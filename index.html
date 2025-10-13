@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>台灣小吃店 - 線上訂餐系統</title>
-    <!-- 引入 LINE LIFF SDK -->
+    <!-- LINE LIFF SDK -->
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
         * {
@@ -206,7 +206,7 @@
 
         .footer-links {
             text-align: center;
-            margin-top: 20px;
+            padding: 15px;
             font-size: 14px;
             color: var(--gray);
         }
@@ -266,12 +266,12 @@
             
             <div class="form-group">
                 <label for="customerPhone" class="required">聯絡電話</label>
-                <input type="tel" id="customerPhone" placeholder="請輸入您的手機號碼 (09xxxxxxxx)" required>
+                <input type="tel" id="customerPhone" placeholder="請輸入您的手機號碼" required pattern="^09\d{8}$">
             </div>
             
             <div class="form-group">
-                <label for="customerLineId">Line ID（選填）</label>
-                <input type="text" id="customerLineId" placeholder="請輸入您的 Line User ID（可接收訂單通知）">
+                <label for="customerLineId">Line ID（自動獲取）</label>
+                <input type="text" id="customerLineId" readonly>
             </div>
             
             <!-- 取餐時間 -->
@@ -311,12 +311,11 @@
             <button class="submit-btn" onclick="submitOrder()" id="submitBtn">
                 🚀 送出訂單
             </button>
+        </div>
 
-            <!-- 隱私政策與使用條款 -->
-            <div class="footer-links">
-                <a href="https://anonymousbeefsteak-cloud.github.io/lineuse/privacy-policy.html" target="_blank">隱私政策</a>
-                <a href="https://anonymousbeefsteak-cloud.github.io/lineuse/terms-of-use.html" target="_blank">使用條款</a>
-            </div>
+        <div class="footer-links">
+            <a href="https://anonymousbeefsteak-cloud.github.io/lineuse/privacy-policy.html" target="_blank">隱私政策</a>
+            <a href="https://anonymousbeefsteak-cloud.github.io/lineuse/terms-of-use.html" target="_blank">使用條款</a>
         </div>
     </div>
     
@@ -324,32 +323,30 @@
     <div id="notification" class="notification"></div>
 
     <script>
-        // LIFF ID
+        // LINE LIFF ID
         const LIFF_ID = '2008276630-bYNjwMx7';
-        // 後端 API 端點
-        const API_URL = 'https://script.google.com/macros/s/AKfycbz6LGRkFWol_Y-XCiwHQQC6o1Tni113ynkvH6PhB1AiJO_3iaRtFB_kd2WX1XhqpKT6gQ/exec';
+        let userId = null;
 
         // 初始化
         async function init() {
             try {
-                // 初始化 LIFF
                 await liff.init({ liffId: LIFF_ID });
-                if (liff.isInClient()) {
-                    // 在 LINE 應用內，獲取用戶資料
-                    const profile = await liff.getProfile();
-                    document.getElementById('customerName').value = profile.displayName || '';
-                    document.getElementById('customerLineId').value = profile.userId || '';
-                } else {
-                    // 非 LINE 環境，提示用戶
-                    showNotification('建議在 LINE 應用內使用此訂餐系統以獲得最佳體驗', 'warning', 8000);
+                
+                if (!liff.isLoggedIn()) {
+                    liff.login();
+                    return;
                 }
+
+                const profile = await liff.getProfile();
+                userId = profile.userId;
+                document.getElementById('customerLineId').value = userId;
+                
                 setDefaultDateTime();
             } catch (error) {
-                console.error('LIFF 初始化失敗:', error);
-                showNotification('無法初始化 LINE LIFF，請稍後再試', 'error');
+                showNotification('❌ LINE 初始化失敗: ' + error.message, 'error', 10000);
             }
         }
-        
+
         // 設定預設日期時間
         function setDefaultDateTime() {
             const now = new Date();
@@ -363,9 +360,8 @@
             
             const datetimeLocal = `${year}-${month}-${day}T${hours}:${minutes}`;
             document.getElementById('pickupTime').value = datetimeLocal;
-            document.getElementById('pickupTime').min = datetimeLocal; // 限制過去時間
         }
-        
+
         // 顯示通知
         function showNotification(message, type = 'success', duration = 5000) {
             const notification = document.getElementById('notification');
@@ -377,7 +373,7 @@
                 notification.classList.remove('show');
             }, duration);
         }
-        
+
         // 設定載入狀態
         function setLoading(loading) {
             const loadingElement = document.getElementById('loading');
@@ -391,23 +387,20 @@
                 submitBtn.disabled = false;
             }
         }
-        
-        // 驗證電話號碼
+
+        // 驗證手機號碼
         function validatePhone(phone) {
-            const phoneRegex = /^09\d{8}$/;
-            return phoneRegex.test(phone);
+            return /^09\d{8}$/.test(phone.replace(/\D/g, ''));
         }
-        
-        // 驗證取餐時間
-        function validatePickupTime(pickupTime) {
-            const selectedTime = new Date(pickupTime);
-            const now = new Date();
-            now.setMinutes(now.getMinutes() + 30);
-            return selectedTime >= now;
-        }
-        
+
         // 提交訂單
         async function submitOrder() {
+            if (!liff.isLoggedIn()) {
+                showNotification('請先登入LINE', 'error');
+                liff.login();
+                return;
+            }
+
             // 收集表單資料
             const pickupTime = document.getElementById('pickupTime').value;
             const customerName = document.getElementById('customerName').value.trim();
@@ -415,74 +408,60 @@
             const customerLineId = document.getElementById('customerLineId').value.trim();
             const menuSelect = document.getElementById('menuSelect').value;
             const orderNotes = document.getElementById('orderNotes').value.trim();
-            
-            // 驗證表單
-            if (!customerName || !customerPhone || !menuSelect || !pickupTime) {
+
+            // 驗證
+            if (!customerName || !customerPhone || !menuSelect) {
                 showNotification('請填寫所有必填欄位', 'error');
                 return;
             }
-            
+
             if (!validatePhone(customerPhone)) {
-                showNotification('請輸入有效的台灣手機號碼（09開頭，10位數字）', 'error');
+                showNotification('手機號碼格式錯誤，請輸入09開頭的10位數字', 'error');
                 return;
             }
-            
-            if (!validatePickupTime(pickupTime)) {
-                showNotification('取餐時間必須至少為30分鐘後', 'error');
+
+            const pickupDate = new Date(pickupTime);
+            if (pickupDate <= new Date()) {
+                showNotification('取餐時間必須是未來時間', 'error');
                 return;
             }
-            
+
             // 提取價格
             const priceMatch = menuSelect.match(/\$(\d+)$/);
             const totalAmount = priceMatch ? parseInt(priceMatch[1]) : 0;
-            
+
             const orderData = {
                 customerName: customerName,
                 customerPhone: customerPhone,
+                liffUserId: userId,
                 customerLineId: customerLineId,
                 product: menuSelect,
                 totalAmount: totalAmount,
                 pickupTime: pickupTime,
                 notes: orderNotes,
                 timestamp: new Date().toISOString(),
-                source: 'web_app'
+                source: 'web_app_react_liff'
             };
-            
+
             console.log('發送訂單:', orderData);
-            
             setLoading(true);
-            
+
             try {
-                // 發送訂單到後端
-                const response = await fetch(API_URL, {
+                const response = await fetch('https://script.google.com/macros/s/AKfycbz6LGRkFWol_Y-XCiwHQQC6o1Tni113ynkvH6PhB1AiJO_3iaRtFB_kd2WX1XhqpKT6gQ/exec', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify(orderData)
                 });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-                
+
                 const result = await response.json();
-                
+
                 if (result.status === 'success') {
                     let notificationMessage = `✅ 訂單成功！\n訂單編號: ${result.orderId}\n取餐時間: ${new Date(pickupTime).toLocaleString('zh-TW')}\n總金額: $${totalAmount}`;
                     
-                    // 如果有 Line ID 且在 LINE 環境內，發送 LINE 訊息
-                    if (customerLineId && liff.isInClient()) {
-                        try {
-                            await liff.sendMessages([{
-                                type: 'text',
-                                text: `您的訂單已確認！\n訂單編號: ${result.orderId}\n餐點: ${menuSelect}\n總金額: $${totalAmount}\n取餐時間: ${new Date(pickupTime).toLocaleString('zh-TW')}\n備註: ${orderNotes || '無'}`
-                            }]);
-                            notificationMessage += `\n📱 Line通知已發送`;
-                        } catch (error) {
-                            console.error('發送 LINE 訊息失敗:', error);
-                            notificationMessage += `\n⚠️ Line通知發送失敗`;
-                        }
+                    if (customerLineId) {
+                        notificationMessage += `\n📱 Line通知已發送`;
                     }
                     
                     showNotification(notificationMessage, 'success', 8000);
@@ -490,24 +469,21 @@
                     // 清空表單
                     document.getElementById('customerName').value = '';
                     document.getElementById('customerPhone').value = '';
-                    document.getElementById('customerLineId').value = '';
+                    document.getElementById('customerLineId').value = userId;
                     document.getElementById('menuSelect').value = '';
                     document.getElementById('orderNotes').value = '';
                     setDefaultDateTime();
-                    
                 } else {
                     throw new Error(result.message || '訂單發送失敗');
                 }
-                
             } catch (error) {
                 console.error('錯誤:', error);
-                let errorMessage = `❌ 發送失敗: ${error.message}`;
-                showNotification(errorMessage, 'error', 10000);
+                showNotification(`❌ 發送失敗: ${error.message}`, 'error', 10000);
             } finally {
                 setLoading(false);
             }
         }
-        
+
         // 頁面載入時初始化
         document.addEventListener('DOMContentLoaded', init);
     </script>
