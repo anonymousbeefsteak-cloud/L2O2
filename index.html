@@ -312,7 +312,7 @@
                 address: "臺北市信義區松壽路123號",
                 businessHours: "10:00 - 22:00"
             },
-            endpointUrl: "https://script.google.com/macros/s/AKfycbzwH5AnXX2TjU2CRAC81yaDko47AHCR5TETX9yT6sNwjPvWH-JgbTY0jVI1HJ2cfbg/exec",
+            endpointUrl: "https://script.google.com/macros/s/AKfycby7NFn94DWzQOJ-1w4jUDoQHQHkgw0OnKheAx2AipF6_4Towo9rRyyRdqYNMGkBuXtIMA/exec",
             liffId: "2008276630-bYNjwMx7",
             fallbackMenu: [
                 { id: 1, name: "滷肉飯", price: 35, emoji: "🍜", category: "主食" },
@@ -349,54 +349,64 @@
             }
         }
 
-        // 載入菜單 - 修復版本
+        // 載入菜單
         async function loadMenu() {
             const menuInfo = document.getElementById('menuInfo');
-            
-            try {
-                menuInfo.textContent = '正在載入菜單...';
-                menuInfo.style.borderLeftColor = '#3498db';
-                
-                // 添加隨機參數避免緩存問題
-                const timestamp = new Date().getTime();
-                const menuUrl = `${CONFIG.endpointUrl}?action=menu&t=${timestamp}`;
-                
-                console.log('嘗試載入菜單 URL:', menuUrl);
-                
-                const response = await fetch(menuUrl, {
-                    method: 'GET',
-                    headers: {
-                        'Accept': 'application/json',
-                    },
-                    mode: 'cors',
-                    cache: 'no-cache'
-                });
+            const maxRetries = 2;
+            let attempt = 0;
 
-                console.log('菜單響應狀態:', response.status, response.statusText);
+            while (attempt <= maxRetries) {
+                try {
+                    menuInfo.textContent = '正在載入菜單...';
+                    menuInfo.style.borderLeftColor = '#3498db';
+                    
+                    const timestamp = new Date().getTime();
+                    const menuUrl = `${CONFIG.endpointUrl}?action=menu&t=${timestamp}`;
+                    console.log('嘗試載入菜單 URL:', menuUrl);
+                    
+                    const response = await fetch(menuUrl, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                        },
+                        mode: 'cors',
+                        cache: 'no-cache'
+                    });
 
-                if (!response.ok) {
-                    throw new Error(`HTTP 錯誤: ${response.status} ${response.statusText}`);
+                    console.log('菜單響應狀態:', response.status, response.statusText);
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(`HTTP 錯誤: ${response.status} ${response.statusText} - ${errorText}`);
+                    }
+
+                    const data = await response.json();
+                    console.log('菜單數據:', data);
+
+                    if (data.status === 'success' && Array.isArray(data.menu)) {
+                        menuItems = data.menu;
+                        console.log('菜單載入成功，項目數量:', menuItems.length);
+                        displayMenu();
+                        menuInfo.textContent = `已載入 ${menuItems.length} 種餐點`;
+                        menuInfo.style.borderLeftColor = '#27ae60';
+                        return;
+                    } else {
+                        throw new Error('無效的菜單數據格式: ' + JSON.stringify(data));
+                    }
+                } catch (error) {
+                    attempt++;
+                    console.error(`載入菜單嘗試 ${attempt} 失敗:`, error.message);
+                    if (attempt > maxRetries) {
+                        console.error('載入菜單最終失敗:', error.message);
+                        menuItems = CONFIG.fallbackMenu;
+                        displayMenu();
+                        menuInfo.textContent = `使用預設菜單 (${menuItems.length} 種餐點) - 錯誤: ${error.message}`;
+                        menuInfo.style.borderLeftColor = '#e74c3c';
+                        showNotification('無法載入最新菜單，已使用預設菜單', 'error');
+                        return;
+                    }
+                    await new Promise(resolve => setTimeout(resolve, 1000));
                 }
-
-                const data = await response.json();
-                console.log('菜單數據:', data);
-
-                if (data.status === 'success' && Array.isArray(data.menu)) {
-                    menuItems = data.menu;
-                    console.log('菜單載入成功，項目數量:', menuItems.length);
-                    displayMenu();
-                    menuInfo.textContent = `已載入 ${menuItems.length} 種餐點`;
-                    menuInfo.style.borderLeftColor = '#27ae60';
-                } else {
-                    throw new Error('無效的菜單數據格式: ' + JSON.stringify(data));
-                }
-            } catch (error) {
-                console.error('載入菜單失敗:', error.message);
-                menuItems = CONFIG.fallbackMenu;
-                displayMenu();
-                menuInfo.textContent = `使用預設菜單 (${menuItems.length} 種餐點) - ${error.message}`;
-                menuInfo.style.borderLeftColor = '#e74c3c';
-                showNotification('無法載入最新菜單，已使用預設菜單', 'error');
             }
         }
 
@@ -413,7 +423,6 @@
                 menuSelect.appendChild(option);
             });
             
-            // 添加選擇事件來顯示價格
             menuSelect.addEventListener('change', function() {
                 const selectedOption = this.options[this.selectedIndex];
                 if (selectedOption.value) {
@@ -524,12 +533,12 @@
                         cache: 'no-cache'
                     });
 
-                    console.log('訂單提交響應狀態:', response.status);
+                    console.log('訂單提交響應狀態:', response.status, response.statusText);
 
                     if (!response.ok) {
                         const errorText = await response.text();
                         console.error('訂單提交失敗，HTTP 狀態:', response.status, '響應:', errorText);
-                        throw new Error(`HTTP 錯誤: ${response.status} ${response.statusText}`);
+                        throw new Error(`HTTP 錯誤: ${response.status} ${response.statusText} - ${errorText}`);
                     }
 
                     const result = await response.json();
