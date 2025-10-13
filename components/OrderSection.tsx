@@ -1,6 +1,6 @@
-
 import React, { useState } from 'react';
-import type { OrderItem, MenuItem } from '../types';
+// FIX: Updated type import path to src/types.ts
+import type { OrderItem, MenuItem } from '../src/types';
 
 interface OrderSectionProps {
     orderItems: OrderItem[];
