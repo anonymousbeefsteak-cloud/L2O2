@@ -67,6 +67,9 @@ const App = () => {
             }
             return [...prevItems, { ...itemToAdd, quantity: 1 }];
         });
+        showNotification(`${itemToAdd.emoji} ${itemToAdd.name} 已加入訂單`, 'success');
+        // Scroll to the order section to show the user the updated order list
+        document.getElementById('order')?.scrollIntoView({ behavior: 'smooth' });
     };
 
     const handleUpdateQuantity = (itemId: number, newQuantity: number) => {
