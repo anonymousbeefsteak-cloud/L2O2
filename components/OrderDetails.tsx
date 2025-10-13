@@ -1,6 +1,6 @@
-
 import React from 'react';
-import type { OrderItem } from '../types';
+// FIX: Updated type import path to src/types.ts
+import type { OrderItem } from '../src/types';
 
 interface OrderDetailsProps {
     orderItems: OrderItem[];
