@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -12,7 +13,7 @@
             box-sizing: border-box;
             font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
         }
-
+        
         :root {
             --primary: #3498db;
             --primary-dark: #2980b9;
@@ -27,7 +28,7 @@
             --border: #e1e8ed;
             --shadow: rgba(0,0,0,0.1);
         }
-
+        
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
@@ -36,7 +37,7 @@
             justify-content: center;
             align-items: center;
         }
-
+        
         .container {
             max-width: 500px;
             width: 100%;
@@ -46,12 +47,12 @@
             overflow: hidden;
             animation: fadeIn 0.5s ease-out;
         }
-
+        
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
-
+        
         .header {
             background: linear-gradient(135deg, var(--secondary), var(--secondary-dark));
             color: white;
@@ -60,7 +61,7 @@
             position: relative;
             overflow: hidden;
         }
-
+        
         .header::before {
             content: "";
             position: absolute;
@@ -71,29 +72,29 @@
             background: rgba(255,255,255,0.1);
             transform: rotate(45deg);
         }
-
+        
         .header h1 {
             font-size: 2.2em;
             margin-bottom: 10px;
             position: relative;
             text-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
-
+        
         .header p {
             font-size: 1.1em;
             opacity: 0.9;
             position: relative;
         }
-
+        
         .order-form {
             padding: 30px;
         }
-
+        
         .form-group {
             margin-bottom: 20px;
             position: relative;
         }
-
+        
         .form-group label {
             display: block;
             margin-bottom: 8px;
@@ -101,7 +102,7 @@
             color: var(--dark);
             font-size: 15px;
         }
-
+        
         .form-group input,
         .form-group select,
         .form-group textarea {
@@ -113,7 +114,7 @@
             transition: all 0.3s;
             background: white;
         }
-
+        
         .form-group input:focus,
         .form-group select:focus,
         .form-group textarea:focus {
@@ -121,7 +122,7 @@
             border-color: var(--primary);
             box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
         }
-
+        
         .submit-btn {
             width: 100%;
             padding: 15px;
@@ -135,19 +136,19 @@
             transition: all 0.3s;
             box-shadow: 0 4px 10px rgba(39, 174, 96, 0.3);
         }
-
+        
         .submit-btn:hover:not(:disabled) {
             transform: translateY(-3px);
             box-shadow: 0 7px 15px rgba(39, 174, 96, 0.4);
         }
-
+        
         .submit-btn:disabled {
             background: #bdc3c7;
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
         }
-
+        
         .notification {
             position: fixed;
             top: 20px;
@@ -164,19 +165,19 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
             white-space: pre-line;
         }
-
+        
         .notification.show {
             transform: translateX(0);
         }
-
+        
         .notification.success {
             background: var(--success);
         }
-
+        
         .notification.error {
             background: var(--danger);
         }
-
+        
         .loading {
             display: none;
             text-align: center;
@@ -197,12 +198,12 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-
+        
         .required::after {
             content: " *";
             color: var(--danger);
         }
-
+        
         .menu-info {
             background: #f8f9fa;
             padding: 10px 15px;
@@ -212,28 +213,28 @@
             color: #6c757d;
             border-left: 4px solid var(--primary);
         }
-
+        
         @media (max-width: 576px) {
             body {
                 padding: 10px;
             }
-
+            
             .container {
                 border-radius: 15px;
             }
-
+            
             .header {
                 padding: 25px 20px;
             }
-
+            
             .header h1 {
                 font-size: 1.8em;
             }
-
+            
             .order-form {
                 padding: 20px;
             }
-
+            
             .notification {
                 right: 10px;
                 left: 10px;
@@ -248,30 +249,30 @@
             <h1>🍜 台灣小吃店</h1>
             <p>線上訂餐系統 • 快速方便</p>
         </div>
-
+        
         <div class="order-form">
             <!-- 顧客資訊 -->
             <div class="form-group">
                 <label for="customerName" class="required">顧客姓名</label>
                 <input type="text" id="customerName" placeholder="請輸入您的姓名" required>
             </div>
-
+            
             <div class="form-group">
                 <label for="customerPhone" class="required">聯絡電話</label>
                 <input type="tel" id="customerPhone" placeholder="請輸入您的手機號碼" required>
             </div>
-
+            
             <div class="form-group">
                 <label for="customerLineId">Line ID（選填）</label>
                 <input type="text" id="customerLineId" placeholder="請輸入您的 Line User ID（可接收訂單通知）">
             </div>
-
+            
             <!-- 取餐時間 -->
             <div class="form-group">
                 <label for="pickupTime" class="required">取餐時間</label>
                 <input type="datetime-local" id="pickupTime" required>
             </div>
-
+            
             <!-- 菜單選擇 -->
             <div class="form-group">
                 <label for="menuSelect" class="required">選擇餐點</label>
@@ -283,34 +284,28 @@
                     正在載入菜單...
                 </div>
             </div>
-
+            
             <!-- 訂單備註 -->
             <div class="form-group">
                 <label for="orderNotes">訂單備註</label>
                 <textarea id="orderNotes" rows="3" placeholder="如有特殊需求請在此備註（例如：不要加辣、餐具數量、過敏食材等）"></textarea>
             </div>
-
+            
             <!-- 加載指示器 -->
             <div class="loading" id="loading">
                 <div class="spinner"></div>
                 <p style="font-size: 15px;">訂單發送中...</p>
             </div>
-
+            
             <!-- 提交按鈕 -->
             <button class="submit-btn" id="submitBtn">🚀 送出訂單</button>
         </div>
     </div>
-
+    
     <!-- 通知訊息 -->
     <div id="notification" class="notification"></div>
 
     <script>
-        // ==================== 配置設定 ====================
-        // !! 重要：請替換為您自己的 LIFF ID 和 部署後的 Google Apps Script Web App URL !!
-        const LIFF_ID = "YOUR_LIFF_ID_HERE";
-        const APPS_SCRIPT_WEB_APP_URL = "YOUR_DEPLOYED_WEB_APP_URL_HERE"; 
-        // =================================================
-
         const CONFIG = {
             restaurant: {
                 name: "台灣小吃店",
@@ -318,8 +313,9 @@
                 address: "臺北市信義區松壽路123號",
                 businessHours: "10:00 - 22:00"
             },
-            endpointUrl: APPS_SCRIPT_WEB_APP_URL, 
-            liffId: LIFF_ID,
+            endpointUrl: "https://script.google.com/macros/s/AKfycbz3U-Wv7tdbB-WHtDieB2i2wner2zQ5ltuebeB5gYxONHJ6yKJK5153inq_GhNrHex07w/exec
+",
+            liffId: "2008276630-bYNjwMx7",
             fallbackMenu: [
                 { id: 1, name: "滷肉飯", price: 35, emoji: "🍜", category: "主食" },
                 { id: 2, name: "雞肉飯", price: 40, emoji: "🍚", category: "主食" },
@@ -340,55 +336,42 @@
         // 初始化 LIFF
         async function initializeLiff() {
             try {
-                if (!CONFIG.liffId || CONFIG.liffId === "YOUR_LIFF_ID_HERE") {
-                    console.warn('LIFF ID 未設置或為預設值，LIFF 功能將無法使用。');
-                    showNotification('LIFF ID 未設置，部分功能可能受限', 'warning');
-                    return;
-                }
-
                 await liff.init({ liffId: CONFIG.liffId });
                 if (liff.isLoggedIn()) {
                     const profile = await liff.getProfile();
                     liffUserId = profile.userId;
-                    // 如果用戶名輸入框是空的，才自動填充 LIFF 顯示名稱
-                    if (document.getElementById('customerName').value === '') {
-                        document.getElementById('customerName').value = profile.displayName || '';
-                    }
-                    // 如果 Line ID 輸入框是空的，才自動填充 LIFF 用戶 ID
-                    if (document.getElementById('customerLineId').value === '') {
-                        document.getElementById('customerLineId').value = profile.userId || '';
-                    }
+                    document.getElementById('customerName').value = profile.displayName || '';
+                    document.getElementById('customerLineId').value = profile.userId || '';
                 } else {
-                    console.log('LIFF 未登錄，允許匿名使用。如果需要 LIFF 功能請確保用戶已登錄。');
-                    // 可選：強制登錄
-                    // liff.login(); 
+                    liff.login();
                 }
             } catch (error) {
                 console.error('LIFF 初始化失敗:', error);
-                showNotification('無法初始化 LINE LIFF，部分功能可能受限', 'error');
+                showNotification('無法初始化 LINE LIFF，請稍後再試或聯繫客服', 'error');
             }
         }
 
-        // 載入菜單
+        // 載入菜單 - 修復版本
         async function loadMenu() {
             const menuInfo = document.getElementById('menuInfo');
-
+            
             try {
                 menuInfo.textContent = '正在載入菜單...';
                 menuInfo.style.borderLeftColor = '#3498db';
-
+                
                 // 添加隨機參數避免緩存問題
                 const timestamp = new Date().getTime();
                 const menuUrl = `${CONFIG.endpointUrl}?action=menu&t=${timestamp}`;
-
+                
                 console.log('嘗試載入菜單 URL:', menuUrl);
-
+                
                 const response = await fetch(menuUrl, {
                     method: 'GET',
                     headers: {
                         'Accept': 'application/json',
+                    'Content-Type': 'application/json'
                     },
-                    mode: 'cors', // 確保使用 CORS 模式
+                    mode: 'cors',
                     cache: 'no-cache'
                 });
 
@@ -408,7 +391,7 @@
                     menuInfo.textContent = `已載入 ${menuItems.length} 種餐點`;
                     menuInfo.style.borderLeftColor = '#27ae60';
                 } else {
-                    throw new Error('無效的菜單數據格式或狀態非成功: ' + JSON.stringify(data));
+                    throw new Error('無效的菜單數據格式: ' + JSON.stringify(data));
                 }
             } catch (error) {
                 console.error('載入菜單失敗:', error.message);
@@ -424,7 +407,7 @@
         function displayMenu() {
             const menuSelect = document.getElementById('menuSelect');
             menuSelect.innerHTML = '<option value="">請選擇餐點</option>';
-
+            
             menuItems.forEach(item => {
                 const option = document.createElement('option');
                 option.value = `${item.name} $${item.price}`;
@@ -432,17 +415,13 @@
                 option.setAttribute('data-price', item.price);
                 menuSelect.appendChild(option);
             });
-
+            
             // 添加選擇事件來顯示價格
             menuSelect.addEventListener('change', function() {
                 const selectedOption = this.options[this.selectedIndex];
-                const menuInfoElement = document.getElementById('menuInfo');
                 if (selectedOption.value) {
-                    menuInfoElement.textContent = `選擇: ${selectedOption.textContent}`;
-                    menuInfoElement.style.borderLeftColor = 'var(--primary)';
-                } else {
-                    menuInfoElement.textContent = `請選擇餐點`;
-                    menuInfoElement.style.borderLeftColor = 'var(--gray)';
+                    const price = selectedOption.getAttribute('data-price');
+                    document.getElementById('menuInfo').textContent = `選擇: ${selectedOption.textContent}`;
                 }
             });
         }
@@ -450,11 +429,7 @@
         // 設定預設日期時間
         function setDefaultDateTime() {
             const now = new Date();
-            now.setMinutes(now.getMinutes() + 30); // 預設30分鐘後
-            // 將秒和毫秒歸零
-            now.setSeconds(0);
-            now.setMilliseconds(0);
-
+            now.setMinutes(now.getMinutes() + 30);
             const year = now.getFullYear();
             const month = String(now.getMonth() + 1).padStart(2, '0');
             const day = String(now.getDate()).padStart(2, '0');
@@ -482,11 +457,9 @@
             if (loading) {
                 loadingElement.style.display = 'block';
                 submitBtn.disabled = true;
-                submitBtn.textContent = '處理中...';
             } else {
                 loadingElement.style.display = 'none';
                 submitBtn.disabled = false;
-                submitBtn.textContent = '🚀 送出訂單';
             }
         }
 
@@ -510,10 +483,9 @@
             }
             const pickupDate = new Date(pickupTime);
             const now = new Date();
-            // 允許取餐時間為當前時間或之後的任何時間（但最好是未來，所以這裡保留嚴格的未來時間驗證）
-            if (pickupDate <= now) { // 使用 <= 讓當前時間精確到分鐘之後也可以
-                 showNotification('取餐時間必須是未來時間', 'error');
-                 return;
+            if (pickupDate <= now) {
+                showNotification('取餐時間必須是未來時間', 'error');
+                return;
             }
             if (!menuSelect) {
                 showNotification('請選擇一項餐點', 'error');
@@ -524,11 +496,11 @@
             const totalAmount = priceMatch ? parseInt(priceMatch[1]) : 0;
 
             const orderData = {
-                source: 'web_app_react_liff', 
+                source: 'web_app_react_liff',
                 liffUserId: liffUserId || '未提供',
                 customerName: customerName,
                 customerPhone: customerPhone,
-                customerLineId: customerLineId, 
+                customerLineId: customerLineId,
                 product: menuSelect,
                 totalAmount: totalAmount,
                 pickupTime: pickupTime,
@@ -572,15 +544,12 @@
                             notificationMessage += `\n📱 Line通知已發送`;
                         }
                         showNotification(notificationMessage, 'success', 8000);
-                        // 清空表單，但保留 LIFF 自動填充的 Line ID 和姓名
-                        if (!liffUserId) { // 只有非 LIFF 用戶才清空姓名和 Line ID
-                            document.getElementById('customerName').value = '';
-                            document.getElementById('customerLineId').value = '';
-                        }
+                        document.getElementById('customerName').value = '';
                         document.getElementById('customerPhone').value = '';
+                        document.getElementById('customerLineId').value = '';
                         document.getElementById('menuSelect').value = '';
                         document.getElementById('orderNotes').value = '';
-                        setDefaultDateTime(); // 重設取餐時間
+                        setDefaultDateTime();
                         setLoading(false);
                         return;
                     } else {
@@ -594,7 +563,7 @@
                         setLoading(false);
                         return;
                     }
-                    await new Promise(resolve => setTimeout(resolve, 1000)); 
+                    await new Promise(resolve => setTimeout(resolve, 1000));
                 }
             }
         }
