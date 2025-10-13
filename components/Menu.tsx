@@ -1,6 +1,6 @@
-
 import React from 'react';
-import type { MenuItem as MenuItemType } from '../types';
+// FIX: Updated type import path to src/types.ts
+import type { MenuItem as MenuItemType } from '../src/types';
 import MenuItem from './MenuItem';
 
 interface MenuProps {
