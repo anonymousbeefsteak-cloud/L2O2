@@ -6,6 +6,7 @@
     <title>台灣小吃店 - 線上訂餐系統</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
+        /* CSS 部分不變，略過以節省空間 */
         * {
             margin: 0;
             padding: 0;
@@ -400,27 +401,34 @@
                 source: 'web_app'
             };
 
+            console.log('發送訂單資料:', orderData);  // 除錯用
+
             setLoading(true);
 
             try {
                 const scriptUrl = 'https://script.google.com/macros/s/AKfycbz6LGRkFWol_Y-XCiwHQQC6o1Tni113ynkvH6PhB1AiJO_3iaRtFB_kd2WX1XhqpKT6gQ/exec';
                 const response = await fetch(scriptUrl, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'text/plain;charset=utf-8'  // 修復 CORS：使用 text/plain
+                    },
                     body: JSON.stringify(orderData)
                 });
+
+                console.log('回應狀態:', response.status, response.statusText);  // 除錯用
 
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
 
-                const result = await response.json().catch(() => {
-                    throw new Error('無效的伺服器回應');
-                });
+                const textResponse = await response.text();
+                const result = JSON.parse(textResponse);  // 解析 text 為 JSON
+
+                console.log('後端回應:', result);  // 除錯用
 
                 if (result.status === 'success') {
                     let notificationMessage = `✅ 訂單成功！\n訂單編號: ${result.orderId}\n取餐時間: ${new Date(pickupTime).toLocaleString('zh-TW')}\n總金額: $${totalAmount}`;
-                    if (customerLineId && liff.isLoggedIn()) {
+                    if (customerLineId && liff && liff.isLoggedIn()) {
                         await liff.sendMessages([{
                             type: 'text',
                             text: notificationMessage
@@ -429,6 +437,7 @@
                     }
 
                     showNotification(notificationMessage, 'success', 8000);
+                    // 清空表單
                     document.getElementById('customerName').value = '';
                     document.getElementById('customerPhone').value = '';
                     document.getElementById('customerLineId').value = '';
@@ -439,7 +448,7 @@
                     throw new Error(result.message || '訂單發送失敗');
                 }
             } catch (error) {
-                console.error('錯誤:', error);
+                console.error('詳細錯誤:', error);
                 let errorMessage = error.message.includes('HTTP') ? '伺服器連線錯誤，請稍後再試' :
                                  error.message === '無效的伺服器回應' ? '伺服器回應格式錯誤' :
                                  `❌ 發送失敗: ${error.message}`;
