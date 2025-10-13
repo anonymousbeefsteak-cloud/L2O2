@@ -203,6 +203,16 @@
             color: var(--danger);
         }
         
+        .menu-info {
+            background: #f8f9fa;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-top: 5px;
+            font-size: 14px;
+            color: #6c757d;
+            border-left: 4px solid var(--primary);
+        }
+        
         @media (max-width: 576px) {
             body {
                 padding: 10px;
@@ -269,6 +279,9 @@
                     <option value="">請選擇餐點</option>
                     <!-- 動態填充 -->
                 </select>
+                <div class="menu-info" id="menuInfo">
+                    正在載入菜單...
+                </div>
             </div>
             
             <!-- 訂單備註 -->
@@ -336,36 +349,54 @@
             }
         }
 
-        // 載入菜單
+        // 載入菜單 - 修復版本
         async function loadMenu() {
+            const menuInfo = document.getElementById('menuInfo');
+            
             try {
-                const response = await fetch(`${CONFIG.endpointUrl}?action=menu`, {
+                menuInfo.textContent = '正在載入菜單...';
+                menuInfo.style.borderLeftColor = '#3498db';
+                
+                // 添加隨機參數避免緩存問題
+                const timestamp = new Date().getTime();
+                const menuUrl = `${CONFIG.endpointUrl}?action=menu&t=${timestamp}`;
+                
+                console.log('嘗試載入菜單 URL:', menuUrl);
+                
+                const response = await fetch(menuUrl, {
                     method: 'GET',
                     headers: {
                         'Accept': 'application/json',
-                        'Content-Type': 'application/json'
                     },
                     mode: 'cors',
                     cache: 'no-cache'
                 });
+
+                console.log('菜單響應狀態:', response.status, response.statusText);
 
                 if (!response.ok) {
                     throw new Error(`HTTP 錯誤: ${response.status} ${response.statusText}`);
                 }
 
                 const data = await response.json();
+                console.log('菜單數據:', data);
+
                 if (data.status === 'success' && Array.isArray(data.menu)) {
                     menuItems = data.menu;
-                    console.log('菜單載入成功:', menuItems);
+                    console.log('菜單載入成功，項目數量:', menuItems.length);
                     displayMenu();
+                    menuInfo.textContent = `已載入 ${menuItems.length} 種餐點`;
+                    menuInfo.style.borderLeftColor = '#27ae60';
                 } else {
-                    throw new Error('無效的菜單數據格式');
+                    throw new Error('無效的菜單數據格式: ' + JSON.stringify(data));
                 }
             } catch (error) {
                 console.error('載入菜單失敗:', error.message);
-                showNotification('無法載入菜單，將顯示預設菜單。如問題持續，請聯繫客服。', 'error');
                 menuItems = CONFIG.fallbackMenu;
                 displayMenu();
+                menuInfo.textContent = `使用預設菜單 (${menuItems.length} 種餐點) - ${error.message}`;
+                menuInfo.style.borderLeftColor = '#e74c3c';
+                showNotification('無法載入最新菜單，已使用預設菜單', 'error');
             }
         }
 
@@ -373,11 +404,22 @@
         function displayMenu() {
             const menuSelect = document.getElementById('menuSelect');
             menuSelect.innerHTML = '<option value="">請選擇餐點</option>';
+            
             menuItems.forEach(item => {
                 const option = document.createElement('option');
                 option.value = `${item.name} $${item.price}`;
                 option.textContent = `${item.emoji} ${item.name} - $${item.price}`;
+                option.setAttribute('data-price', item.price);
                 menuSelect.appendChild(option);
+            });
+            
+            // 添加選擇事件來顯示價格
+            menuSelect.addEventListener('change', function() {
+                const selectedOption = this.options[this.selectedIndex];
+                if (selectedOption.value) {
+                    const price = selectedOption.getAttribute('data-price');
+                    document.getElementById('menuInfo').textContent = `選擇: ${selectedOption.textContent}`;
+                }
             });
         }
 
