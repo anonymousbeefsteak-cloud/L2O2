@@ -285,7 +285,20 @@
                 businessHours: "10:00 - 22:00"
             },
             endpointUrl: "https://script.google.com/macros/s/AKfycbzwH5AnXX2TjU2CRAC81yaDko47AHCR5TETX9yT6sNwjPvWH-JgbTY0jVI1HJ2cfbg/exec",
-            liffId: "2008276630-bYNjwMx7"
+            liffId: "2008276630-bYNjwMx7",
+            // Fallback menu in case the API call fails
+            fallbackMenu: [
+                { id: 1, name: "滷肉飯", price: 35, emoji: "🍜", category: "主食" },
+                { id: 2, name: "雞肉飯", price: 40, emoji: "🍚", category: "主食" },
+                { id: 3, name: "蚵仔煎", price: 65, emoji: "🦪", category: "小吃" },
+                { id: 4, name: "大腸麵線", price: 50, emoji: "🍲", category: "湯品" },
+                { id: 5, name: "珍珠奶茶", price: 45, emoji: "🥤", category: "飲料" },
+                { id: 6, name: "鹽酥雞", price: 60, emoji: "🍗", category: "小吃" },
+                { id: 7, name: "甜不辣", price: 40, emoji: "🐟", category: "小吃" },
+                { id: 8, name: "蚵仔酥", price: 70, emoji: "🦪", category: "小吃" },
+                { id: 9, name: "肉圓", price: 45, emoji: "🥟", category: "小吃" },
+                { id: 10, name: "碗粿", price: 35, emoji: "🍮", category: "小吃" }
+            ]
         };
 
         let menuItems = [];
@@ -305,7 +318,7 @@
                 }
             } catch (error) {
                 console.error('LIFF 初始化失敗:', error);
-                showError('無法初始化 LINE LIFF，請稍後再試');
+                showError('無法初始化 LINE LIFF，請稍後再試或聯繫客服');
             }
         }
 
@@ -314,18 +327,32 @@
             try {
                 const response = await fetch(`${CONFIG.endpointUrl}?action=menu`, {
                     method: 'GET',
-                    headers: { 'Accept': 'application/json' }
+                    headers: { 
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    mode: 'cors',
+                    cache: 'no-cache'
                 });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP 錯誤: ${response.status} ${response.statusText}`);
+                }
+
                 const data = await response.json();
-                if (data.status === 'success') {
+                if (data.status === 'success' && Array.isArray(data.menu)) {
                     menuItems = data.menu;
+                    console.log('菜單載入成功:', menuItems);
                     displayMenu();
                 } else {
-                    showError('無法載入菜單，請稍後再試');
+                    throw new Error('無效的菜單數據格式');
                 }
             } catch (error) {
-                console.error('載入菜單失敗:', error);
-                showError('無法載入菜單，請稍後再試');
+                console.error('載入菜單失敗:', error.message);
+                showError('無法載入菜單，將顯示預設菜單。如問題持續，請聯繫客服。');
+                // Fallback to local menu
+                menuItems = CONFIG.fallbackMenu;
+                displayMenu();
             }
         }
 
@@ -445,6 +472,9 @@
             successMessage.style.background = '#fee2e2';
             successMessage.style.color = '#dc2626';
             successMessage.textContent = message;
+            setTimeout(() => {
+                successMessage.style.display = 'none';
+            }, 5000);
         }
 
         // 顯示成功訊息
@@ -454,6 +484,9 @@
             successMessage.style.background = '#d1fae5';
             successMessage.style.color = '#065f46';
             successMessage.textContent = message;
+            setTimeout(() => {
+                successMessage.style.display = 'none';
+            }, 5000);
         }
 
         // 提交訂單
@@ -474,8 +507,12 @@
             try {
                 const response = await fetch(CONFIG.endpointUrl, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(orderData)
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(orderData),
+                    mode: 'cors'
                 });
 
                 const result = await response.json();
@@ -492,7 +529,7 @@
                 }
             } catch (error) {
                 console.error('提交訂單失敗:', error);
-                showError('訂單提交失敗，請稍後再試');
+                showError('訂單提交失敗，請檢查網絡連線或聯繫客服');
             }
         }
 
