@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>台灣小吃店 - 線上訂餐系統</title>
-    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
-        /* CSS 部分不變，略過以節省空間 */
         * {
             margin: 0;
             padding: 0;
@@ -231,6 +229,23 @@
                 max-width: none;
             }
         }
+
+        .footer-links {
+            text-align: center;
+            padding: 10px;
+            font-size: 14px;
+            color: var(--gray);
+        }
+
+        .footer-links a {
+            color: var(--primary);
+            text-decoration: none;
+            margin: 0 10px;
+        }
+
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -243,37 +258,44 @@
         <div class="order-form">
             <!-- 顧客資訊 -->
             <div class="form-group">
-                <label for="customerName" class="required" aria-label="顧客姓名（必填）">顧客姓名</label>
+                <label for="customerName" class="required">顧客姓名</label>
                 <input type="text" id="customerName" placeholder="請輸入您的姓名" required>
             </div>
             
             <div class="form-group">
-                <label for="customerPhone" class="required" aria-label="聯絡電話（必填）">聯絡電話</label>
-                <input type="tel" id="customerPhone" placeholder="請輸入您的手機號碼 (09XX-XXX-XXX)" required>
+                <label for="customerPhone" class="required">聯絡電話</label>
+                <input type="tel" id="customerPhone" placeholder="請輸入您的手機號碼" pattern="[0-9]{10}" title="請輸入10位數手機號碼" required>
             </div>
             
             <div class="form-group">
-                <label for="customerLineId" aria-label="Line ID（選填）">Line ID（選填）</label>
+                <label for="customerLineId">Line ID（選填）</label>
                 <input type="text" id="customerLineId" placeholder="請輸入您的 Line User ID（可接收訂單通知）">
             </div>
             
             <!-- 取餐時間 -->
             <div class="form-group">
-                <label for="pickupTime" class="required" aria-label="取餐時間（必填）">取餐時間</label>
+                <label for="pickupTime" class="required">取餐時間</label>
                 <input type="datetime-local" id="pickupTime" required>
             </div>
             
             <!-- 菜單選擇 -->
             <div class="form-group">
-                <label for="menuSelect" class="required" aria-label="選擇餐點（必填）">選擇餐點</label>
+                <label for="menuSelect" class="required">選擇餐點</label>
                 <select id="menuSelect" required>
                     <option value="">請選擇餐點</option>
+                    <option value="滷肉飯 $35">🍜 滷肉飯 - $35</option>
+                    <option value="雞肉飯 $40">🍚 雞肉飯 - $40</option>
+                    <option value="蚵仔煎 $65">🦪 蚵仔煎 - $65</option>
+                    <option value="大腸麵線 $50">🍲 大腸麵線 - $50</option>
+                    <option value="珍珠奶茶 $45">🥤 珍珠奶茶 - $45</option>
+                    <option value="鹽酥雞 $60">🍗 鹽酥雞 - $60</option>
+                    <option value="甜不辣 $40">🐟 甜不辣 - $40</option>
                 </select>
             </div>
             
             <!-- 訂單備註 -->
             <div class="form-group">
-                <label for="orderNotes" aria-label="訂單備註（選填）">訂單備註</label>
+                <label for="orderNotes">訂單備註</label>
                 <textarea id="orderNotes" rows="3" placeholder="如有特殊需求請在此備註（例如：不要加辣、餐具數量、過敏食材等）"></textarea>
             </div>
             
@@ -288,155 +310,144 @@
                 🚀 送出訂單
             </button>
         </div>
+
+        <!-- 隱私政策與使用條款連結 -->
+        <div class="footer-links">
+            <a href="https://anonymousbeefsteak-cloud.github.io/lineuse/privacy-policy.html" target="_blank">隱私政策</a>
+            <a href="https://anonymousbeefsteak-cloud.github.io/lineuse/terms-of-use.html" target="_blank">使用條款</a>
+        </div>
     </div>
     
     <!-- 通知訊息 -->
-    <div id="notification" class="notification" aria-live="polite"></div>
+    <div id="notification" class="notification"></div>
 
     <script>
-        const menuItems = [
-            { name: '滷肉飯', price: 35 },
-            { name: '雞肉飯', price: 40 },
-            { name: '蚵仔煎', price: 65 },
-            { name: '大腸麵線', price: 50 },
-            { name: '珍珠奶茶', price: 45 },
-            { name: '鹽酥雞', price: 60 },
-            { name: '甜不辣', price: 40 }
-        ];
+        // Google Apps Script Web App URL
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz6LGRkFWol_Y-XCiwHQQC6o1Tni113ynkvH6PhB1AiJO_3iaRtFB_kd2WX1XhqpKT6gQ/exec';
 
+        // 初始化
         function init() {
             setDefaultDateTime();
-            populateMenu();
-            initializeLiff();
         }
-
+        
+        // 設定預設日期時間
         function setDefaultDateTime() {
             const now = new Date();
             now.setMinutes(now.getMinutes() + 30);
-            const minDate = new Date().toISOString().slice(0, 16);
-            const datetimeLocal = now.toISOString().slice(0, 16);
-            const pickupTimeInput = document.getElementById('pickupTime');
-            pickupTimeInput.value = datetimeLocal;
-            pickupTimeInput.min = minDate;
+            
+            // 格式化成 datetime-local 需要的格式
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            
+            const datetimeLocal = `${year}-${month}-${day}T${hours}:${minutes}`;
+            document.getElementById('pickupTime').value = datetimeLocal;
         }
-
-        function populateMenu() {
-            const select = document.getElementById('menuSelect');
-            select.innerHTML = '<option value="">請選擇餐點</option>';
-            menuItems.forEach(item => {
-                const option = document.createElement('option');
-                option.value = item.name;
-                option.text = `${item.name} - $${item.price}`;
-                select.appendChild(option);
-            });
-        }
-
-        async function initializeLiff() {
-            try {
-                await liff.init({ liffId: '2008276630-bYNjwMx7' });
-                if (liff.isLoggedIn()) {
-                    const profile = await liff.getProfile();
-                    document.getElementById('customerName').value = profile.displayName;
-                    document.getElementById('customerLineId').value = profile.userId;
-                } else {
-                    liff.login();
-                }
-            } catch (error) {
-                showNotification('LIFF 初始化失敗: ' + error.message, 'error');
-            }
-        }
-
-        function validatePhone(phone) {
-            const regex = /^09\d{2}-?\d{3}-?\d{3}$/;
-            return regex.test(phone);
-        }
-
-        function sanitizeInput(input) {
-            return input.replace(/[<>&]/g, '');
-        }
-
+        
+        // 顯示通知
         function showNotification(message, type = 'success', duration = 5000) {
             const notification = document.getElementById('notification');
             notification.textContent = message;
             notification.className = `notification ${type}`;
             notification.classList.add('show');
-            setTimeout(() => notification.classList.remove('show'), duration);
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, duration);
         }
-
+        
+        // 設定載入狀態
         function setLoading(loading) {
-            document.getElementById('loading').style.display = loading ? 'block' : 'none';
-            document.getElementById('submitBtn').disabled = loading;
+            const loadingElement = document.getElementById('loading');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            if (loading) {
+                loadingElement.style.display = 'block';
+                submitBtn.disabled = true;
+            } else {
+                loadingElement.style.display = 'none';
+                submitBtn.disabled = false;
+            }
         }
-
+        
+        // 提交訂單
         async function submitOrder() {
+            // 收集表單資料
             const pickupTime = document.getElementById('pickupTime').value;
-            const customerName = sanitizeInput(document.getElementById('customerName').value.trim());
-            const customerPhone = sanitizeInput(document.getElementById('customerPhone').value.trim());
-            const customerLineId = sanitizeInput(document.getElementById('customerLineId').value.trim());
+            const customerName = document.getElementById('customerName').value.trim();
+            const customerPhone = document.getElementById('customerPhone').value.trim();
+            const customerLineId = document.getElementById('customerLineId').value.trim();
             const menuSelect = document.getElementById('menuSelect').value;
-            const orderNotes = sanitizeInput(document.getElementById('orderNotes').value.trim());
-
-            if (!customerName || !customerPhone || !menuSelect) {
+            const orderNotes = document.getElementById('orderNotes').value.trim();
+            
+            // 基本驗證
+            if (!customerName || !customerPhone || !menuSelect || !pickupTime) {
                 showNotification('請填寫所有必填欄位', 'error');
                 return;
             }
 
-            if (!validatePhone(customerPhone)) {
-                showNotification('請輸入有效的台灣手機號碼（格式：09XX-XXX-XXX）', 'error');
+            // 驗證電話格式
+            const phonePattern = /^[0-9]{10}$/;
+            if (!phonePattern.test(customerPhone)) {
+                showNotification('請輸入有效的10位數手機號碼', 'error');
                 return;
             }
 
-            const selectedItem = menuItems.find(item => item.name === menuSelect);
-            const totalAmount = selectedItem ? selectedItem.price : 0;
-
+            // 驗證取餐時間
+            const now = new Date();
+            const selectedTime = new Date(pickupTime);
+            if (selectedTime <= now) {
+                showNotification('取餐時間必須晚於當前時間', 'error');
+                return;
+            }
+            
+            // 提取價格
+            const priceMatch = menuSelect.match(/\$(\d+)$/);
+            const totalAmount = priceMatch ? parseInt(priceMatch[1]) : 0;
+            
             const orderData = {
-                customerName,
-                customerPhone,
-                customerLineId,
-                product: menuSelect,
-                totalAmount,
-                pickupTime,
+                customerName: customerName,
+                customerPhone: customerPhone,
+                customerLineId: customerLineId,
+                product: menuSelect.split(' $')[0], // 移除價格部分
+                totalAmount: totalAmount,
+                pickupTime: pickupTime,
                 notes: orderNotes,
                 timestamp: new Date().toISOString(),
                 source: 'web_app'
             };
-
-            console.log('發送訂單資料:', orderData);  // 除錯用
-
+            
+            console.log('發送訂單:', orderData);
+            
             setLoading(true);
-
+            
             try {
-                const scriptUrl = 'https://script.google.com/macros/s/AKfycbz6LGRkFWol_Y-XCiwHQQC6o1Tni113ynkvH6PhB1AiJO_3iaRtFB_kd2WX1XhqpKT6gQ/exec';
-                const response = await fetch(scriptUrl, {
+                const response = await fetch(SCRIPT_URL, {
                     method: 'POST',
-                    headers: { 
-                        'Content-Type': 'text/plain;charset=utf-8'  // 修復 CORS：使用 text/plain
+                    mode: 'cors', // 確保跨域請求
+                    headers: {
+                        'Content-Type': 'application/json',
                     },
                     body: JSON.stringify(orderData)
                 });
-
-                console.log('回應狀態:', response.status, response.statusText);  // 除錯用
-
+                
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
-
-                const textResponse = await response.text();
-                const result = JSON.parse(textResponse);  // 解析 text 為 JSON
-
-                console.log('後端回應:', result);  // 除錯用
-
+                
+                const result = await response.json();
+                
                 if (result.status === 'success') {
                     let notificationMessage = `✅ 訂單成功！\n訂單編號: ${result.orderId}\n取餐時間: ${new Date(pickupTime).toLocaleString('zh-TW')}\n總金額: $${totalAmount}`;
-                    if (customerLineId && liff && liff.isLoggedIn()) {
-                        await liff.sendMessages([{
-                            type: 'text',
-                            text: notificationMessage
-                        }]);
+                    
+                    if (customerLineId) {
                         notificationMessage += `\n📱 Line通知已發送`;
                     }
-
+                    
                     showNotification(notificationMessage, 'success', 8000);
+                    
                     // 清空表單
                     document.getElementById('customerName').value = '';
                     document.getElementById('customerPhone').value = '';
@@ -444,20 +455,21 @@
                     document.getElementById('menuSelect').value = '';
                     document.getElementById('orderNotes').value = '';
                     setDefaultDateTime();
+                    
                 } else {
                     throw new Error(result.message || '訂單發送失敗');
                 }
+                
             } catch (error) {
-                console.error('詳細錯誤:', error);
-                let errorMessage = error.message.includes('HTTP') ? '伺服器連線錯誤，請稍後再試' :
-                                 error.message === '無效的伺服器回應' ? '伺服器回應格式錯誤' :
-                                 `❌ 發送失敗: ${error.message}`;
+                console.error('錯誤:', error);
+                let errorMessage = `❌ 發送失敗: ${error.message}`;
                 showNotification(errorMessage, 'error', 10000);
             } finally {
                 setLoading(false);
             }
         }
-
+        
+        // 頁面載入時初始化
         document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
