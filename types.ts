@@ -1,12 +1,2 @@
-
-export interface MenuItem {
-  id: number;
-  name: string;
-  price: number;
-  emoji: string;
-}
-
-// FIX: Add missing OrderItem interface
-export interface OrderItem extends MenuItem {
-  quantity: number;
-}
+// This file is part of a previous version and is no longer used.
+// The application's TypeScript types are located at /src/types.ts.
