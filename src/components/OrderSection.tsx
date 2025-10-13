@@ -57,7 +57,8 @@ const OrderSection: React.FC<OrderSectionProps> = ({ orderItems, totalAmount, on
         setFormError('');
         if (!validate()) return;
         setIsLoading(true);
-        const result = await onFormSubmit({ ...formData, orderItems, totalAmount });
+        // FIX: The `onFormSubmit` prop expects an object with a specific shape, and `orderItems` and `totalAmount` are not part of it. The parent component already has access to this data.
+        const result = await onFormSubmit(formData);
         setIsLoading(false);
         if (result.success) {
             setFormData({ customerName: liffProfile?.displayName || '', customerPhone: '', pickupTime: getDefaultPickupTime(), notes: '' });
