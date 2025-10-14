@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-TW" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,7 +9,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -18,14 +17,19 @@
                         primary: '#00C300', // LINE Green
                         secondary: '#FF6B00',
                         neutral: '#F5F5F5',
-                        dark: '#333333',
-                        success: '#27ae60',
-                        danger: '#e74c3c',
-                        warning: '#f39c12',
-                        border: '#e1e8ed',
+                        dark: '#333333'
                     },
                     fontFamily: {
                         sans: ['Noto Sans TC', 'sans-serif']
+                    },
+                    animation: {
+                        'scale-in': 'scale-in 0.3s ease-out forwards',
+                    },
+                    keyframes: {
+                        'scale-in': {
+                            '0%': { transform: 'scale(0.95)', opacity: '0' },
+                            '100%': { transform: 'scale(1)', opacity: '1' },
+                        }
                     }
                 }
             }
@@ -45,48 +49,17 @@
             .btn-secondary {
                 @apply bg-white text-primary border-2 border-primary py-3 px-6 rounded-full font-medium transition-all duration-300 hover:bg-primary/10 hover:shadow-lg active:scale-95;
             }
-            .form-group {
-                @apply mb-5 relative;
-            }
-            .form-group label {
-                @apply block text-sm font-medium mb-1 text-dark;
-            }
-            .form-group input,
-            .form-group select,
-            .form-group textarea {
-                @apply w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition bg-white;
-            }
-            .submit-btn {
-                @apply w-full bg-success text-white py-3 rounded-lg font-semibold transition-all duration-300 hover:bg-success/90 hover:shadow-lg active:scale-95 disabled:bg-gray-400 disabled:cursor-not-allowed;
-            }
-            .notification {
-                @apply fixed top-5 right-5 p-4 rounded-lg text-white font-bold max-w-sm shadow-lg transform transition-all duration-500 z-50;
-            }
-            .notification.show {
-                @apply translate-x-0;
-            }
-            .notification.success {
-                @apply bg-success;
-            }
-            .notification.error {
-                @apply bg-danger;
-            }
-            .loading {
-                @apply hidden text-center py-5;
-            }
-            .loading.spinner {
-                @apply border-4 border-gray-200 border-t-primary rounded-full w-8 h-8 animate-spin mx-auto mb-3;
-            }
-            .required::after {
-                @apply content-['*'] text-danger ml-1;
+            .tabular-nums {
+                font-variant-numeric: tabular-nums;
             }
         }
     </style>
 </head>
 <body class="bg-gray-50 font-sans text-dark">
+
     <!-- Navbar -->
-    <nav class="bg-white shadow-md fixed w-full z-20 transition-all duration-300" id="navbar">
-        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+    <nav id="navbar" class="fixed w-full z-20 transition-all duration-300 bg-white shadow-md py-3">
+        <div class="container mx-auto px-4 flex justify-between items-center">
             <div class="flex items-center space-x-2">
                 <i class="fa fa-cutlery text-primary text-2xl"></i>
                 <h1 class="text-xl font-bold">台灣小吃店</h1>
@@ -96,253 +69,210 @@
                 <a href="#order" class="hover:text-primary transition-colors">線上訂餐</a>
                 <a href="#contact" class="hover:text-primary transition-colors">聯絡我們</a>
             </div>
-            <button class="md:hidden text-xl" id="mobileMenuBtn">
+            <button id="mobile-menu-button" class="md:hidden text-xl">
                 <i class="fa fa-bars"></i>
             </button>
         </div>
-        <div class="md:hidden hidden bg-white w-full border-t" id="mobileMenu">
+        <div id="mobile-menu" class="hidden md:hidden bg-white w-full border-t">
             <div class="container mx-auto px-4 py-2 flex flex-col space-y-3">
-                <a href="#menu" class="py-2 hover:text-primary transition-colors text-left">菜單</a>
-                <a href="#order" class="py-2 hover:text-primary transition-colors text-left">線上訂餐</a>
-                <a href="#contact" class="py-2 hover:text-primary transition-colors text-left">聯絡我們</a>
+                <a href="#menu" class="mobile-nav-link py-2 hover:text-primary transition-colors text-left">菜單</a>
+                <a href="#order" class="mobile-nav-link py-2 hover:text-primary transition-colors text-left">線上訂餐</a>
+                <a href="#contact" class="mobile-nav-link py-2 hover:text-primary transition-colors text-left">聯絡我們</a>
             </div>
         </div>
     </nav>
 
-    <!-- Header Banner -->
-    <header class="pt-20 bg-gradient-to-r from-primary/90 to-primary text-white">
-        <div class="container mx-auto px-4 py-16 md:py-24">
-            <div class="max-w-3xl">
-                <h2 class="text-3xl md:text-5xl font-bold mb-4">美味不用等，線上訂餐更輕鬆</h2>
-                <p class="text-lg md:text-xl mb-8 opacity-90">快速訂購您喜愛的台灣小吃，節省等待時間，到店即可取餐</p>
-                <a href="#order" class="inline-block btn-secondary">
-                    立即訂餐 <i class="fa fa-arrow-right ml-2"></i>
-                </a>
-            </div>
-        </div>
-    </header>
-
-    <!-- Features Section -->
-    <section class="py-12 bg-white">
-        <div class="container mx-auto px-4">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="text-center p-6 rounded-lg shadow-sm">
-                    <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i class="fa fa-clock-o text-primary text-2xl"></i>
-                    </div>
-                    <h3 class="text-xl font-semibold mb-2">節省時間</h3>
-                    <p class="text-gray-600">線上提前訂餐，到店即可取餐，不用現場等候</p>
-                </div>
-                <div class="text-center p-6 rounded-lg shadow-sm">
-                    <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i class="fa fa-shopping-cart text-primary text-2xl"></i>
-                    </div>
-                    <h3 class="text-xl font-semibold mb-2">輕鬆訂購</h3>
-                    <p class="text-gray-600">簡單幾步，完成訂餐，支持多種餐點組合</p>
-                </div>
-                <div class="text-center p-6 rounded-lg shadow-sm">
-                    <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i class="fa fa-check-circle text-primary text-2xl"></i>
-                    </div>
-                    <h3 class="text-xl font-semibold mb-2">訂單確認</h3>
-                    <p class="text-gray-600">即時收到訂單確認，輕鬆掌握取餐時間</p>
+    <main>
+        <!-- Header -->
+        <header class="pt-20 bg-gradient-to-r from-primary/90 to-primary text-white">
+            <div class="container mx-auto px-4 py-16 md:py-24">
+                <div class="max-w-3xl">
+                    <h2 class="text-3xl md:text-5xl font-bold mb-4">美味不用等，線上訂餐更輕鬆</h2>
+                    <p class="text-lg md:text-xl mb-8 opacity-90">快速訂購您喜愛的台灣小吃，節省等待時間，到店即可取餐</p>
+                    <a href="#order" class="inline-block bg-white text-primary border-2 border-white py-3 px-6 rounded-full font-medium transition-all duration-300 hover:bg-transparent hover:text-white hover:shadow-lg active:scale-95">
+                        立即訂餐 <i class="fa fa-arrow-right ml-2"></i>
+                    </a>
                 </div>
             </div>
-        </div>
-    </section>
+        </header>
 
-    <!-- Menu Section -->
-    <section id="menu" class="py-16 bg-neutral">
-        <div class="container mx-auto px-4">
-            <div class="text-center mb-12">
-                <h2 class="text-3xl font-bold mb-4">我們的菜單</h2>
-                <p class="text-gray-600 max-w-2xl mx-auto">精選道地台灣小吃，每一道都讓您回味無窮</p>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="menuItems">
-                <!-- Menu items loaded by JavaScript -->
-            </div>
-        </div>
-    </section>
-
-    <!-- Order Section -->
-    <section id="order" class="py-16 bg-white">
-        <div class="container mx-auto px-4">
-            <div class="text-center mb-12">
-                <h2 class="text-3xl font-bold mb-4">線上訂餐</h2>
-                <p class="text-gray-600 max-w-2xl mx-auto">選擇您喜愛的餐點，填寫取餐資訊，輕鬆完成訂購</p>
-            </div>
-            <div class="max-w-4xl mx-auto">
-                <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
-                    <!-- Order Details -->
-                    <div class="lg:col-span-3 bg-neutral p-6 rounded-xl shadow-sm">
-                        <h3 class="text-xl font-semibold mb-4 flex items-center">
-                            <i class="fa fa-list-alt text-primary mr-2"></i> 訂單明細
-                        </h3>
-                        <div id="orderItems" class="space-y-4 mb-6">
-                            <div class="text-center text-gray-500 py-8">
-                                <i class="fa fa-shopping-basket text-4xl mb-2 opacity-30"></i>
-                                <p>尚未選擇餐點</p>
-                            </div>
+        <!-- Features -->
+        <section class="py-12 bg-white">
+            <div class="container mx-auto px-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="text-center p-6 rounded-lg shadow-sm">
+                        <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fa fa-clock-o text-primary text-2xl"></i>
                         </div>
-                        <div class="border-t pt-4">
-                            <div class="flex justify-between font-semibold text-lg">
-                                <span>總金額:</span>
-                                <span id="totalAmount">$0</span>
-                            </div>
-                        </div>
+                        <h3 class="text-xl font-semibold mb-2">節省時間</h3>
+                        <p class="text-gray-600">線上提前訂餐，到店即可取餐，不用現場等候</p>
                     </div>
-                    <!-- Order Form -->
-                    <div class="lg:col-span-2 bg-neutral p-6 rounded-xl shadow-sm">
-                        <form id="orderForm" class="space-y-4">
-                            <div class="form-group">
-                                <label for="customerName" class="required">顧客姓名</label>
-                                <input type="text" id="customerName" placeholder="請輸入您的姓名" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="customerPhone" class="required">聯絡電話</label>
-                                <input type="tel" id="customerPhone" placeholder="請輸入您的手機號碼" required pattern="09\d{8}">
-                                <p class="text-xs text-gray-500 mt-1">請輸入10位數手機號碼</p>
-                            </div>
-                            <div class="form-group">
-                                <label for="customerLineId">Line ID（選填）</label>
-                                <input type="text" id="customerLineId" placeholder="請輸入您的 Line User ID">
-                            </div>
-                            <div class="form-group">
-                                <label for="pickupTime" class="required">取餐時間</label>
-                                <input type="datetime-local" id="pickupTime" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="orderNotes">訂單備註</label>
-                                <textarea id="orderNotes" rows="3" placeholder="如有特殊需求請在此備註"></textarea>
-                            </div>
-                            <div class="loading" id="loading">
-                                <div class="spinner"></div>
-                                <p>訂單發送中...</p>
-                            </div>
-                            <button type="submit" class="submit-btn" id="submitBtn">
-                                <i class="fa fa-check mr-2"></i> 確認訂餐
-                            </button>
-                        </form>
+                    <div class="text-center p-6 rounded-lg shadow-sm">
+                        <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fa fa-shopping-cart text-primary text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-2">輕鬆訂購</h3>
+                        <p class="text-gray-600">簡單幾步，完成訂餐，支持多種餐點組合</p>
+                    </div>
+                    <div class="text-center p-6 rounded-lg shadow-sm">
+                        <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fa fa-check-circle text-primary text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-2">訂單確認</h3>
+                        <p class="text-gray-600">即時收到訂單確認，輕鬆掌握取餐時間</p>
                     </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- Contact Info -->
-    <section id="contact" class="py-16 bg-neutral">
-        <div class="container mx-auto px-4">
-            <div class="max-w-4xl mx-auto">
+        <!-- Menu -->
+        <section id="menu" class="py-16 bg-neutral">
+            <div class="container mx-auto px-4">
                 <div class="text-center mb-12">
-                    <h2 class="text-3xl font-bold mb-4">聯絡我們</h2>
-                    <p class="text-gray-600">如有任何問題或建議，歡迎隨時聯繫我們</p>
+                    <h2 class="text-3xl font-bold mb-4">選擇餐點</h2>
+                    <p class="text-gray-600 max-w-2xl mx-auto">請從下拉選單中選擇餐點，即可加入下方訂單明細</p>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div class="bg-white p-6 rounded-xl shadow-sm">
-                        <h3 class="text-xl font-semibold mb-4">店舖資訊</h3>
-                        <div class="space-y-4">
-                            <div class="flex items-start">
-                                <i class="fa fa-map-marker text-primary mt-1 mr-3"></i>
-                                <p>臺北市信義區松壽路123號</p>
-                            </div>
-                            <div class="flex items-start">
-                                <i class="fa fa-phone text-primary mt-1 mr-3"></i>
-                                <p>02-1234-5678</p>
-                            </div>
-                            <div class="flex items-start">
-                                <i class="fa fa-clock-o text-primary mt-1 mr-3"></i>
-                                <p>營業時間: 10:00 - 22:00</p>
+                <div class="max-w-2xl mx-auto">
+                    <div class="bg-white p-4 rounded-xl shadow-sm">
+                        <label for="menu-select" class="block text-sm font-medium mb-2 text-gray-700">新增餐點至訂單：</label>
+                        <select id="menu-select" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition text-lg">
+                            <!-- Options will be injected by JavaScript -->
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Order Section -->
+        <section id="order" class="py-16 bg-white">
+            <div class="container mx-auto px-4">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold mb-4">訂單內容與資訊</h2>
+                    <p class="text-gray-600 max-w-2xl mx-auto">確認您的餐點，填寫取餐資訊，輕鬆完成訂購</p>
+                </div>
+                <div class="max-w-4xl mx-auto">
+                    <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+                        <div class="lg:col-span-3">
+                            <!-- Cart -->
+                            <div class="bg-neutral p-6 rounded-xl shadow-sm h-full flex flex-col">
+                                <h3 class="text-xl font-semibold mb-4 flex items-center">
+                                    <i class="fa fa-list-alt text-primary mr-2"></i> 訂單明細
+                                </h3>
+                                <div id="cart-items" class="flex-grow space-y-3 mb-6 overflow-y-auto pr-2 min-h-[200px]">
+                                    <!-- Cart items will be injected here -->
+                                </div>
+                                <div class="border-t pt-4">
+                                    <div class="flex justify-between font-semibold text-lg">
+                                        <span>總金額:</span>
+                                        <span id="total-amount" class="tabular-nums">$0</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="mt-6">
-                            <h4 class="font-medium mb-2">關注我們</h4>
-                            <div class="flex space-x-4">
-                                <a href="#" class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-colors" aria-label="Facebook">
-                                    <i class="fa fa-facebook"></i>
-                                </a>
-                                <a href="#" class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-colors" aria-label="Instagram">
-                                    <i class="fa fa-instagram"></i>
-                                </a>
-                                <a href="#" class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-colors" aria-label="Line">
-                                    <i class="fa fa-line"></i>
-                                </a>
-                            </div>
+                        <div class="lg:col-span-2">
+                            <!-- Order Form -->
+                            <form id="order-form" class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium mb-1" for="customerName">姓名 <span class="text-red-500">*</span></label>
+                                    <input type="text" id="customerName" name="customerName" required autocomplete="name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition"/>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-1" for="customerPhone">手機號碼 <span class="text-red-500">*</span></label>
+                                    <input type="tel" id="customerPhone" name="customerPhone" required pattern="09\d{8}" placeholder="0912345678" autocomplete="tel" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition"/>
+                                    <p class="text-xs text-gray-500 mt-1">請輸入10位數手機號碼</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-1" for="customerLineId">LINE ID (選填)</label>
+                                    <input type="text" id="customerLineId" name="customerLineId" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition"/>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-1" for="pickupTime">取餐時間 <span class="text-red-500">*</span></label>
+                                    <input type="datetime-local" id="pickupTime" name="pickupTime" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition"/>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-1" for="notes">備註 (選填)</label>
+                                    <textarea id="notes" name="notes" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition"></textarea>
+                                </div>
+                                <div id="form-error" class="text-sm text-red-500 text-center hidden"></div>
+                                <button id="submit-button" type="submit" class="w-full btn-primary flex items-center justify-center">
+                                    <span id="submit-button-text">
+                                        <i class="fa fa-check mr-2"></i> 確認訂餐
+                                    </span>
+                                </button>
+                            </form>
                         </div>
                     </div>
-                    <div class="bg-white p-6 rounded-xl shadow-sm">
-                        <h3 class="text-xl font-semibold mb-4">常見問題</h3>
-                        <div class="space-y-4">
-                            <div>
-                                <h4 class="font-medium flex items-center">
-                                    <i class="fa fa-question-circle text-primary mr-2"></i>
-                                    線上訂單需要提前多久訂購？
-                                </h4>
-                                <p class="text-gray-600 text-sm mt-1">建議提前至少15-30分鐘訂購，以便我們準備新鮮美味的餐點。</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact -->
+        <section id="contact" class="py-16 bg-neutral">
+            <div class="container mx-auto px-4">
+                <div class="max-w-4xl mx-auto">
+                    <div class="text-center mb-12">
+                        <h2 class="text-3xl font-bold mb-4">聯絡我們</h2>
+                        <p class="text-gray-600">如有任何問題或建議，歡迎隨時聯繫我們</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="bg-white p-6 rounded-xl shadow-sm">
+                            <h3 class="text-xl font-semibold mb-4">店舖資訊</h3>
+                            <div class="space-y-4">
+                                <div class="flex items-start"><i class="fa fa-map-marker text-primary mt-1 mr-3"></i><p>臺北市信義區松壽路123號</p></div>
+                                <div class="flex items-start"><i class="fa fa-phone text-primary mt-1 mr-3"></i><p>02-1234-5678</p></div>
+                                <div class="flex items-start"><i class="fa fa-clock-o text-primary mt-1 mr-3"></i><p>營業時間: 10:00 - 22:00</p></div>
                             </div>
-                            <div>
-                                <h4 class="font-medium flex items-center">
-                                    <i class="fa fa-question-circle text-primary mr-2"></i>
-                                    如何取消或修改訂單？
-                                </h4>
-                                <p class="text-gray-600 text-sm mt-1">請致電我們的店舖電話，提供您的訂單編號進行修改或取消。</p>
-                            </div>
-                            <div>
-                                <h4 class="font-medium flex items-center">
-                                    <i class="fa fa-question-circle text-primary mr-2"></i>
-                                    可以指定取餐時間嗎？
-                                </h4>
-                                <p class="text-gray-600 text-sm mt-1">當然可以，訂購時請選擇您方便的取餐時間，我們會準時準備好。</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-sm">
+                            <h3 class="text-xl font-semibold mb-4">常見問題</h3>
+                            <div class="space-y-4">
+                                <div><h4 class="font-medium flex items-center"><i class="fa fa-question-circle text-primary mr-2"></i>線上訂單需要提前多久訂購？</h4><p class="text-gray-600 text-sm mt-1">建議提前至少15-30分鐘訂購，以便我們準備新鮮美味的餐點。</p></div>
+                                <div><h4 class="font-medium flex items-center"><i class="fa fa-question-circle text-primary mr-2"></i>如何取消或修改訂單？</h4><p class="text-gray-600 text-sm mt-1">請致電我們的店舖電話，提供您的訂單編號進行修改或取消。</p></div>
+                                <div><h4 class="font-medium flex items-center"><i class="fa fa-question-circle text-primary mr-2"></i>可以指定取餐時間嗎？</h4><p class="text-gray-600 text-sm mt-1">當然可以，訂購時請選擇您方便的取餐時間，我們會準時準備好。</p></div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-8">
+        <div class="container mx-auto px-4 text-center">
+            <div class="flex items-center justify-center space-x-2 mb-4">
+                <i class="fa fa-cutlery text-primary"></i>
+                <h2 class="text-xl font-bold">台灣小吃店</h2>
+            </div>
+            <p class="text-gray-400 mb-4">道地台灣味，滿足您的味蕾</p>
+            <p class="text-gray-500 text-sm">© 2024 台灣小吃店 版權所有</p>
         </div>
-    </section>
+    </footer>
 
     <!-- Success Modal -->
-    <div id="successModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-        <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4 transform transition-all scale-95 opacity-0" id="modalContent">
+    <div id="success-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div id="success-modal-content" class="bg-white rounded-xl p-8 max-w-md w-full mx-4 animate-scale-in">
             <div class="text-center">
                 <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i class="fa fa-check text-2xl text-success"></i>
+                    <i class="fa fa-check text-2xl text-green-500"></i>
                 </div>
-                <h3 class="text-2xl font-bold mb-2" id="modal-title">訂單提交成功！</h3>
+                <h3 class="text-2xl font-bold mb-2">訂單提交成功！</h3>
                 <p class="text-gray-600 mb-4">您的訂單已順利提交，我們會盡快準備您的餐點</p>
                 <div class="bg-gray-50 p-4 rounded-lg mb-6">
-                    <p class="text-sm text-gray-500 mb-1">訂單編號</p>
-                    <p class="font-semibold text-lg" id="modalOrderId">ORD-123456ABC</p>
+                    <p class="text-sm text-gray-500 mb-1">訂單編號 (參考用)</p>
+                    <p id="modal-order-id" class="font-semibold text-lg"></p>
                 </div>
-                <button id="closeModal" class="btn-primary w-full">
-                    完成
-                </button>
+                <button id="modal-close-button" class="w-full btn-primary">完成</button>
             </div>
         </div>
     </div>
 
-    <!-- Notification -->
-    <div id="notification" class="notification"></div>
-
-    <!-- Footer -->
-    <footer class="bg-dark text-white py-8">
-        <div class="container mx-auto px-4">
-            <div class="text-center">
-                <div class="flex items-center justify-center space-x-2 mb-4">
-                    <i class="fa fa-cutlery text-primary"></i>
-                    <h2 class="text-xl font-bold">台灣小吃店</h2>
-                </div>
-                <p class="text-gray-400 mb-4">道地台灣味，滿足您的味蕾</p>
-                <p class="text-gray-400 mb-2"><a href="https://anonymousbeefsteak-cloud.github.io/lineuse/privacy-policy.html" class="hover:text-primary">隱私政策</a> | <a href="https://anonymousbeefsteak-cloud.github.io/lineuse/terms-of-use.html" class="hover:text-primary">使用條款</a></p>
-                <p class="text-gray-500 text-sm">© 2024 台灣小吃店 版權所有</p>
-            </div>
-        </div>
-    </footer>
 
     <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- CONSTANTS & STATE ---
         const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbw-hL5djJSYqwO9B1Zyig21FWOgVwXquOnDqTZxjlDAzSFfC8nCEIAAS2950H98DH9Ibg/exec';
-        const LIFF_ID = '2008276630-bYNjwMx7';
-
-        const menuItems = [
+        const MENU_ITEMS = [
             { id: 1, name: "滷肉飯", price: 35, emoji: "🍜" },
             { id: 2, name: "雞肉飯", price: 40, emoji: "🍚" },
             { id: 3, name: "蚵仔煎", price: 65, emoji: "🦪" },
@@ -354,277 +284,246 @@
             { id: 9, name: "肉圓", price: 45, emoji: "🥟" },
             { id: 10, name: "碗粿", price: 35, emoji: "🍮" }
         ];
+        let cart = []; // State for cart items
 
-        let order = {
-            items: [],
-            totalAmount: 0
+        // --- DOM ELEMENTS ---
+        const menuSelect = document.getElementById('menu-select');
+        const cartItemsContainer = document.getElementById('cart-items');
+        const totalAmountEl = document.getElementById('total-amount');
+        const orderForm = document.getElementById('order-form');
+        const submitButton = document.getElementById('submit-button');
+        const submitButtonText = document.getElementById('submit-button-text');
+        const formErrorEl = document.getElementById('form-error');
+        const successModal = document.getElementById('success-modal');
+        const successModalContent = document.getElementById('success-modal-content');
+        const modalOrderIdEl = document.getElementById('modal-order-id');
+        const modalCloseButton = document.getElementById('modal-close-button');
+        const navbar = document.getElementById('navbar');
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        // --- RENDER FUNCTIONS ---
+        const renderMenuDropdown = () => {
+            const defaultOption = `<option value="" disabled selected>— 請選擇餐點 —</option>`;
+            menuSelect.innerHTML = defaultOption + MENU_ITEMS.map(item => 
+                `<option value="${item.id}">${item.emoji} ${item.name} - $${item.price}</option>`
+            ).join('');
         };
 
-        let liffUserId = '';
-
-        const menuItemsContainer = document.getElementById('menuItems');
-        const orderItemsContainer = document.getElementById('orderItems');
-        const totalAmountElement = document.getElementById('totalAmount');
-        const orderForm = document.getElementById('orderForm');
-        const successModal = document.getElementById('successModal');
-        const modalContent = document.getElementById('modalContent');
-        const modalOrderId = document.getElementById('modalOrderId');
-        const closeModalBtn = document.getElementById('closeModal');
-        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-        const mobileMenu = document.getElementById('mobileMenu');
-        const navbar = document.getElementById('navbar');
-        const notification = document.getElementById('notification');
-        const submitBtn = document.getElementById('submitBtn');
-        const loading = document.getElementById('loading');
-
-        document.addEventListener('DOMContentLoaded', async () => {
-            await initLiff();
-            setDefaultPickupTime();
-            renderMenu();
-            setupEventListeners();
-        });
-
-        async function initLiff() {
-            try {
-                await liff.init({ liffId: LIFF_ID });
-                if (liff.isLoggedIn()) {
-                    const profile = await liff.getProfile();
-                    liffUserId = profile.userId;
-                    document.getElementById('customerLineId').value = liffUserId;
-                } else {
-                    liff.login();
-                }
-            } catch (error) {
-                console.error('LIFF 初始化失敗:', error);
-                showNotification('無法初始化 LINE 服務，請稍後再試', 'error');
-            }
-        }
-
-        function setupEventListeners() {
-            window.addEventListener('scroll', handleNavbarScroll);
-            mobileMenuBtn.addEventListener('click', toggleMobileMenu);
-            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-                anchor.addEventListener('click', handleSmoothScroll);
-            });
-            orderForm.addEventListener('submit', handleFormSubmit);
-            closeModalBtn.addEventListener('click', closeModal);
-        }
-
-        function setDefaultPickupTime() {
-            const defaultPickupTime = new Date();
-            defaultPickupTime.setMinutes(defaultPickupTime.getMinutes() + 30);
-            document.getElementById('pickupTime').value = defaultPickupTime.toISOString().slice(0, 16);
-        }
-
-        function handleNavbarScroll() {
-            if (window.scrollY > 50) {
-                navbar.classList.add('py-2', 'bg-white/95', 'backdrop-blur-sm');
-                navbar.classList.remove('py-3', 'bg-white');
+        const renderCart = () => {
+            if (cart.length === 0) {
+                cartItemsContainer.innerHTML = `
+                    <div class="text-center text-gray-500 py-8 flex flex-col items-center justify-center h-full">
+                        <i class="fa fa-shopping-basket text-4xl mb-2 opacity-30"></i>
+                        <p>尚未選擇餐點</p>
+                    </div>`;
             } else {
-                navbar.classList.add('py-3', 'bg-white');
-                navbar.classList.remove('py-2', 'bg-white/95', 'backdrop-blur-sm');
-            }
-        }
+                cartItemsContainer.innerHTML = cart.map(item => {
+                    const removeButtonHtml = item.quantity > 1
+                        ? `<button data-item-id="${item.id}" title="減少數量" class="cart-remove-btn w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-red-100 hover:text-red-500 transition-colors">
+                            <i class="fa fa-minus text-xs"></i>
+                           </button>`
+                        : `<button data-item-id="${item.id}" title="從購物車移除" class="cart-remove-btn w-8 h-8 rounded-full bg-red-50 flex items-center justify-center text-red-500 hover:bg-red-100 transition-colors">
+                            <i class="fa fa-trash-o"></i>
+                           </button>`;
 
-        function toggleMobileMenu() {
-            const isHidden = mobileMenu.classList.toggle('hidden');
-            mobileMenuBtn.querySelector('i').className = isHidden ? 'fa fa-bars' : 'fa fa-times';
-        }
-
-        function handleSmoothScroll(e) {
-            e.preventDefault();
-            const targetId = this.getAttribute('href');
-            const targetElement = document.querySelector(targetId);
-            if (targetElement) {
-                window.scrollTo({
-                    top: targetElement.offsetTop - 80,
-                    behavior: 'smooth'
-                });
-                if (!mobileMenu.classList.contains('hidden')) {
-                    toggleMobileMenu();
-                }
-            }
-        }
-
-        function showNotification(message, type = 'success', duration = 5000) {
-            notification.textContent = message;
-            notification.className = `notification ${type}`;
-            notification.classList.add('show');
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, duration);
-        }
-
-        function setLoading(loadingState) {
-            if (loadingState) {
-                loading.classList.remove('hidden');
-                submitBtn.disabled = true;
-            } else {
-                loading.classList.add('hidden');
-                submitBtn.disabled = false;
-            }
-        }
-
-        function renderMenu() {
-            menuItemsContainer.innerHTML = '';
-            menuItems.forEach(item => {
-                const menuItemEl = document.createElement('div');
-                menuItemEl.className = 'bg-white rounded-xl overflow-hidden shadow-sm menu-item-hover';
-                menuItemEl.innerHTML = `
-                    <div class="p-5">
-                        <div class="flex justify-between items-start mb-3">
-                            <h3 class="text-lg font-semibold flex items-center">${item.emoji} ${item.name}</h3>
-                            <span class="text-lg font-bold text-primary">$${item.price}</span>
+                    return `
+                        <div class="flex items-center p-3 bg-white rounded-lg shadow-sm">
+                            <div class="flex-grow pr-2">
+                                <p class="font-medium truncate" title="${item.name}">${item.emoji} ${item.name}</p>
+                                <p class="text-sm text-gray-500">$${item.price} / 份</p>
+                            </div>
+                            <div class="flex items-center space-x-2 flex-shrink-0">
+                                ${removeButtonHtml}
+                                <span class="w-8 text-center font-medium tabular-nums">${item.quantity}</span>
+                                <button data-item-id="${item.id}" title="增加數量" class="cart-add-btn w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-green-100 hover:text-green-500 transition-colors">
+                                    <i class="fa fa-plus text-xs"></i>
+                                </button>
+                            </div>
+                            <div class="w-20 text-right font-semibold tabular-nums">
+                                $${item.price * item.quantity}
+                            </div>
                         </div>
-                        <button class="add-to-order w-full py-2 border border-primary text-primary rounded-lg hover:bg-primary hover:text-white transition-colors" data-id="${item.id}">
-                            <i class="fa fa-plus mr-1"></i> 加入訂單
-                        </button>
-                    </div>
-                `;
-                menuItemEl.querySelector('.add-to-order').addEventListener('click', () => addToOrder(item.id));
-                menuItemsContainer.appendChild(menuItemEl);
-            });
-        }
+                    `;
+                }).join('');
+            }
+            const totalAmount = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+            totalAmountEl.textContent = `$${totalAmount}`;
+            submitButton.disabled = cart.length === 0;
+        };
 
-        function addToOrder(itemId) {
-            const item = menuItems.find(menuItem => menuItem.id === itemId);
+        // --- CART LOGIC ---
+        const addToCart = (itemId) => {
+            const item = MENU_ITEMS.find(i => i.id === itemId);
             if (!item) return;
-            const existingItem = order.items.find(orderItem => orderItem.id === itemId);
+
+            const existingItem = cart.find(i => i.id === itemId);
             if (existingItem) {
                 existingItem.quantity++;
             } else {
-                order.items.push({ ...item, quantity: 1 });
+                cart.push({ ...item, quantity: 1 });
             }
-            updateOrder();
-            document.getElementById('order').scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
+            renderCart();
+        };
 
-        function removeFromOrder(itemId) {
-            const itemIndex = order.items.findIndex(orderItem => orderItem.id === itemId);
-            if (itemIndex > -1) {
-                if (order.items[itemIndex].quantity > 1) {
-                    order.items[itemIndex].quantity--;
-                } else {
-                    order.items.splice(itemIndex, 1);
-                }
-                updateOrder();
-            }
-        }
+        const removeFromCart = (itemId) => {
+            const existingItemIndex = cart.findIndex(i => i.id === itemId);
+            if (existingItemIndex === -1) return;
 
-        function calculateTotal() {
-            order.totalAmount = order.items.reduce((total, item) => total + (item.price * item.quantity), 0);
-        }
-
-        function updateOrder() {
-            calculateTotal();
-            renderOrderItems();
-            totalAmountElement.textContent = `$${order.totalAmount}`;
-        }
-
-        function renderOrderItems() {
-            if (order.items.length === 0) {
-                orderItemsContainer.innerHTML = `
-                    <div class="text-center text-gray-500 py-8">
-                        <i class="fa fa-shopping-basket text-4xl mb-2 opacity-30"></i>
-                        <p>尚未選擇餐點</p>
-                    </div>
-                `;
+            if (cart[existingItemIndex].quantity > 1) {
+                cart[existingItemIndex].quantity--;
             } else {
-                orderItemsContainer.innerHTML = '';
-                order.items.forEach(item => {
-                    const orderItemEl = document.createElement('div');
-                    orderItemEl.className = 'flex justify-between items-center p-3 bg-white rounded-lg shadow-sm';
-                    orderItemEl.innerHTML = `
-                        <div>
-                            <p class="font-medium">${item.emoji} ${item.name}</p>
-                            <p class="text-sm text-gray-500">$${item.price} x ${item.quantity}</p>
-                        </div>
-                        <div class="flex items-center">
-                            <span class="font-semibold mr-3">$${item.price * item.quantity}</span>
-                            <button class="remove-from-order w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-red-100 hover:text-danger transition-colors" data-id="${item.id}" aria-label="Remove one ${item.name}">
-                                <i class="fa fa-minus text-xs"></i>
-                            </button>
-                        </div>
-                    `;
-                    orderItemEl.querySelector('.remove-from-order').addEventListener('click', () => removeFromOrder(item.id));
-                    orderItemsContainer.appendChild(orderItemEl);
-                });
+                cart.splice(existingItemIndex, 1);
             }
-        }
+            renderCart();
+        };
 
-        async function handleFormSubmit(e) {
+        // --- UI & MODAL LOGIC ---
+        const showFormError = (message) => {
+            formErrorEl.textContent = message;
+            formErrorEl.classList.remove('hidden');
+            setTimeout(() => formErrorEl.classList.add('hidden'), 3000);
+        };
+
+        const setLoadingState = (isLoading) => {
+            submitButton.disabled = isLoading;
+            if (isLoading) {
+                submitButtonText.innerHTML = `
+                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    提交中...`;
+            } else {
+                submitButtonText.innerHTML = `<i class="fa fa-check mr-2"></i> 確認訂餐`;
+            }
+        };
+
+        const showSuccessModal = (orderId) => {
+            modalOrderIdEl.textContent = orderId;
+            successModal.classList.remove('hidden');
+            // Timeout to allow display:flex to apply before starting animation
+            setTimeout(() => {
+                successModalContent.classList.add('opacity-100', 'scale-100');
+            }, 10);
+        };
+        
+        const hideSuccessModal = () => {
+            successModalContent.classList.remove('opacity-100', 'scale-100');
+            setTimeout(() => {
+                successModal.classList.add('hidden');
+            }, 300); // Wait for animation to finish
+        };
+        
+        const setDefaultPickupTime = () => {
+            const pickupTimeInput = document.getElementById('pickupTime');
+            const now = new Date();
+            now.setMinutes(now.getMinutes() + 30);
+            const localISOString = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+            pickupTimeInput.value = localISOString;
+        };
+
+        // --- EVENT HANDLERS ---
+        menuSelect.addEventListener('change', (e) => {
+            const itemId = parseInt(e.target.value, 10);
+            if (itemId) {
+                addToCart(itemId);
+                document.getElementById('order').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                // Reset dropdown to allow adding more items easily
+                e.target.value = '';
+            }
+        });
+
+        cartItemsContainer.addEventListener('click', (e) => {
+            const addButton = e.target.closest('.cart-add-btn');
+            const removeButton = e.target.closest('.cart-remove-btn');
+            if (addButton) {
+                const itemId = parseInt(addButton.dataset.itemId, 10);
+                addToCart(itemId);
+            } else if (removeButton) {
+                const itemId = parseInt(removeButton.dataset.itemId, 10);
+                removeFromCart(itemId);
+            }
+        });
+
+        orderForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            if (order.items.length === 0) {
-                showNotification('請至少選擇一項餐點', 'error');
+            if (cart.length === 0) {
+                showFormError('請至少選擇一項餐點');
                 return;
             }
-            setLoading(true);
-            const formData = {
-                customerName: document.getElementById('customerName').value.trim(),
-                customerPhone: document.getElementById('customerPhone').value.trim(),
-                customerLineId: document.getElementById('customerLineId').value.trim() || liffUserId,
-                pickupTime: document.getElementById('pickupTime').value,
-                notes: document.getElementById('orderNotes').value.trim(),
-                items: order.items,
-                totalAmount: order.totalAmount,
-                source: 'web',
-                timestamp: new Date().toISOString()
+
+            setLoadingState(true);
+            const formData = new FormData(orderForm);
+            const totalAmount = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+            
+            const payload = {
+                customerName: formData.get('customerName'),
+                customerPhone: formData.get('customerPhone'),
+                customerLineId: formData.get('customerLineId'),
+                pickupTime: formData.get('pickupTime'),
+                notes: formData.get('notes'),
+                items: cart.map(({ id, name, price, quantity }) => ({ id, name, price, quantity })),
+                totalAmount: totalAmount,
+                source: 'web'
             };
+
             try {
                 const response = await fetch(API_ENDPOINT, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(formData),
+                    body: JSON.stringify(payload),
                     redirect: 'follow'
                 });
+                if (!response.ok) throw new Error(`伺服器錯誤: ${response.status}`);
+                
                 const result = await response.json();
                 if (result.status === 'success') {
-                    let notificationMessage = `✅ 訂單成功！\n訂單編號: ${result.orderId}\n取餐時間: ${new Date(formData.pickupTime).toLocaleString('zh-TW')}\n總金額: $${formData.totalAmount}`;
-                    if (formData.customerLineId) {
-                        notificationMessage += `\n📱 Line通知已發送`;
-                        if (liff.isLoggedIn()) {
-                            await liff.sendMessages([{
-                                type: 'text',
-                                text: `您的訂單已提交！\n訂單編號: ${result.orderId}\n取餐時間: ${new Date(formData.pickupTime).toLocaleString('zh-TW')}\n總金額: $${formData.totalAmount}`
-                            }]);
-                        }
-                    }
-                    openSuccessModal(result.orderId);
-                    showNotification(notificationMessage, 'success', 8000);
-                    resetOrder();
+                    cart = [];
+                    renderCart();
+                    orderForm.reset();
+                    setDefaultPickupTime();
+                    showSuccessModal(result.orderId);
                 } else {
-                    showNotification(`訂單提交失敗: ${result.message || '未知錯誤，請重試'}`, 'error');
+                    throw new Error(result.message || '訂單提交失敗');
                 }
-            } catch (error) {
-                console.error('訂單提交錯誤:', error);
-                showNotification('訂單提交失敗，請檢查您的網路連線並稍後再試。', 'error');
+            } catch (err) {
+                showFormError(err.message);
             } finally {
-                setLoading(false);
+                setLoadingState(false);
             }
-        }
+        });
+        
+        modalCloseButton.addEventListener('click', hideSuccessModal);
+        
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                navbar.classList.add('bg-white/95', 'backdrop-blur-sm', 'shadow-md', 'py-2');
+                navbar.classList.remove('py-3');
+            } else {
+                navbar.classList.remove('bg-white/95', 'backdrop-blur-sm', 'shadow-md', 'py-2');
+                navbar.classList.add('py-3');
+            }
+        });
 
-        function openSuccessModal(orderId) {
-            modalOrderId.textContent = orderId;
-            successModal.classList.remove('hidden');
-            setTimeout(() => {
-                modalContent.classList.remove('scale-95', 'opacity-0');
-                modalContent.classList.add('scale-100', 'opacity-100');
-            }, 10);
-        }
+        mobileMenuButton.addEventListener('click', () => {
+            const isMenuOpen = !mobileMenu.classList.contains('hidden');
+            mobileMenu.classList.toggle('hidden');
+            mobileMenuButton.querySelector('i').className = isMenuOpen ? 'fa fa-bars' : 'fa fa-times';
+        });
 
-        function closeModal() {
-            modalContent.classList.add('scale-95', 'opacity-0');
-            setTimeout(() => {
-                successModal.classList.add('hidden');
-            }, 300);
-        }
+        document.querySelectorAll('.mobile-nav-link').forEach(link => {
+            link.addEventListener('click', () => {
+                 mobileMenu.classList.add('hidden');
+                 mobileMenuButton.querySelector('i').className = 'fa fa-bars';
+            });
+        });
 
-        function resetOrder() {
-            order = { items: [], totalAmount: 0 };
-            updateOrder();
-            orderForm.reset();
-            setDefaultPickupTime();
-        }
+        // --- INITIALIZATION ---
+        renderMenuDropdown();
+        renderCart();
+        setDefaultPickupTime();
+    });
     </script>
 </body>
 </html>
