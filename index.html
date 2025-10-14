@@ -9,7 +9,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -174,15 +173,15 @@
                             <!-- Order Form -->
                             <form id="order-form" class="space-y-4">
                                 <div>
-                                    <label class="block text-sm font-medium mb-1" for="customerName">姓名 (來自LINE) <span class="text-red-500">*</span></label>
-                                    <input type="text" id="customerName" name="customerName" required autocomplete="name" readonly class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"/>
+                                    <label class="block text-sm font-medium mb-1" for="customerName">姓名 <span class="text-red-500">*</span></label>
+                                    <input type="text" id="customerName" name="customerName" required autocomplete="name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition"/>
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium mb-1" for="customerPhone">手機號碼 <span class="text-red-500">*</span></label>
                                     <input type="tel" id="customerPhone" name="customerPhone" required pattern="09\d{8}" placeholder="0912345678" autocomplete="tel" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition"/>
                                     <p class="text-xs text-gray-500 mt-1">請輸入10位數手機號碼</p>
                                 </div>
-                                <div id="line-id-group" class="hidden">
+                                <div>
                                     <label class="block text-sm font-medium mb-1" for="customerLineId">LINE ID (選填)</label>
                                     <input type="text" id="customerLineId" name="customerLineId" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition"/>
                                 </div>
@@ -272,7 +271,6 @@
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         // --- CONSTANTS & STATE ---
-        const LIFF_ID = '2008276630-bYNjwMx7';
         const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbw-hL5djJSYqwO9B1Zyig21FWOgVwXquOnDqTZxjlDAzSFfC8nCEIAAS2950H98DH9Ibg/exec';
         const MENU_ITEMS = [
             { id: 1, name: "滷肉飯", price: 35, emoji: "🍜" },
@@ -286,8 +284,7 @@
             { id: 9, name: "肉圓", price: 45, emoji: "🥟" },
             { id: 10, name: "碗粿", price: 35, emoji: "🍮" }
         ];
-        let cart = [];
-        let lineUserId = null;
+        let cart = []; // State for cart items
 
         // --- DOM ELEMENTS ---
         const menuSelect = document.getElementById('menu-select');
@@ -304,7 +301,6 @@
         const navbar = document.getElementById('navbar');
         const mobileMenuButton = document.getElementById('mobile-menu-button');
         const mobileMenu = document.getElementById('mobile-menu');
-        const customerNameInput = document.getElementById('customerName');
 
         // --- RENDER FUNCTIONS ---
         const renderMenuDropdown = () => {
@@ -406,10 +402,17 @@
         const showSuccessModal = (orderId) => {
             modalOrderIdEl.textContent = orderId;
             successModal.classList.remove('hidden');
+            // Timeout to allow display:flex to apply before starting animation
+            setTimeout(() => {
+                successModalContent.classList.add('opacity-100', 'scale-100');
+            }, 10);
         };
         
         const hideSuccessModal = () => {
-            successModal.classList.add('hidden');
+            successModalContent.classList.remove('opacity-100', 'scale-100');
+            setTimeout(() => {
+                successModal.classList.add('hidden');
+            }, 300); // Wait for animation to finish
         };
         
         const setDefaultPickupTime = () => {
@@ -426,6 +429,7 @@
             if (itemId) {
                 addToCart(itemId);
                 document.getElementById('order').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                // Reset dropdown to allow adding more items easily
                 e.target.value = '';
             }
         });
@@ -434,64 +438,15 @@
             const addButton = e.target.closest('.cart-add-btn');
             const removeButton = e.target.closest('.cart-remove-btn');
             if (addButton) {
-                addToCart(parseInt(addButton.dataset.itemId, 10));
+                const itemId = parseInt(addButton.dataset.itemId, 10);
+                addToCart(itemId);
             } else if (removeButton) {
-                removeFromCart(parseInt(removeButton.dataset.itemId, 10));
+                const itemId = parseInt(removeButton.dataset.itemId, 10);
+                removeFromCart(itemId);
             }
         });
 
-        modalCloseButton.addEventListener('click', hideSuccessModal);
-        
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > 50) {
-                navbar.classList.add('bg-white/95', 'backdrop-blur-sm', 'shadow-md', 'py-2');
-                navbar.classList.remove('py-3');
-            } else {
-                navbar.classList.remove('bg-white/95', 'backdrop-blur-sm', 'shadow-md', 'py-2');
-                navbar.classList.add('py-3');
-            }
-        });
-
-        mobileMenuButton.addEventListener('click', () => {
-            mobileMenu.classList.toggle('hidden');
-            mobileMenuButton.querySelector('i').className = mobileMenu.classList.contains('hidden') ? 'fa fa-bars' : 'fa fa-times';
-        });
-
-        document.querySelectorAll('.mobile-nav-link').forEach(link => {
-            link.addEventListener('click', () => {
-                 mobileMenu.classList.add('hidden');
-                 mobileMenuButton.querySelector('i').className = 'fa fa-bars';
-            });
-        });
-
-        // --- LIFF & APP INITIALIZATION ---
-        async function initializeApp() {
-            try {
-                await liff.init({ liffId: LIFF_ID });
-                if (!liff.isLoggedIn()) {
-                    liff.login();
-                    return; // Stop execution until page reloads after login
-                }
-                
-                const profile = await liff.getProfile();
-                lineUserId = profile.userId;
-                customerNameInput.value = profile.displayName;
-                
-                // Now that we have the user info, set up the form submission
-                orderForm.addEventListener('submit', handleFormSubmit);
-
-            } catch (error) {
-                console.error('LIFF initialization failed.', error);
-                document.body.innerHTML = `<div class="p-8 text-center text-red-600">LIFF 初始化失敗。請確認您在 LINE App 中開啟此頁面。</div>`;
-            }
-            
-            // Initial render calls
-            renderMenuDropdown();
-            renderCart();
-            setDefaultPickupTime();
-        }
-
-        async function handleFormSubmit(e) {
+        orderForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             if (cart.length === 0) {
                 showFormError('請至少選擇一項餐點');
@@ -503,14 +458,14 @@
             const totalAmount = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
             
             const payload = {
-                lineUserId: lineUserId,
                 customerName: formData.get('customerName'),
                 customerPhone: formData.get('customerPhone'),
+                customerLineId: formData.get('customerLineId'),
                 pickupTime: formData.get('pickupTime'),
                 notes: formData.get('notes'),
                 items: cart.map(({ id, name, price, quantity }) => ({ id, name, price, quantity })),
                 totalAmount: totalAmount,
-                source: 'liff_app'
+                source: 'web'
             };
 
             try {
@@ -527,8 +482,6 @@
                     cart = [];
                     renderCart();
                     orderForm.reset();
-                    // Re-apply defaults after reset
-                    customerNameInput.value = (await liff.getProfile()).displayName;
                     setDefaultPickupTime();
                     showSuccessModal(result.orderId);
                 } else {
@@ -539,9 +492,37 @@
             } finally {
                 setLoadingState(false);
             }
-        }
+        });
+        
+        modalCloseButton.addEventListener('click', hideSuccessModal);
+        
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                navbar.classList.add('bg-white/95', 'backdrop-blur-sm', 'shadow-md', 'py-2');
+                navbar.classList.remove('py-3');
+            } else {
+                navbar.classList.remove('bg-white/95', 'backdrop-blur-sm', 'shadow-md', 'py-2');
+                navbar.classList.add('py-3');
+            }
+        });
 
-        initializeApp();
+        mobileMenuButton.addEventListener('click', () => {
+            const isMenuOpen = !mobileMenu.classList.contains('hidden');
+            mobileMenu.classList.toggle('hidden');
+            mobileMenuButton.querySelector('i').className = isMenuOpen ? 'fa fa-bars' : 'fa fa-times';
+        });
+
+        document.querySelectorAll('.mobile-nav-link').forEach(link => {
+            link.addEventListener('click', () => {
+                 mobileMenu.classList.add('hidden');
+                 mobileMenuButton.querySelector('i').className = 'fa fa-bars';
+            });
+        });
+
+        // --- INITIALIZATION ---
+        renderMenuDropdown();
+        renderCart();
+        setDefaultPickupTime();
     });
     </script>
 </body>
