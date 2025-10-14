@@ -56,7 +56,6 @@
             }
         }
     </style>
-<link rel="stylesheet" href="/index.css">
 </head>
 <body class="bg-gray-50 font-sans text-dark">
 
@@ -263,12 +262,21 @@
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         // --- CONFIGURATION ---
-        const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwq-f23BaguX9-ThylkeXY0sSVRDB2tzg_YfgBlC9nLE39ukT47BNFQtKZ94uvYdRZZmQ/exec';
+        const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbxfrYlDMYiERpd1FRGNvp8QACLfm1jbm0yKVUq3RKD-YQfPcWLvEXDH6eBtPIRbOiKPig/exec';
         const LIFF_ID = '2008276630-bYNjwMx7';
         
-        // --- STATE ---
-        let MENU_ITEMS = [];
-        let cart = [];
+        // --- CONSTANTS & STATE ---
+        const MENU_ITEMS = [
+            { id: 1, name: "經典沙朗牛排", price: 250, emoji: "🥩" },
+            { id: 2, name: "特級菲力牛排", price: 320, emoji: "🍖" },
+            { id: 3, name: "香煎雞腿排", price: 220, emoji: "🍗" },
+            { id: 4, name: "酥炸鱈魚排", price: 230, emoji: "🐟" },
+            { id: 5, name: "鐵板麵套餐", price: 150, emoji: "🍝" },
+            { id: 6, name: "玉米濃湯", price: 40, emoji: "🌽" },
+            { id: 7, name: "香蒜麵包", price: 30, emoji: "🥖" },
+            { id: 8, name: "紅茶", price: 25, emoji: "🥤" }
+        ];
+        let cart = []; // State for cart items
 
         // --- DOM ELEMENTS ---
         const menuSelect = document.getElementById('menu-select');
@@ -279,24 +287,12 @@
         const submitButtonText = document.getElementById('submit-button-text');
         const formErrorEl = document.getElementById('form-error');
         const successModal = document.getElementById('success-modal');
+        const successModalContent = document.getElementById('success-modal-content');
         const modalOrderIdEl = document.getElementById('modal-order-id');
         const modalCloseButton = document.getElementById('modal-close-button');
         const navbar = document.getElementById('navbar');
         const mobileMenuButton = document.getElementById('mobile-menu-button');
         const mobileMenu = document.getElementById('mobile-menu');
-        
-        // --- HELPER FUNCTIONS ---
-        const getEmojiForItem = (item) => {
-            const name = item.name;
-            if (name.includes('牛排')) return '🥩';
-            if (name.includes('雞')) return '🍗';
-            if (name.includes('魚')) return '🐟';
-            if (name.includes('麵')) return '🍝';
-            if (name.includes('湯')) return '🥣';
-            if (name.includes('麵包')) return '🥖';
-            if (name.includes('紅茶')) return '🥤';
-            return '🍴';
-        };
 
         // --- RENDER FUNCTIONS ---
         const renderMenuDropdown = () => {
@@ -473,28 +469,30 @@
             };
 
             try {
-                const response = await fetch(API_ENDPOINT, {
+                // Using 'no-cors' mode is a common workaround for simple POSTs to Google Apps Script.
+                // It prevents CORS errors but means we cannot read the response from the server.
+                // The backend is responsible for sending all notifications.
+                await fetch(API_ENDPOINT, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    mode: 'no-cors', 
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // Use text/plain for 'no-cors'
                     body: JSON.stringify(payload),
                 });
-                
-                const result = await response.json();
 
-                if (result.status === 'success' && result.orderId) {
-                    showSuccessModal(result.orderId);
-                    cart = [];
-                    renderCart();
-                    orderForm.reset();
-                    setDefaultPickupTime();
-                    initializeLiff();
-                } else {
-                    throw new Error(result.message || '訂單提交失敗，請重試。');
-                }
+                // Since we can't read the real Order ID from the response, we generate a temporary one for display.
+                const tempOrderId = "WEB" + Date.now().toString().slice(-6);
+                showSuccessModal(tempOrderId);
+
+                // Reset form state
+                cart = [];
+                renderCart();
+                orderForm.reset();
+                setDefaultPickupTime();
+                initializeLiff(); // Re-populate LIFF info
 
             } catch (err) {
                 console.error('Fetch error:', err);
-                showFormError(err.message || '網路連線錯誤，請稍後再試。');
+                showFormError('網路連線錯誤，請稍後再試。');
             } finally {
                 setLoadingState(false);
             }
@@ -532,27 +530,6 @@
 
         // --- INITIALIZATION ---
         const main = async () => {
-            menuSelect.disabled = true;
-            menuSelect.innerHTML = `<option>菜單載入中...</option>`;
-            
-            try {
-                const response = await fetch(`${API_ENDPOINT}?action=getMenu`);
-                if (!response.ok) throw new Error(`Network response was not ok, status: ${response.status}`);
-                const result = await response.json();
-                if (result.success && Array.isArray(result.data)) {
-                    MENU_ITEMS = result.data.map(item => ({...item, emoji: getEmojiForItem(item)}));
-                } else {
-                    throw new Error(result.message || 'Failed to parse menu data.');
-                }
-            } catch (error) {
-                console.error('Failed to fetch menu:', error);
-                menuSelect.innerHTML = `<option>菜單載入失敗，請稍後重試</option>`;
-                showFormError('無法載入菜單，請重新整理頁面。');
-                return; // Stop initialization if menu fails to load
-            } finally {
-                 menuSelect.disabled = false;
-            }
-
             await initializeLiff();
             renderMenuDropdown();
             renderCart();
@@ -562,6 +539,5 @@
         main();
     });
     </script>
-<script type="module" src="/index.tsx"></script>
 </body>
 </html>
