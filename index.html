@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>台灣小吃店 - 線上訂餐</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -187,6 +186,10 @@
                                     <input type="text" id="customerLineId" name="customerLineId" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition"/>
                                 </div>
                                 <div>
+                                    <label class="block text-sm font-medium mb-1" for="customerLineUserId">LINE User ID (選填)</label>
+                                    <input type="text" id="customerLineUserId" name="customerLineUserId" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition"/>
+                                </div>
+                                <div>
                                     <label class="block text-sm font-medium mb-1" for="pickupTime">取餐時間 <span class="text-red-500">*</span></label>
                                     <input type="datetime-local" id="pickupTime" name="pickupTime" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition"/>
                                 </div>
@@ -260,7 +263,7 @@
                 <h3 class="text-2xl font-bold mb-2">訂單提交成功！</h3>
                 <p class="text-gray-600 mb-4">您的訂單已順利提交，我們會盡快準備您的餐點</p>
                 <div class="bg-gray-50 p-4 rounded-lg mb-6">
-                    <p id="modal-id-label" class="text-sm text-gray-500 mb-1">訂單編號 (參考用)</p>
+                    <p class="text-sm text-gray-500 mb-1">訂單編號 (參考用)</p>
                     <p id="modal-order-id" class="font-semibold text-lg"></p>
                 </div>
                 <button id="modal-close-button" class="w-full btn-primary">完成</button>
@@ -272,8 +275,7 @@
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         // --- CONSTANTS & STATE ---
-        const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbw-hL5djJSYqwO9B1Zyig21FWOgVwXquOnDqTZxjlDAzSFfC8nCEIAAS2950H98DH9Ibg/exec';
-        const LIFF_ID = '2008276630-bYNjwMx7';
+        const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzlHebvLYC4ieyxyhYV-v6ceiHeHbv4OYDg5zhVc6DiBGzMOh7CAEmu1DXVgXE6EmiX5A/exec';
         const MENU_ITEMS = [
             { id: 1, name: "滷肉飯", price: 35, emoji: "🍜" },
             { id: 2, name: "雞肉飯", price: 40, emoji: "🍚" },
@@ -287,7 +289,6 @@
             { id: 10, name: "碗粿", price: 35, emoji: "🍮" }
         ];
         let cart = []; // State for cart items
-        let liffUserId = '';
 
         // --- DOM ELEMENTS ---
         const menuSelect = document.getElementById('menu-select');
@@ -300,34 +301,10 @@
         const successModal = document.getElementById('success-modal');
         const successModalContent = document.getElementById('success-modal-content');
         const modalOrderIdEl = document.getElementById('modal-order-id');
-        const modalIdLabel = document.getElementById('modal-id-label');
         const modalCloseButton = document.getElementById('modal-close-button');
         const navbar = document.getElementById('navbar');
         const mobileMenuButton = document.getElementById('mobile-menu-button');
         const mobileMenu = document.getElementById('mobile-menu');
-
-        // --- LIFF INITIALIZATION ---
-        const initializeLiff = async () => {
-            try {
-                await liff.init({ liffId: LIFF_ID });
-                if (liff.isLoggedIn()) {
-                    const profile = await liff.getProfile();
-                    liffUserId = profile.userId;
-                    const customerLineIdInput = document.getElementById('customerLineId');
-                    const lineIdLabel = document.querySelector('label[for="customerLineId"]');
-
-                    if (customerLineIdInput) {
-                        customerLineIdInput.value = liffUserId;
-                        customerLineIdInput.readOnly = true;
-                    }
-                    if (lineIdLabel) {
-                        lineIdLabel.textContent = "LINE ID (自動填入)";
-                    }
-                }
-            } catch (error) {
-                console.error('LIFF initialization failed. Running in normal browser.', error);
-            }
-        };
 
         // --- RENDER FUNCTIONS ---
         const renderMenuDropdown = () => {
@@ -426,9 +403,8 @@
             }
         };
 
-        const showSuccessModal = (displayId, hasLineId) => {
-            modalIdLabel.textContent = hasLineId ? '用戶ID (參考用)' : '手機號碼 (參考用)';
-            modalOrderIdEl.textContent = displayId;
+        const showSuccessModal = (orderId) => {
+            modalOrderIdEl.textContent = orderId;
             successModal.classList.remove('hidden');
             // Timeout to allow display:flex to apply before starting animation
             setTimeout(() => {
@@ -474,7 +450,7 @@
             }
         });
 
-        orderForm.addEventListener('submit', (e) => {
+        orderForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             if (cart.length === 0) {
                 showFormError('請至少選擇一項餐點');
@@ -484,43 +460,43 @@
             setLoadingState(true);
             const formData = new FormData(orderForm);
             const totalAmount = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
-            const customerLineId = formData.get('customerLineId');
-            const customerPhone = formData.get('customerPhone');
             
-            const params = new URLSearchParams();
-            params.append('customerName', formData.get('customerName'));
-            params.append('customerPhone', customerPhone);
-            params.append('customerLineId', customerLineId);
-            params.append('pickupTime', formData.get('pickupTime'));
-            params.append('notes', formData.get('notes'));
-            params.append('items', JSON.stringify(cart.map(({ id, name, price, quantity }) => ({ id, name, price, quantity }))));
-            params.append('totalAmount', totalAmount.toString());
-            params.append('source', liffUserId ? 'liff' : 'web');
+            const payload = {
+                customerName: formData.get('customerName'),
+                customerPhone: formData.get('customerPhone'),
+                customerLineId: formData.get('customerLineId'),
+                customerLineUserId: formData.get('customerLineUserId'),
+                pickupTime: formData.get('pickupTime'),
+                notes: formData.get('notes'),
+                items: cart.map(({ id, name, price, quantity }) => ({ id, name, price, quantity })),
+                totalAmount: totalAmount,
+                source: 'web'
+            };
 
-            fetch(API_ENDPOINT, {
-                method: 'POST',
-                body: params,
-                mode: 'no-cors'
-            }).then(() => {
-                // In no-cors mode, we can't read the response, so we assume success.
-                const displayId = customerLineId || customerPhone;
-                const hasLineId = !!customerLineId;
-
-                cart = [];
-                renderCart();
-                orderForm.reset();
-                if(liffUserId) {
-                    const customerLineIdInput = document.getElementById('customerLineId');
-                    if (customerLineIdInput) customerLineIdInput.value = liffUserId;
+            try {
+                const response = await fetch(API_ENDPOINT, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload),
+                    redirect: 'follow'
+                });
+                if (!response.ok) throw new Error(`伺服器錯誤: ${response.status}`);
+                
+                const result = await response.json();
+                if (result.status === 'success') {
+                    cart = [];
+                    renderCart();
+                    orderForm.reset();
+                    setDefaultPickupTime();
+                    showSuccessModal(result.orderId);
+                } else {
+                    throw new Error(result.message || '訂單提交失敗');
                 }
-                setDefaultPickupTime();
-                showSuccessModal(displayId, hasLineId);
-            }).catch(err => {
-                console.error("Fetch error:", err);
-                showFormError('訂單提交失敗，請檢查您的網路連線。');
-            }).finally(() => {
+            } catch (err) {
+                showFormError(err.message);
+            } finally {
                 setLoadingState(false);
-            });
+            }
         });
         
         modalCloseButton.addEventListener('click', hideSuccessModal);
@@ -549,14 +525,9 @@
         });
 
         // --- INITIALIZATION ---
-        const main = async () => {
-            await initializeLiff();
-            renderMenuDropdown();
-            renderCart();
-            setDefaultPickupTime();
-        };
-
-        main();
+        renderMenuDropdown();
+        renderCart();
+        setDefaultPickupTime();
     });
     </script>
 </body>
