@@ -259,7 +259,7 @@
                 <h3 class="text-2xl font-bold mb-2">訂單提交成功！</h3>
                 <p class="text-gray-600 mb-4">您的訂單已順利提交，我們會盡快準備您的餐點</p>
                 <div class="bg-gray-50 p-4 rounded-lg mb-6">
-                    <p class="text-sm text-gray-500 mb-1">訂單編號 (參考用)</p>
+                    <p id="modal-id-label" class="text-sm text-gray-500 mb-1">訂單編號 (參考用)</p>
                     <p id="modal-order-id" class="font-semibold text-lg"></p>
                 </div>
                 <button id="modal-close-button" class="w-full btn-primary">完成</button>
@@ -297,6 +297,7 @@
         const successModal = document.getElementById('success-modal');
         const successModalContent = document.getElementById('success-modal-content');
         const modalOrderIdEl = document.getElementById('modal-order-id');
+        const modalIdLabel = document.getElementById('modal-id-label');
         const modalCloseButton = document.getElementById('modal-close-button');
         const navbar = document.getElementById('navbar');
         const mobileMenuButton = document.getElementById('mobile-menu-button');
@@ -399,8 +400,9 @@
             }
         };
 
-        const showSuccessModal = (orderId) => {
-            modalOrderIdEl.textContent = orderId;
+        const showSuccessModal = (displayId, hasLineId) => {
+            modalIdLabel.textContent = hasLineId ? '用戶ID (參考用)' : '訂單編號 (參考用)';
+            modalOrderIdEl.textContent = displayId;
             successModal.classList.remove('hidden');
             // Timeout to allow display:flex to apply before starting animation
             setTimeout(() => {
@@ -456,11 +458,12 @@
             setLoadingState(true);
             const formData = new FormData(orderForm);
             const totalAmount = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+            const customerLineId = formData.get('customerLineId');
             
             const payload = {
                 customerName: formData.get('customerName'),
                 customerPhone: formData.get('customerPhone'),
-                customerLineId: formData.get('customerLineId'),
+                customerLineId: customerLineId,
                 pickupTime: formData.get('pickupTime'),
                 notes: formData.get('notes'),
                 items: cart.map(({ id, name, price, quantity }) => ({ id, name, price, quantity })),
@@ -479,11 +482,12 @@
                 
                 const result = await response.json();
                 if (result.status === 'success') {
+                    const displayId = customerLineId || result.orderId;
                     cart = [];
                     renderCart();
                     orderForm.reset();
                     setDefaultPickupTime();
-                    showSuccessModal(result.orderId);
+                    showSuccessModal(displayId, !!customerLineId);
                 } else {
                     throw new Error(result.message || '訂單提交失敗');
                 }
