@@ -5,16 +5,16 @@ declare var ContentService: any;
 
 /**
  * LINE訂餐機器人系統 - 雙重綁定專業版
- * 版本：8.0.0
+ * 版本：8.1.0
  * 開發者：AI Assistant
- * 最後更新：2025/10/15
- * 功能：實現用戶首次關注綁定與LIFF下單時的二次資料綁定，並同步前後端菜單。
+ * 最後更新：2025/10/16
+ * 功能：實現用戶首次關注綁定與LIFF下單時的二次資料綁定，並同步前後端菜單為台灣小吃。
  */
 
 // ==================== 配置設定 ====================
 var CONFIG = {
   restaurant: {
-    name: "無名牛排",
+    name: "台灣小吃店",
     phone: "02-1234-5678",
     address: "臺北市信義區松壽路123號",
     openingHours: "10:00 - 22:00"
@@ -22,14 +22,16 @@ var CONFIG = {
   sheetId: "101phIlp8Eu9czR8rKnIBfv8c1wPVLftlva1eaAl3nCs", // 請確認此ID是否正確
   lineToken: "hJ/VCrwaX67qCzgw0GL+pZ4gYduAYrnPV3D9UtwnaKNXnEVYGpefCO1Lu2chiXLGWf+vSyn35bwq2rm2srj96L3r8UCXluH2PA/VV/ldKSjZo7a0rPo/4whRWlERB/1MoDqYQXqx4y9oaRhFA6xFoAdB04t89/1O/w1cDnyilFU=",
   menu: [
-    { id: 1, name: "經典沙朗牛排", price: 250, category: "🥩 牛排" },
-    { id: 2, name: "特級菲力牛排", price: 320, category: "🥩 牛排" },
-    { id: 3, name: "香煎雞腿排", price: 220, category: "🍖 排餐" },
-    { id: 4, name: "酥炸鱈魚排", price: 230, category: "🍖 排餐" },
-    { id: 5, name: "鐵板麵套餐", price: 150, category: "🍝 套餐" },
-    { id: 6, name: "玉米濃湯", price: 40, category: "⭐ 附餐" },
-    { id: 7, name: "香蒜麵包", price: 30, category: "⭐ 附餐" },
-    { id: 8, name: "紅茶", price: 25, category: "🥤 飲料" }
+    { id: 1, name: "滷肉飯", price: 35, category: "主食" },
+    { id: 2, name: "雞肉飯", price: 40, category: "主食" },
+    { id: 3, name: "蚵仔煎", price: 65, category: "小吃" },
+    { id: 4, name: "大腸麵線", price: 50, category: "湯類" },
+    { id: 5, name: "珍珠奶茶", price: 45, category: "飲料" },
+    { id: 6, name: "鹽酥雞", price: 60, category: "小吃" },
+    { id: 7, name: "甜不辣", price: 40, category: "小吃" },
+    { id: 8, name: "蚵仔酥", price: 70, category: "小吃" },
+    { id: 9, name: "肉圓", price: 45, category: "小吃" },
+    { id: 10, name: "碗粿", price: 35, category: "主食" }
   ]
 };
 
