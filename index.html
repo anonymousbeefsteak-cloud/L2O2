@@ -7,27 +7,48 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: '#3498db',
+              secondary: '#ff6b6b',
+              success: '#27ae60',
+              danger: '#e74c3c',
+              light: '#f8f9fa',
+              dark: '#343a40',
+              neutral: '#f1f5f9',
+            },
+            keyframes: {
+              fadeIn: {
+                '0%': { opacity: '0', transform: 'translateY(20px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)' },
+              },
+            },
+            animation: {
+              fadeIn: 'fadeIn 0.5s ease-out forwards',
+            },
+          },
+        },
+      }
+    </script>
     <style>
-        html { scroll-behavior: smooth; }
-        body { font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif; background-color: #f9fafb; }
-        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+      html { scroll-behavior: smooth; }
+      body { font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif; }
     </style>
 </head>
-<body>
+<body class="bg-neutral">
     <div id="root"></div>
 
     <script type="text/babel">
         const { useState, useEffect, useMemo, useCallback } = React;
 
         // ==================== CONSTANTS ====================
-        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz6LGRkFWol_Y-XCiwHQQC6o1Tni113ynkvH6PhB1AiJO_3iaRtFB_kd2WX1XhqpKT6gQ/exec";
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyvGq83H2r7mZxEHfHaEXOBm2B2U_rNlLc3Exio8Nq6cb8ULqfvf5wrb_b1wQgiVEZ0zA/exec"; // Replace with your Apps Script URL
         const LIFF_ID = '2008276630-bYNjwMx7';
 
         const MENU_ITEMS = [
@@ -43,81 +64,46 @@
             { id: 10, name: "碗粿", price: 35, emoji: "🍮", category: "小吃" }
         ];
 
-        // ==================== UTILITIES ====================
         const getDefaultPickupTime = () => {
             const now = new Date();
             now.setMinutes(now.getMinutes() + 30);
-            return now.toISOString().slice(0, 16);
-        };
-
-        const generateOrderId = () => {
-            const timestamp = new Date().getTime().toString().slice(-6);
-            const randomStr = Math.random().toString(36).substring(2, 5).toUpperCase();
-            return "ORD-" + timestamp + randomStr;
+            const hours = now.getHours();
+            if (hours < 10) {
+                now.setHours(10, 0, 0, 0);
+            } else if (hours >= 22) {
+                now.setDate(now.getDate() + 1);
+                now.setHours(10, 0, 0, 0);
+            }
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hour = String(now.getHours()).padStart(2, '0');
+            const minute = String(now.getMinutes()).padStart(2, '0');
+            return `${year}-${month}-${day}T${hour}:${minute}`;
         };
 
         // ==================== SERVICES ====================
         const submitOrder = async (orderData) => {
             try {
                 console.log("開始提交訂單:", orderData);
-                
-                // 格式化餐點內容
-                const itemsText = orderData.items.map(item => 
-                    `${item.emoji} ${item.name} x${item.quantity} = $${item.price * item.quantity}`
-                ).join(', ');
-
-                // 計算總金額
-                const calculatedTotal = orderData.items.reduce((sum, item) => 
-                    sum + (item.price * item.quantity), 0
-                );
-
-                // 準備完整的訂單資料
-                const completeOrderData = {
-                    ...orderData,
-                    orderId: generateOrderId(),
-                    itemsText: itemsText,
-                    calculatedTotal: calculatedTotal,
-                    timestamp: new Date().toISOString(),
-                    items: orderData.items.map(item => ({
-                        id: item.id,
-                        name: item.name,
-                        price: item.price,
-                        quantity: item.quantity,
-                        emoji: item.emoji,
-                        total: item.price * item.quantity
-                    }))
-                };
-
-                console.log("完整訂單資料:", completeOrderData);
-
-                // 使用 FormData 提交
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 15000);
                 const response = await fetch(APPS_SCRIPT_URL, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(completeOrderData)
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(orderData),
+                    mode: 'cors',
+                    signal: controller.signal
                 });
-
+                clearTimeout(timeoutId);
                 const result = await response.json();
                 console.log("訂單提交結果:", result);
-
-                if (result.status === 'success') {
-                    return { 
-                        success: true, 
-                        message: '訂單已提交成功！我們會盡快為您準備餐點。', 
-                        orderId: result.orderId 
-                    };
-                } else {
-                    throw new Error(result.message || '訂單提交失敗');
-                }
-
+                return result;
             } catch (error) {
                 console.error("提交失敗:", error);
                 return { 
                     success: false, 
-                    message: `訂單提交失敗：${error.message}。請稍後重試或聯繫店家。`, 
-                    orderId: null 
+                    message: error.name === 'AbortError' ? '請求超時，請稍後再試。' : `提交訂單失敗: ${error.message}` 
                 };
             }
         };
@@ -132,195 +118,168 @@
             useEffect(() => {
                 const initializeLiff = async () => {
                     try {
-                        console.log('開始初始化 LIFF...');
-                        if (!window.liff) {
-                            throw new Error('LIFF SDK 未載入');
-                        }
+                        if (!window.liff) throw new Error('LIFF SDK 未找到');
                         await window.liff.init({ liffId: LIFF_ID });
-                        console.log('✅ LIFF 初始化成功');
-
+                        console.log('LIFF 初始化成功');
                         if (window.liff.isLoggedIn()) {
-                            try {
-                                const profile = await window.liff.getProfile();
-                                console.log('👤 用戶資料:', profile);
-                                setLiffCustomerName(profile.displayName);
-                                setLiffUserId(profile.userId);
-                            } catch (profileError) {
-                                console.warn('無法獲取用戶資料:', profileError);
-                                setLiffCustomerName('親愛的顧客');
-                            }
-                        } else {
-                            console.log('用戶未登入');
-                            setLiffCustomerName('親愛的顧客');
+                            const profile = await window.liff.getProfile();
+                            setLiffCustomerName(profile.displayName);
+                            setLiffUserId(profile.userId);
+                            console.log('用戶資料加載:', profile.displayName);
                         }
                     } catch (error) {
-                        console.error('LIFF 初始化失敗:', error);
+                        console.error('LIFF 初始化失敗', error);
                         setLiffError(error.message);
-                        setLiffCustomerName('親愛的顧客');
+                        setLiffCustomerName('顧客');
                     } finally {
                         setIsLiffReady(true);
                     }
                 };
-
-                const timeout = setTimeout(initializeLiff, 100);
-                return () => clearTimeout(timeout);
+                initializeLiff();
             }, []);
 
-            return { 
-                isLiffReady, 
-                liffCustomerName, 
-                liffUserId, 
-                liffError
-            };
+            return { isLiffReady, liffCustomerName, liffUserId, liffError };
         };
 
         // ==================== COMPONENTS ====================
         const LoadingSpinner = () => (
             <div className="min-h-screen flex flex-col justify-center items-center bg-white">
-                <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                <p className="mt-4 text-lg text-gray-700">正在載入訂餐系統...</p>
+                <div className="inline-block w-12 h-12 border-4 border-t-blue-500 border-gray-200 rounded-full animate-spin"></div>
+                <p className="mt-4 text-lg text-gray-700">正在與 LINE 連接中...</p>
             </div>
         );
 
         const Navbar = () => {
             const [isMenuOpen, setIsMenuOpen] = useState(false);
+            const [isScrolled, setIsScrolled] = useState(false);
 
-            const scrollToSection = (sectionId) => {
-                const element = document.getElementById(sectionId);
-                if (element) {
-                    element.scrollIntoView({ behavior: 'smooth' });
+            useEffect(() => {
+                const handleScroll = () => setIsScrolled(window.scrollY > 50);
+                window.addEventListener('scroll', handleScroll);
+                return () => window.removeEventListener('scroll', handleScroll);
+            }, []);
+
+            const handleLinkClick = (e, targetId) => {
+                e.preventDefault();
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    const top = targetElement.offsetTop - 80;
+                    window.scrollTo({ top, behavior: 'smooth' });
                     setIsMenuOpen(false);
                 }
             };
 
+            const navClass = isScrolled ? 'py-2 bg-white/95 backdrop-blur-sm' : 'py-3 bg-white';
+            const navLinks = [
+                { href: '#menu', text: '菜單' },
+                { href: '#order', text: '線上訂餐' },
+                { href: '#contact', text: '聯絡我們' },
+            ];
+
             return (
-                <nav className="fixed w-full bg-white shadow-md z-50">
-                    <div className="container mx-auto px-4 py-3">
-                        <div className="flex justify-between items-center">
-                            <div className="flex items-center space-x-2">
-                                <i className="fa-solid fa-utensils text-blue-600 text-xl"></i>
-                                <h1 className="text-lg font-bold text-gray-800">台灣小吃店</h1>
-                            </div>
-                            
-                            <div className="hidden md:flex items-center space-x-6">
-                                <button onClick={() => scrollToSection('menu')} className="text-gray-600 hover:text-blue-600 transition-colors">
-                                    菜單
-                                </button>
-                                <button onClick={() => scrollToSection('order')} className="text-gray-600 hover:text-blue-600 transition-colors">
-                                    線上訂餐
-                                </button>
-                                <button onClick={() => scrollToSection('contact')} className="text-gray-600 hover:text-blue-600 transition-colors">
-                                    聯絡我們
-                                </button>
-                            </div>
-
-                            <button 
-                                className="md:hidden text-gray-600"
-                                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                            >
-                                <i className={`fa-solid ${isMenuOpen ? 'fa-xmark' : 'fa-bars'} text-xl`}></i>
-                            </button>
+                <nav className={`fixed w-full z-20 transition-all duration-300 shadow-md ${navClass}`}>
+                    <div className="container mx-auto px-4 flex justify-between items-center">
+                        <div className="flex items-center space-x-2">
+                            <i className="fa-solid fa-utensils text-primary text-2xl"></i>
+                            <h1 className="text-xl font-bold text-dark">台灣小吃店</h1>
                         </div>
-
-                        {isMenuOpen && (
-                            <div className="md:hidden mt-4 pb-2 border-t pt-4">
-                                <div className="flex flex-col space-y-3">
-                                    <button onClick={() => scrollToSection('menu')} className="text-left py-2 text-gray-600 hover:text-blue-600 transition-colors">
-                                        菜單
-                                    </button>
-                                    <button onClick={() => scrollToSection('order')} className="text-left py-2 text-gray-600 hover:text-blue-600 transition-colors">
-                                        線上訂餐
-                                    </button>
-                                    <button onClick={() => scrollToSection('contact')} className="text-left py-2 text-gray-600 hover:text-blue-600 transition-colors">
-                                        聯絡我們
-                                    </button>
-                                </div>
-                            </div>
-                        )}
+                        <div className="hidden md:flex items-center space-x-6">
+                            {navLinks.map(link => (
+                                <a key={link.href} href={link.href} onClick={(e) => handleLinkClick(e, link.href)} className="hover:text-primary transition-colors">
+                                    {link.text}
+                                </a>
+                            ))}
+                        </div>
+                        <button className="md:hidden text-xl text-dark" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+                            <i className="fa-solid fa-bars"></i>
+                        </button>
                     </div>
+                    {isMenuOpen && (
+                        <div className="md:hidden bg-white w-full border-t">
+                            <div className="container mx-auto px-4 py-2 flex flex-col space-y-3">
+                                {navLinks.map(link => (
+                                    <a key={link.href} href={link.href} onClick={(e) => handleLinkClick(e, link.href)} className="py-2 hover:text-primary transition-colors">
+                                        {link.text}
+                                    </a>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </nav>
             );
         };
 
         const Header = () => {
+            const handleOrderNowClick = (e) => {
+                e.preventDefault();
+                const orderSection = document.getElementById('order');
+                if (orderSection) {
+                    window.scrollTo({ top: orderSection.offsetTop - 80, behavior: 'smooth' });
+                }
+            };
+
             return (
-                <header className="pt-20 bg-gradient-to-br from-blue-600 to-purple-700 text-white">
-                    <div className="container mx-auto px-4 py-16 text-center">
-                        <div className="max-w-3xl mx-auto fade-in">
-                            <h1 className="text-4xl md:text-5xl font-bold mb-4">
-                                美味不用等
-                            </h1>
-                            <p className="text-xl md:text-2xl mb-8 opacity-90">
-                                LINE 線上訂餐，到店即取免等候
+                <header className="pt-24 md:pt-32 bg-gradient-to-r from-blue-500 to-indigo-600 text-white">
+                    <div className="container mx-auto px-4 py-16 md:py-24 text-center md:text-left">
+                        <div className="max-w-3xl">
+                            <h2 className="text-3xl md:text-5xl font-bold mb-4 animate-fadeIn">美味不用等，線上訂餐更輕鬆</h2>
+                            <p className="text-lg md:text-xl mb-8 opacity-90 animate-fadeIn" style={{ animationDelay: '0.2s' }}>
+                                快速訂購您喜愛的台灣小吃，節省等待時間，到店即可取餐
                             </p>
-                            <button 
-                                onClick={() => document.getElementById('order').scrollIntoView({ behavior: 'smooth' })}
-                                className="bg-white text-blue-600 px-8 py-3 rounded-full font-bold hover:bg-gray-100 transition-all transform hover:scale-105 active:scale-95"
-                            >
+                            <a href="#order" onClick={handleOrderNowClick} className="inline-block bg-white text-primary border-2 border-transparent py-3 px-8 rounded-full font-bold transition-all duration-300 hover:bg-transparent hover:text-white hover:border-white hover:shadow-lg active:scale-95 animate-fadeIn" style={{ animationDelay: '0.4s' }}>
                                 立即訂餐 <i className="fa-solid fa-arrow-right ml-2"></i>
-                            </button>
+                            </a>
                         </div>
                     </div>
                 </header>
             );
         };
 
+        const FeatureCard = ({ icon, title, description }) => (
+            <div className="text-center p-6 rounded-lg shadow-sm bg-white">
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i className={`fa-solid ${icon} text-primary text-2xl`}></i>
+                </div>
+                <h3 className="text-xl font-semibold mb-2">{title}</h3>
+                <p className="text-gray-600">{description}</p>
+            </div>
+        );
+
         const Features = () => (
-            <section className="py-12 bg-white">
+            <section className="py-12 bg-neutral">
                 <div className="container mx-auto px-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div className="text-center p-6">
-                            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <i className="fa-solid fa-clock text-blue-600 text-2xl"></i>
-                            </div>
-                            <h3 className="text-xl font-semibold mb-2">節省時間</h3>
-                            <p className="text-gray-600">線上提前訂餐，到店即可取餐</p>
-                        </div>
-                        <div className="text-center p-6">
-                            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <i className="fa-solid fa-mobile-screen text-green-600 text-2xl"></i>
-                            </div>
-                            <h3 className="text-xl font-semibold mb-2">輕鬆訂購</h3>
-                            <p className="text-gray-600">簡單幾步完成訂餐</p>
-                        </div>
-                        <div className="text-center p-6">
-                            <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <i className="fa-solid fa-bell text-purple-600 text-2xl"></i>
-                            </div>
-                            <h3 className="text-xl font-semibold mb-2">即時通知</h3>
-                            <p className="text-gray-600">訂單狀態即時掌握</p>
-                        </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <FeatureCard icon="fa-clock" title="節省時間" description="線上提前訂餐，到店即可取餐，不用現場等候" />
+                        <FeatureCard icon="fa-cart-shopping" title="輕鬆訂購" description="簡單幾步，完成訂餐，支持多種餐點組合" />
+                        <FeatureCard icon="fa-circle-check" title="訂單確認" description="即時收到訂單確認，輕鬆掌握取餐時間" />
                     </div>
                 </div>
             </section>
         );
 
-        const MenuItem = ({ item, onAddToOrder }) => (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300">
-                <div className="p-4">
+        const MenuItem = React.memo(({ item, onAddToOrder }) => (
+            <div className="bg-white rounded-xl overflow-hidden shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                <div className="p-5">
                     <div className="flex justify-between items-start mb-3">
-                        <div>
+                        <h3 className="text-lg font-semibold flex items-center text-dark">
                             <span className="text-2xl mr-2">{item.emoji}</span>
-                            <h3 className="text-lg font-semibold text-gray-800 inline">{item.name}</h3>
-                        </div>
-                        <span className="text-lg font-bold text-blue-600">${item.price}</span>
+                            {item.name}
+                        </h3>
+                        <span className="text-lg font-bold text-primary">${item.price}</span>
                     </div>
-                    <button 
-                        onClick={() => onAddToOrder(item)}
-                        className="w-full bg-blue-50 text-blue-600 border border-blue-200 py-2 rounded-lg hover:bg-blue-600 hover:text-white transition-colors font-medium"
-                    >
-                        <i className="fa-solid fa-plus mr-2"></i>加入訂單
+                    <button className="w-full py-2 bg-primary/10 border border-primary/20 text-primary rounded-lg hover:bg-primary hover:text-white transition-colors font-semibold" onClick={() => onAddToOrder(item)}>
+                        <i className="fa-solid fa-plus mr-1"></i> 加入訂單
                     </button>
                 </div>
             </div>
-        );
+        ));
 
         const Menu = ({ menuItems, onAddToOrder }) => (
-            <section id="menu" className="py-16 bg-gray-50">
+            <section id="menu" className="py-16 bg-white">
                 <div className="container mx-auto px-4">
                     <div className="text-center mb-12">
-                        <h2 className="text-3xl font-bold text-gray-800 mb-4">美味菜單</h2>
-                        <p className="text-gray-600">精選道地台灣小吃</p>
+                        <h2 className="text-3xl font-bold mb-4 text-dark">我們的菜單</h2>
+                        <p className="text-gray-600 max-w-2xl mx-auto">精選道地台灣小吃，每一道都讓您回味無窮</p>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {menuItems.map(item => (
@@ -331,31 +290,29 @@
             </section>
         );
 
-        const OrderItem = ({ item, onUpdateQuantity, onRemoveItem }) => (
-            <div className="flex justify-between items-center bg-white p-4 rounded-lg border border-gray-200">
-                <div className="flex-1">
-                    <p className="font-semibold text-gray-800">{item.emoji} {item.name}</p>
-                    <p className="text-sm text-gray-600">${item.price} x {item.quantity} = ${item.price * item.quantity}</p>
+        const SuccessModal = ({ isOpen, orderId, onClose }) => {
+            if (!isOpen) return null;
+            return (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fadeIn">
+                    <div className="bg-white rounded-xl p-8 max-w-md w-full mx-4 transform transition-all duration-300">
+                        <div className="text-center">
+                            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i className="fa-solid fa-check text-2xl text-green-500"></i>
+                            </div>
+                            <h3 className="text-2xl font-bold mb-2 text-dark">訂單提交成功！</h3>
+                            <p className="text-gray-600 mb-4">您的訂單已順利提交，我們會盡快準備您的餐點。</p>
+                            <div className="bg-gray-50 p-4 rounded-lg mb-6">
+                                <p className="text-sm text-gray-500 mb-1">訂單編號</p>
+                                <p className="font-semibold text-lg text-dark">{orderId}</p>
+                            </div>
+                            <button onClick={onClose} className="w-full bg-primary text-white py-3 px-6 rounded-full font-medium transition-all duration-300 hover:bg-opacity-90 hover:shadow-lg active:scale-95">
+                                完成
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                    <button 
-                        onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
-                        className="w-8 h-8 bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 transition-colors"
-                    >-</button>
-                    <span className="w-8 text-center font-medium">{item.quantity}</span>
-                    <button 
-                        onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
-                        className="w-8 h-8 bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 transition-colors"
-                    >+</button>
-                    <button 
-                        onClick={() => onRemoveItem(item.id)}
-                        className="w-8 h-8 bg-red-100 text-red-600 rounded-full hover:bg-red-200 transition-colors"
-                    >
-                        <i className="fa-solid fa-trash text-xs"></i>
-                    </button>
-                </div>
-            </div>
-        );
+            );
+        };
 
         const OrderSection = ({ orderItems, totalAmount, onUpdateQuantity, onRemoveItem, onFormSubmit, liffCustomerName, liffUserId }) => {
             const [formData, setFormData] = useState({
@@ -376,43 +333,41 @@
 
             const validateForm = () => {
                 const newErrors = {};
-                if (!formData.customerName.trim()) newErrors.customerName = '請輸入姓名';
-                if (formData.customerName.trim().length < 2) newErrors.customerName = '姓名至少2個字';
-                if (!/^09\d{8}$/.test(formData.customerPhone)) newErrors.customerPhone = '請輸入正確手機號碼';
-                if (!formData.pickupTime) newErrors.pickupTime = '請選擇取餐時間';
+                if (!formData.customerName.trim()) newErrors.customerName = '請輸入您的姓名';
+                if (formData.customerName.trim().length < 2) newErrors.customerName = '姓名至少需要2個字元';
+                if (!/^09\d{8}$/.test(formData.customerPhone)) newErrors.customerPhone = '請輸入有效的手機號碼 (09開頭，共10位數字)';
+                if (!formData.pickupTime || new Date(formData.pickupTime) <= new Date()) newErrors.pickupTime = '請選擇未來的取餐時間';
                 if (orderItems.length === 0) {
-                    setFormError('請選擇至少一項餐點');
+                    setFormError('請至少選擇一項餐點');
                     return false;
                 }
                 setErrors(newErrors);
-                setFormError('');
                 return Object.keys(newErrors).length === 0;
+            };
+
+            const handleChange = (e) => {
+                const { name, value } = e.target;
+                setFormData(prev => ({ ...prev, [name]: value }));
+                if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
+                if (formError) setFormError('');
             };
 
             const handleSubmit = async (e) => {
                 e.preventDefault();
                 if (!validateForm()) return;
-
                 setIsLoading(true);
-                
+                setFormError('');
                 const orderData = {
-                    customerName: formData.customerName,
-                    customerPhone: formData.customerPhone,
-                    pickupTime: formData.pickupTime,
-                    notes: formData.notes,
+                    ...formData,
                     items: orderItems,
-                    totalAmount: totalAmount,
-                    source: 'web_app_react_liff',
+                    totalAmount,
                     timestamp: new Date().toISOString(),
-                    liffUserId: liffUserId,
-                    liffCustomerName: liffCustomerName
+                    source: 'web_app_react_liff',
+                    customerLineId: liffCustomerName || '未提供',
+                    lineUserId: liffUserId || '未提供'
                 };
-
-                console.log("提交訂單資料:", orderData);
-
                 const result = await onFormSubmit(orderData);
                 setIsLoading(false);
-
                 if (result.success) {
                     setFormData({
                         customerName: liffCustomerName || '',
@@ -420,126 +375,74 @@
                         pickupTime: getDefaultPickupTime(),
                         notes: ''
                     });
+                    setErrors({});
                 } else {
                     setFormError(result.message);
                 }
             };
 
             return (
-                <section id="order" className="py-16 bg-white">
+                <section id="order" className="py-16 bg-neutral">
                     <div className="container mx-auto px-4">
-                        <div className="max-w-2xl mx-auto">
-                            <div className="text-center mb-8">
-                                <h2 className="text-3xl font-bold text-gray-800 mb-2">線上訂餐</h2>
-                                <p className="text-gray-600">填寫訂單資訊，快速取餐</p>
-                            </div>
-
-                            <form onSubmit={handleSubmit} className="space-y-6">
-                                <div className="bg-gray-50 p-6 rounded-xl">
-                                    <h3 className="text-lg font-semibold mb-4 text-gray-800">訂購餐點</h3>
-                                    {orderItems.length === 0 ? (
-                                        <p className="text-center text-gray-500 py-4">尚未選擇餐點</p>
-                                    ) : (
-                                        <div className="space-y-3">
-                                            {orderItems.map(item => (
-                                                <OrderItem
-                                                    key={item.id}
-                                                    item={item}
-                                                    onUpdateQuantity={onUpdateQuantity}
-                                                    onRemoveItem={onRemoveItem}
-                                                />
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="grid md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">姓名 *</label>
-                                        <input
-                                            type="text"
-                                            value={formData.customerName}
-                                            onChange={(e) => setFormData(prev => ({...prev, customerName: e.target.value}))}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                            placeholder="請輸入姓名"
-                                        />
-                                        {errors.customerName && <p className="text-red-500 text-sm mt-1">{errors.customerName}</p>}
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">手機 *</label>
-                                        <input
-                                            type="tel"
-                                            value={formData.customerPhone}
-                                            onChange={(e) => setFormData(prev => ({...prev, customerPhone: e.target.value}))}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                            placeholder="0912345678"
-                                            maxLength="10"
-                                        />
-                                        {errors.customerPhone && <p className="text-red-500 text-sm mt-1">{errors.customerPhone}</p>}
+                        <div className="text-center mb-12">
+                            <h2 className="text-3xl font-bold mb-4 text-dark">線上訂餐</h2>
+                            <p className="text-gray-600 max-w-2xl mx-auto">確認您的訂單資訊，快速又方便</p>
+                        </div>
+                        <div className="max-w-2xl mx-auto bg-white p-6 md:p-8 rounded-2xl shadow-lg">
+                            <form onSubmit={handleSubmit} noValidate className="space-y-6">
+                                <div className="bg-gray-50 p-4 rounded-lg">
+                                    <h3 className="text-lg font-semibold mb-3 text-dark">🍽️ 您的餐點</h3>
+                                    <div className="space-y-3">
+                                        {orderItems.length === 0 ? (
+                                            <p className="text-center text-gray-500 py-4">尚未選擇任何餐點</p>
+                                        ) : (
+                                            orderItems.map(item => (
+                                                <div key={item.id} className="flex justify-between items-center bg-white p-3 rounded-md shadow-sm">
+                                                    <div>
+                                                        <p className="font-medium text-sm md:text-base">{`${item.emoji} ${item.name}`}</p>
+                                                        <p className="text-sm text-gray-500">{`$${item.price} x ${item.quantity} = $${item.price * item.quantity}`}</p>
+                                                    </div>
+                                                    <div className="flex items-center space-x-1 md:space-x-2">
+                                                        <button type="button" onClick={() => onUpdateQuantity(item.id, item.quantity - 1)} className="w-7 h-7 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors">-</button>
+                                                        <span className="w-8 text-center font-medium">{item.quantity}</span>
+                                                        <button type="button" onClick={() => onUpdateQuantity(item.id, item.quantity + 1)} className="w-7 h-7 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors">+</button>
+                                                        <button type="button" onClick={() => onRemoveItem(item.id)} className="w-7 h-7 rounded-full bg-red-100 text-red-600 hover:bg-red-200 transition-colors"><i className="fa-solid fa-xmark"></i></button>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
                                     </div>
                                 </div>
-
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">取餐時間 *</label>
-                                    <input
-                                        type="datetime-local"
-                                        value={formData.pickupTime}
-                                        onChange={(e) => setFormData(prev => ({...prev, pickupTime: e.target.value}))}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                        min={new Date().toISOString().slice(0, 16)}
-                                    />
+                                    <label className="block text-sm font-medium mb-1" htmlFor="customerName">顧客姓名 <span className="text-red-500">*</span></label>
+                                    <input type="text" id="customerName" name="customerName" value={formData.customerName} onChange={handleChange} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition" />
+                                    {errors.customerName && <p className="text-red-500 text-sm mt-1">{errors.customerName}</p>}
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1" htmlFor="customerPhone">聯絡電話 <span className="text-red-500">*</span></label>
+                                    <input type="tel" id="customerPhone" name="customerPhone" value={formData.customerPhone} onChange={handleChange} required placeholder="0912345678" maxLength={10} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition" />
+                                    {errors.customerPhone && <p className="text-red-500 text-sm mt-1">{errors.customerPhone}</p>}
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1" htmlFor="pickupTime">取餐時間 <span className="text-red-500">*</span></label>
+                                    <input type="datetime-local" id="pickupTime" name="pickupTime" value={formData.pickupTime} onChange={handleChange} required min={new Date().toISOString().slice(0, 16)} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition" />
                                     {errors.pickupTime && <p className="text-red-500 text-sm mt-1">{errors.pickupTime}</p>}
                                 </div>
-
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">備註</label>
-                                    <textarea
-                                        value={formData.notes}
-                                        onChange={(e) => setFormData(prev => ({...prev, notes: e.target.value}))}
-                                        rows="3"
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                        placeholder="特殊需求請在此備註..."
-                                    />
+                                    <label className="block text-sm font-medium mb-1" htmlFor="notes">訂單備註 (選填)</label>
+                                    <textarea id="notes" name="notes" rows={3} value={formData.notes} onChange={handleChange} placeholder="如有特殊需求請在此備註..." className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition"></textarea>
                                 </div>
-
-                                {liffUserId && (
-                                    <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg">
-                                        <p className="text-sm text-blue-700">
-                                            <i className="fa-solid fa-user mr-2"></i>
-                                            LINE 用戶: {liffCustomerName}
-                                        </p>
-                                    </div>
-                                )}
-
-                                <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
-                                    <div className="flex justify-between items-center text-lg font-bold text-green-800">
-                                        <span>總金額:</span>
-                                        <span>${totalAmount}</span>
-                                    </div>
+                                <div className="bg-green-100/50 border border-green-200/80 p-4 rounded-lg text-lg font-bold flex justify-between items-center">
+                                    <span className="text-green-800">💰 總金額:</span>
+                                    <span className="text-green-800">${totalAmount}</span>
                                 </div>
-
-                                <button
-                                    type="submit"
-                                    disabled={isLoading || orderItems.length === 0}
-                                    className="w-full bg-blue-600 text-white py-4 px-6 rounded-lg font-bold text-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                >
-                                    {isLoading ? (
-                                        <>
-                                            <i className="fa-solid fa-spinner fa-spin mr-2"></i>
-                                            處理中...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <i className="fa-solid fa-paper-plane mr-2"></i>
-                                            送出訂單
-                                        </>
-                                    )}
+                                <button type="submit" className="w-full bg-primary text-white py-3 px-6 rounded-full font-bold text-lg transition-all duration-300 hover:bg-opacity-90 hover:shadow-lg active:scale-95 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed" disabled={isLoading || orderItems.length === 0}>
+                                    {isLoading ? <><i className="fa-solid fa-spinner fa-spin text-xl mr-2"></i> 處理中...</> : <><i className="fa-solid fa-paper-plane mr-2"></i> 送出訂單</>}
                                 </button>
-
                                 {formError && (
-                                    <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg">
-                                        <i className="fa-solid fa-triangle-exclamation mr-2"></i>
-                                        {formError}
+                                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center">
+                                        <i className="fa-solid fa-circle-exclamation mr-2"></i>
+                                        <span>{formError}</span>
                                     </div>
                                 )}
                             </form>
@@ -549,71 +452,47 @@
             );
         };
 
-        const SuccessModal = ({ isOpen, orderId, onClose }) => {
-            if (!isOpen) return null;
-
-            return (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-xl max-w-md w-full p-6">
-                        <div className="text-center">
-                            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <i className="fa-solid fa-check text-green-500 text-2xl"></i>
-                            </div>
-                            <h3 className="text-2xl font-bold text-gray-800 mb-2">訂單成功！</h3>
-                            <p className="text-gray-600 mb-4">我們已收到您的訂單</p>
-                            <div className="bg-gray-50 p-4 rounded-lg mb-6">
-                                <p className="text-sm text-gray-500">訂單編號</p>
-                                <p className="font-mono text-lg font-bold text-gray-800">{orderId}</p>
-                            </div>
-                            <button
-                                onClick={onClose}
-                                className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-                            >
-                                確認
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            );
-        };
+        const FAQItem = ({ question, answer }) => (
+            <div>
+                <h4 className="font-medium flex items-center">
+                    <i className="fa-solid fa-circle-question text-primary mr-2"></i>
+                    {question}
+                </h4>
+                <p className="text-gray-600 text-sm mt-1">{answer}</p>
+            </div>
+        );
 
         const Contact = () => (
-            <section id="contact" className="py-16 bg-gray-50">
+            <section id="contact" className="py-16 bg-white">
                 <div className="container mx-auto px-4">
+                    <div className="text-center mb-12">
+                        <h2 className="text-3xl font-bold mb-4 text-dark">聯絡我們</h2>
+                        <p className="text-gray-600">如有任何問題或建議，歡迎隨時聯繫我們</p>
+                    </div>
                     <div className="max-w-4xl mx-auto">
-                        <div className="text-center mb-12">
-                            <h2 className="text-3xl font-bold text-gray-800 mb-4">聯絡我們</h2>
-                            <p className="text-gray-600">有任何問題，歡迎聯繫</p>
-                        </div>
-                        <div className="grid md:grid-cols-2 gap-8">
-                            <div className="bg-white p-6 rounded-xl shadow-sm">
-                                <h3 className="text-xl font-semibold mb-4 text-gray-800">店家資訊</h3>
-                                <div className="space-y-3">
-                                    <div className="flex items-center">
-                                        <i className="fa-solid fa-location-dot text-blue-600 w-6"></i>
-                                        <span className="text-gray-700">台北市信義區松壽路123號</span>
-                                    </div>
-                                    <div className="flex items-center">
-                                        <i className="fa-solid fa-phone text-blue-600 w-6"></i>
-                                        <span className="text-gray-700">02-1234-5678</span>
-                                    </div>
-                                    <div className="flex items-center">
-                                        <i className="fa-solid fa-clock text-blue-600 w-6"></i>
-                                        <span className="text-gray-700">10:00 - 22:00</span>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="bg-neutral p-6 rounded-xl shadow-sm">
+                                <h3 className="text-xl font-semibold mb-4 text-dark">店舖資訊</h3>
+                                <div className="space-y-4">
+                                    <div className="flex items-start"><i className="fa-solid fa-location-dot text-primary mt-1 mr-3"></i><p className="text-dark">臺北市信義區松壽路123號</p></div>
+                                    <div className="flex items-start"><i className="fa-solid fa-phone text-primary mt-1 mr-3"></i><p className="text-dark">02-1234-5678</p></div>
+                                    <div className="flex items-start"><i className="fa-solid fa-clock text-primary mt-1 mr-3"></i><p className="text-dark">營業時間: 10:00 - 22:00</p></div>
+                                </div>
+                                <div className="mt-6">
+                                    <h4 className="font-medium mb-2 text-dark">關注我們</h4>
+                                    <div className="flex space-x-4">
+                                        <a href="#" className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-colors"><i className="fa-brands fa-facebook-f"></i></a>
+                                        <a href="#" className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-colors"><i className="fa-brands fa-instagram"></i></a>
+                                        <a href="#" className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-colors"><i className="fa-brands fa-line"></i></a>
                                     </div>
                                 </div>
                             </div>
-                            <div className="bg-white p-6 rounded-xl shadow-sm">
-                                <h3 className="text-xl font-semibold mb-4 text-gray-800">常見問題</h3>
+                            <div className="bg-neutral p-6 rounded-xl shadow-sm">
+                                <h3 className="text-xl font-semibold mb-4 text-dark">常見問題</h3>
                                 <div className="space-y-4">
-                                    <div>
-                                        <h4 className="font-medium text-gray-800">需要提前多久訂餐？</h4>
-                                        <p className="text-gray-600 text-sm mt-1">建議提前15-30分鐘訂購</p>
-                                    </div>
-                                    <div>
-                                        <h4 className="font-medium text-gray-800">如何修改訂單？</h4>
-                                        <p className="text-gray-600 text-sm mt-1">請直接來電店家修改</p>
-                                    </div>
+                                    <FAQItem question="線上訂單需要提前多久訂購？" answer="建議提前至少15-30分鐘訂購，以便我們準備新鮮美味的餐點。" />
+                                    <FAQItem question="如何取消或修改訂單？" answer="請致電我們的店舖電話，提供您的訂單編號進行修改或取消。" />
+                                    <FAQItem question="可以指定取餐時間嗎？" answer="當然可以，訂購時請選擇您方便的取餐時間，我們會準時準備好。" />
                                 </div>
                             </div>
                         </div>
@@ -623,72 +502,86 @@
         );
 
         const Footer = () => (
-            <footer className="bg-gray-800 text-white py-8">
+            <footer className="bg-dark text-white py-8">
                 <div className="container mx-auto px-4 text-center">
                     <div className="flex items-center justify-center space-x-2 mb-4">
-                        <i className="fa-solid fa-utensils text-blue-400"></i>
+                        <i className="fa-solid fa-utensils text-primary"></i>
                         <h2 className="text-xl font-bold">台灣小吃店</h2>
                     </div>
-                    <p className="text-gray-400 mb-2">道地台灣味，滿足您的味蕾</p>
-                    <p className="text-gray-500 text-sm">© 2024 台灣小吃店</p>
+                    <p className="text-gray-400 mb-4">道地台灣味，滿足您的味蕾</p>
+                    <p className="text-gray-500 text-sm">© 2025 台灣小吃店 版權所有</p>
                 </div>
             </footer>
         );
 
-        // ==================== MAIN APP ====================
+        // ==================== APP ====================
         const App = () => {
             const [orderItems, setOrderItems] = useState([]);
             const [isModalOpen, setIsModalOpen] = useState(false);
             const [submittedOrderId, setSubmittedOrderId] = useState('');
-            const { 
-                isLiffReady, 
-                liffCustomerName, 
-                liffUserId
-            } = useLiff();
+            const { isLiffReady, liffCustomerName, liffUserId, liffError } = useLiff();
 
-            const totalAmount = useMemo(() => 
-                orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0), 
-                [orderItems]
-            );
+            const totalAmount = useMemo(() => {
+                return orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+            }, [orderItems]);
 
             const handleAddToOrder = useCallback((itemToAdd) => {
-                setOrderItems(prev => {
-                    const existing = prev.find(item => item.id === itemToAdd.id);
-                    if (existing) {
-                        return prev.map(item => 
-                            item.id === itemToAdd.id 
+                setOrderItems(prevItems => {
+                    const existingItem = prevItems.find(item => item.id === itemToAdd.id);
+                    if (existingItem) {
+                        return prevItems.map(item =>
+                            item.id === itemToAdd.id
                                 ? { ...item, quantity: item.quantity + 1 }
                                 : item
                         );
                     }
-                    return [...prev, { ...itemToAdd, quantity: 1 }];
+                    return [...prevItems, { ...itemToAdd, quantity: 1 }];
                 });
             }, []);
 
             const handleUpdateQuantity = useCallback((itemId, newQuantity) => {
                 if (newQuantity < 1) {
-                    setOrderItems(prev => prev.filter(item => item.id !== itemId));
+                    setOrderItems(prevItems => prevItems.filter(item => item.id !== itemId));
                 } else {
-                    setOrderItems(prev => prev.map(item => 
-                        item.id === itemId ? { ...item, quantity: newQuantity } : item
-                    ));
+                    setOrderItems(prevItems =>
+                        prevItems.map(item =>
+                            item.id === itemId
+                                ? { ...item, quantity: newQuantity }
+                                : item
+                        )
+                    );
                 }
             }, []);
 
             const handleRemoveItem = useCallback((itemId) => {
-                setOrderItems(prev => prev.filter(item => item.id !== itemId));
+                setOrderItems(prevItems => prevItems.filter(item => item.id !== itemId));
             }, []);
 
-            const handleFormSubmit = async (orderData) => {
-                const result = await submitOrder(orderData);
-
-                if (result.success) {
-                    setSubmittedOrderId(result.orderId);
-                    setIsModalOpen(true);
+            const handleFormSubmit = async (formData) => {
+                const result = await submitOrder(formData);
+                if (result.success && result.orderId) {
+                    const pickupDate = new Date(formData.pickupTime).toLocaleString('zh-TW');
+                    if (window.liff && window.liff.isInClient()) {
+                        const lineMessage = `🎉 您的訂單已成立！\n----------------------\n餐點：${formData.items.map(item => `${item.name} x${item.quantity}`).join(', ')}\n總金額：$${totalAmount}\n姓名：${formData.customerName}\n電話：${formData.customerPhone}\n取餐時間：${pickupDate}\n訂單編號：${result.orderId}\n備註：${formData.notes || '無'}\n----------------------\n感謝您的訂購！`;
+                        try {
+                            await window.liff.sendMessages([{ type: 'text', text: lineMessage }]);
+                            setTimeout(() => {
+                                window.liff.closeWindow();
+                            }, 1000);
+                        } catch (error) {
+                            console.error("發送 LINE 消息失敗", error);
+                            setSubmittedOrderId(result.orderId);
+                            setIsModalOpen(true);
+                        }
+                    } else {
+                        setSubmittedOrderId(result.orderId);
+                        setIsModalOpen(true);
+                    }
                     setOrderItems([]);
+                    return { success: true, message: '成功' };
+                } else {
+                    return { success: false, message: result.message || '訂單提交失敗' };
                 }
-
-                return result;
             };
 
             const closeModal = () => {
@@ -701,21 +594,23 @@
             }
 
             return (
-                <div className="min-h-screen">
+                <div className="animate-fadeIn">
                     <Navbar />
-                    <Header />
-                    <Features />
-                    <Menu menuItems={MENU_ITEMS} onAddToOrder={handleAddToOrder} />
-                    <OrderSection
-                        orderItems={orderItems}
-                        totalAmount={totalAmount}
-                        onUpdateQuantity={handleUpdateQuantity}
-                        onRemoveItem={handleRemoveItem}
-                        onFormSubmit={handleFormSubmit}
-                        liffCustomerName={liffCustomerName}
-                        liffUserId={liffUserId}
-                    />
-                    <Contact />
+                    <main>
+                        <Header />
+                        <Features />
+                        <Menu menuItems={MENU_ITEMS} onAddToOrder={handleAddToOrder} />
+                        <OrderSection
+                            orderItems={orderItems}
+                            totalAmount={totalAmount}
+                            onUpdateQuantity={handleUpdateQuantity}
+                            onRemoveItem={handleRemoveItem}
+                            onFormSubmit={handleFormSubmit}
+                            liffCustomerName={liffCustomerName}
+                            liffUserId={liffUserId}
+                        />
+                        <Contact />
+                    </main>
                     <Footer />
                     <SuccessModal
                         isOpen={isModalOpen}
@@ -727,7 +622,11 @@
         };
 
         // ==================== RENDER ====================
-        ReactDOM.render(<App />, document.getElementById('root'));
+        const rootElement = document.getElementById('root');
+        if (rootElement) {
+            const root = ReactDOM.createRoot(rootElement);
+            root.render(<App />);
+        }
     </script>
 </body>
 </html>
