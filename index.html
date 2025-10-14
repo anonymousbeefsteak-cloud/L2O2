@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>台灣小吃店 - 線上訂餐</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -272,6 +273,7 @@
     document.addEventListener('DOMContentLoaded', () => {
         // --- CONSTANTS & STATE ---
         const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbw-hL5djJSYqwO9B1Zyig21FWOgVwXquOnDqTZxjlDAzSFfC8nCEIAAS2950H98DH9Ibg/exec';
+        const LIFF_ID = '2008276630-bYNjwMx7';
         const MENU_ITEMS = [
             { id: 1, name: "滷肉飯", price: 35, emoji: "🍜" },
             { id: 2, name: "雞肉飯", price: 40, emoji: "🍚" },
@@ -285,6 +287,7 @@
             { id: 10, name: "碗粿", price: 35, emoji: "🍮" }
         ];
         let cart = []; // State for cart items
+        let liffUserId = '';
 
         // --- DOM ELEMENTS ---
         const menuSelect = document.getElementById('menu-select');
@@ -302,6 +305,29 @@
         const navbar = document.getElementById('navbar');
         const mobileMenuButton = document.getElementById('mobile-menu-button');
         const mobileMenu = document.getElementById('mobile-menu');
+
+        // --- LIFF INITIALIZATION ---
+        const initializeLiff = async () => {
+            try {
+                await liff.init({ liffId: LIFF_ID });
+                if (liff.isLoggedIn()) {
+                    const profile = await liff.getProfile();
+                    liffUserId = profile.userId;
+                    const customerLineIdInput = document.getElementById('customerLineId');
+                    const lineIdLabel = document.querySelector('label[for="customerLineId"]');
+
+                    if (customerLineIdInput) {
+                        customerLineIdInput.value = liffUserId;
+                        customerLineIdInput.readOnly = true;
+                    }
+                    if (lineIdLabel) {
+                        lineIdLabel.textContent = "LINE ID (自動填入)";
+                    }
+                }
+            } catch (error) {
+                console.error('LIFF initialization failed. Running in normal browser.', error);
+            }
+        };
 
         // --- RENDER FUNCTIONS ---
         const renderMenuDropdown = () => {
@@ -486,6 +512,10 @@
                     cart = [];
                     renderCart();
                     orderForm.reset();
+                    if(liffUserId) {
+                        const customerLineIdInput = document.getElementById('customerLineId');
+                        if (customerLineIdInput) customerLineIdInput.value = liffUserId;
+                    }
                     setDefaultPickupTime();
                     showSuccessModal(displayId, !!customerLineId);
                 } else {
@@ -524,9 +554,14 @@
         });
 
         // --- INITIALIZATION ---
-        renderMenuDropdown();
-        renderCart();
-        setDefaultPickupTime();
+        const main = async () => {
+            await initializeLiff();
+            renderMenuDropdown();
+            renderCart();
+            setDefaultPickupTime();
+        };
+
+        main();
     });
     </script>
 </body>
