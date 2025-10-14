@@ -472,7 +472,7 @@
             try {
                 const response = await fetch(API_ENDPOINT, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'text/plain' }, // Use text/plain to avoid CORS preflight
                     body: JSON.stringify(payload),
                 });
 
