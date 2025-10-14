@@ -494,7 +494,7 @@
                 notes: formData.get('notes'),
                 items: cart.map(({ id, name, price, quantity }) => ({ id, name, price, quantity })),
                 totalAmount: totalAmount,
-                source: 'web'
+                source: liffUserId ? 'liff' : 'web'
             };
 
             try {
