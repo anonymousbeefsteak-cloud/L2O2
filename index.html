@@ -1,106 +1,594 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><?= restaurantName ?> LINE訂餐系統</title>
-  <style>
-    body {
-      font-family: Arial, 'Noto Sans TC', sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: #f4f4f4;
-      color: #333;
-      line-height: 1.6;
-    }
-    .container {
-      max-width: 800px;
-      margin: 20px auto;
-      padding: 20px;
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-      text-align: center;
-    }
-    h1 {
-      color: #d32f2f;
-      font-size: 2em;
-      margin-bottom: 10px;
-    }
-    .status {
-      color: #388e3c;
-      font-size: 1.2em;
-      margin: 10px 0;
-    }
-    .info {
-      margin: 20px 0;
-      font-size: 1.1em;
-    }
-    .info p {
-      margin: 10px 0;
-    }
-    .liff-button {
-      display: inline-block;
-      padding: 12px 24px;
-      background-color: #00c300;
-      color: #fff;
-      text-decoration: none;
-      border-radius: 5px;
-      font-size: 1.1em;
-      margin: 10px 0;
-      transition: background-color 0.3s;
-    }
-    .liff-button:hover {
-      background-color: #00a300;
-    }
-    .links {
-      margin-top: 20px;
-    }
-    .links a {
-      color: #d32f2f;
-      text-decoration: none;
-      margin: 0 10px;
-    }
-    .links a:hover {
-      text-decoration: underline;
-    }
-    footer {
-      margin-top: 20px;
-      font-size: 0.9em;
-      color: #666;
-    }
-    @media (max-width: 600px) {
-      .container {
-        margin: 10px;
-        padding: 15px;
-      }
-      h1 {
-        font-size: 1.5em;
-      }
-      .liff-button {
-        padding: 10px 20px;
-        font-size: 1em;
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>L2O - 訂餐應用</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        header h1 {
+            color: #00B900;
+            margin-bottom: 10px;
+        }
+        
+        .status-bar {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .profile {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .profile img {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin-right: 15px;
+            object-fit: cover;
+        }
+        
+        .profile-info h3 {
+            margin-bottom: 5px;
+        }
+        
+        .profile-info p {
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .menu-section {
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .menu-section h2 {
+            margin-bottom: 15px;
+            color: #333;
+            display: flex;
+            align-items: center;
+        }
+        
+        .menu-section h2 i {
+            margin-right: 10px;
+            color: #00B900;
+        }
+        
+        .menu-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .menu-item:last-child {
+            border-bottom: none;
+        }
+        
+        .menu-details {
+            flex: 1;
+        }
+        
+        .menu-name {
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+        
+        .menu-price {
+            color: #e63946;
+            font-weight: bold;
+        }
+        
+        .order-btn {
+            background-color: #00B900;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        
+        .order-btn:hover {
+            background-color: #008000;
+        }
+        
+        .cart-section {
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .cart-total {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #eee;
+        }
+        
+        .checkout-btn {
+            width: 100%;
+            background-color: #0078d7;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 15px;
+        }
+        
+        .checkout-btn:hover {
+            background-color: #005a9e;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .action-btn {
+            flex: 1;
+            background-color: #fff;
+            border: 1px solid #eee;
+            padding: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .action-btn:hover {
+            background-color: #f0f0f0;
+            transform: translateY(-2px);
+        }
+        
+        .action-btn i {
+            font-size: 1.5em;
+            margin-bottom: 8px;
+            color: #00B900;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        footer a {
+            color: #0078d7;
+            text-decoration: none;
+            margin: 0 5px;
+        }
+        
+        footer a:hover {
+            text-decoration: underline;
+        }
+        
+        .separator {
+            margin: 0 5px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 50px 0;
+        }
+        
+        .loading i {
+            font-size: 2em;
+            color: #00B900;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h1><?= restaurantName ?> LINE訂餐系統</h1>
-    <p class="status">✅ 系統運行正常</p>
-    <div class="info">
-      <p>📍 地址：<?= restaurantAddress ?></p>
-      <p>📞 電話：<?= restaurantPhone ?></p>
-      <p>使用我們的 LINE 訂餐系統，輕鬆點餐！</p>
-      <a href="<?= liffUrl ?>" class="liff-button">立即使用 LINE 訂餐</a>
+    <div class="container">
+        <div id="loading" class="loading">
+            <i class="fas fa-circle-notch fa-spin"></i>
+            <p>載入中...</p>
+        </div>
+        
+        <div id="app" class="hidden">
+            <header>
+                <h1><i class="fas fa-utensils"></i> L2O 訂餐應用</h1>
+                <p>beefsteak 提供</p>
+            </header>
+            
+            <div class="status-bar">
+                <p id="connection-status">連接狀態: 未連接</p>
+            </div>
+            
+            <div class="profile" id="profile-section">
+                <img id="profile-img" src="" alt="用戶頭像">
+                <div class="profile-info">
+                    <h3 id="profile-name">用戶名稱</h3>
+                    <p id="profile-status">加載用戶信息中...</p>
+                </div>
+            </div>
+            
+            <div class="actions">
+                <button class="action-btn" id="share-btn">
+                    <i class="fas fa-share-alt"></i>
+                    <span>分享</span>
+                </button>
+                <button class="action-btn" id="send-message-btn">
+                    <i class="fas fa-comment"></i>
+                    <span>發消息</span>
+                </button>
+                <button class="action-btn" id="close-btn">
+                    <i class="fas fa-times"></i>
+                    <span>關閉</span>
+                </button>
+            </div>
+            
+            <div class="menu-section">
+                <h2><i class="fas fa-list"></i> 菜單</h2>
+                <div class="menu-item">
+                    <div class="menu-details">
+                        <div class="menu-name">澳洲和牛牛排</div>
+                    </div>
+                    <div class="menu-price">¥350</div>
+                    <button class="order-btn" data-id="1">點購</button>
+                </div>
+                <div class="menu-item">
+                    <div class="menu-details">
+                        <div class="menu-name">經典番茄義大利面</div>
+                    </div>
+                    <div class="menu-price">¥220</div>
+                    <button class="order-btn" data-id="2">點購</button>
+                </div>
+                <div class="menu-item">
+                    <div class="menu-details">
+                        <div class="menu-name">安格斯牛肉漢堡</div>
+                    </div>
+                    <div class="menu-price">¥150</div>
+                    <button class="order-btn" data-id="3">點購</button>
+                </div>
+                <div class="menu-item">
+                    <div class="menu-details">
+                        <div class="menu-name">冰鎮可樂</div>
+                    </div>
+                    <div class="menu-price">¥50</div>
+                    <button class="order-btn" data-id="4">點購</button>
+                </div>
+                <div class="menu-item">
+                    <div class="menu-details">
+                        <div class="menu-name">凱撒沙拉</div>
+                    </div>
+                    <div class="menu-price">¥120</div>
+                    <button class="order-btn" data-id="5">點購</button>
+                </div>
+            </div>
+            
+            <div class="cart-section">
+                <h2><i class="fas fa-shopping-cart"></i> 購物車</h2>
+                <div id="cart-items">
+                    <p id="empty-cart">購物車是空的，請添加商品</p>
+                </div>
+                <div class="cart-total">
+                    <span>總金額:</span>
+                    <span id="total-amount">¥0</span>
+                </div>
+                <button class="checkout-btn" id="checkout-btn" disabled>確認訂單</button>
+            </div>
+            
+            <footer>
+                <a href="https://anonymousbeefsteak-cloud.github.io/lineuse/privacy-policy.html" target="_blank">隱私政策</a>
+                <span class="separator">|</span>
+                <a href="https://anonymousbeefsteak-cloud.github.io/lineuse/terms-of-use.html" target="_blank">使用條款</a>
+                <p>Provider ID: 2004582030</p>
+            </footer>
+        </div>
     </div>
-    <div class="links">
-      <a href="https://anonymousbeefsteak-cloud.github.io/lineuse/privacy-policy.html">隱私政策</a> |
-      <a href="https://anonymousbeefsteak-cloud.github.io/lineuse/terms-of-use.html">使用條款</a>
-    </div>
-    <footer>
-      <p>&copy; 2025 <?= restaurantName ?>. All rights reserved.</p>
-    </footer>
-  </div>
+
+    <script>
+        // 菜單數據
+        const menuItems = [
+            {id: 1, name: "澳洲和牛牛排", price: 350},
+            {id: 2, name: "經典番茄義大利面", price: 220},
+            {id: 3, name: "安格斯牛肉漢堡", price: 150},
+            {id: 4, name: "冰鎮可樂", price: 50},
+            {id: 5, name: "凱撒沙拉", price: 120}
+        ];
+        
+        // 購物車數據
+        let cart = [];
+        
+        // 初始化LIFF
+        async function initLiff() {
+            try {
+                await liff.init({ liffId: "2008276630-bYNjwMx7" });
+                
+                // 檢查是否已登入
+                if (!liff.isLoggedIn()) {
+                    // 未登入則進行登入
+                    liff.login();
+                } else {
+                    // 已登入，加載用戶信息
+                    loadUserProfile();
+                    
+                    // 更新連接狀態
+                    document.getElementById('connection-status').textContent = 
+                        '連接狀態: 已連接 (LIFF ID: 2008276630-bYNjwMx7)';
+                    
+                    // 顯示應用內容，隱藏加載畫面
+                    document.getElementById('loading').classList.add('hidden');
+                    document.getElementById('app').classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('LIFF初始化失敗:', error);
+                document.getElementById('connection-status').textContent = 
+                    '連接失敗，請重新載入頁面';
+            }
+        }
+        
+        // 加載用戶信息
+        async function loadUserProfile() {
+            try {
+                const profile = await liff.getProfile();
+                document.getElementById('profile-img').src = profile.pictureUrl;
+                document.getElementById('profile-name').textContent = profile.displayName;
+                document.getElementById('profile-status').textContent = `用戶ID: ${profile.userId.substring(0, 8)}...`;
+            } catch (error) {
+                console.error('加載用戶信息失敗:', error);
+                document.getElementById('profile-status').textContent = '無法加載用戶信息';
+            }
+        }
+        
+        // 添加商品到購物車
+        function addToCart(itemId) {
+            const item = menuItems.find(menu => menu.id === itemId);
+            if (!item) return;
+            
+            // 檢查購物車中是否已有該商品
+            const existingItem = cart.find(cartItem => cartItem.id === itemId);
+            
+            if (existingItem) {
+                // 已存在，增加數量
+                existingItem.quantity++;
+            } else {
+                // 不存在，添加新商品
+                cart.push({...item, quantity: 1});
+            }
+            
+            updateCart();
+        }
+        
+        // 從購物車移除商品
+        function removeFromCart(itemId) {
+            const index = cart.findIndex(item => item.id === itemId);
+            if (index === -1) return;
+            
+            if (cart[index].quantity > 1) {
+                // 數量大於1，減少數量
+                cart[index].quantity--;
+            } else {
+                // 數量為1，移除商品
+                cart.splice(index, 1);
+            }
+            
+            updateCart();
+        }
+        
+        // 更新購物車顯示
+        function updateCart() {
+            const cartItemsElement = document.getElementById('cart-items');
+            const totalAmountElement = document.getElementById('total-amount');
+            const emptyCartElement = document.getElementById('empty-cart');
+            const checkoutBtn = document.getElementById('checkout-btn');
+            
+            // 計算總金額
+            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            
+            // 更新總金額顯示
+            totalAmountElement.textContent = `¥${total}`;
+            
+            // 檢查購物車是否為空
+            if (cart.length === 0) {
+                emptyCartElement.classList.remove('hidden');
+                checkoutBtn.disabled = true;
+                cartItemsElement.innerHTML = '';
+                return;
+            }
+            
+            // 購物車不為空
+            emptyCartElement.classList.add('hidden');
+            checkoutBtn.disabled = false;
+            
+            // 更新購物車項目
+            cartItemsElement.innerHTML = '';
+            cart.forEach(item => {
+                const cartItemElement = document.createElement('div');
+                cartItemElement.className = 'cart-item';
+                cartItemElement.innerHTML = `
+                    <div>
+                        ${item.name} x${item.quantity}
+                    </div>
+                    <div>
+                        <button class="remove-btn" data-id="${item.id}" style="background: none; border: none; color: #e63946; cursor: pointer;">
+                            <i class="fas fa-minus-circle"></i>
+                        </button>
+                        <span style="margin: 0 10px;">¥${item.price * item.quantity}</span>
+                        <button class="add-btn" data-id="${item.id}" style="background: none; border: none; color: #00B900; cursor: pointer;">
+                            <i class="fas fa-plus-circle"></i>
+                        </button>
+                    </div>
+                `;
+                cartItemsElement.appendChild(cartItemElement);
+            });
+            
+            // 添加按鈕事件監聽
+            document.querySelectorAll('.add-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const itemId = parseInt(e.currentTarget.dataset.id);
+                    addToCart(itemId);
+                });
+            });
+            
+            // 添加移除按鈕事件監聽
+            document.querySelectorAll('.remove-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const itemId = parseInt(e.currentTarget.dataset.id);
+                    removeFromCart(itemId);
+                });
+            });
+        }
+        
+        // 提交訂單
+        function submitOrder() {
+            if (cart.length === 0) return;
+            
+            // 構建訂單消息
+            let orderText = "我要訂購：\n";
+            cart.forEach(item => {
+                orderText += `${item.id} x${item.quantity}, `;
+            });
+            
+            // 移除最後的逗號和空格
+            orderText = orderText.slice(0, -2);
+            
+            // 使用LIFF發送消息
+            if (liff.isInClient()) {
+                liff.sendMessages([
+                    {
+                        type: 'text',
+                        text: orderText
+                    }
+                ]).then(() => {
+                    alert('訂單已發送！');
+                    // 清空購物車
+                    cart = [];
+                    updateCart();
+                }).catch((error) => {
+                    console.error('發送消息失敗:', error);
+                    alert('訂單發送失敗，請重試');
+                });
+            } else {
+                alert('請在LINE應用中打開以完成訂單');
+            }
+        }
+        
+        // 頁面加載完成後初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            // 初始化LIFF
+            initLiff();
+            
+            // 菜單點購按鈕事件
+            document.querySelectorAll('.order-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const itemId = parseInt(e.currentTarget.dataset.id);
+                    addToCart(itemId);
+                });
+            });
+            
+            // 結帳按鈕事件
+            document.getElementById('checkout-btn').addEventListener('click', submitOrder);
+            
+            // 分享按鈕事件
+            document.getElementById('share-btn').addEventListener('click', () => {
+                if (liff.isInClient()) {
+                    liff.shareTargetPicker();
+                } else {
+                    alert('請在LINE應用中打開以使用分享功能');
+                }
+            });
+            
+            // 發消息按鈕事件
+            document.getElementById('send-message-btn').addEventListener('click', () => {
+                if (liff.isInClient()) {
+                    liff.sendMessages([
+                        {
+                            type: 'text',
+                            text: '我正在使用L2O訂餐應用'
+                        }
+                    ]).then(() => {
+                        alert('消息已發送');
+                    }).catch((error) => {
+                        console.error('發送消息失敗:', error);
+                    });
+                } else {
+                    alert('請在LINE應用中打開以使用發消息功能');
+                }
+            });
+            
+            // 關閉按鈕事件
+            document.getElementById('close-btn').addEventListener('click', () => {
+                if (liff.isInClient()) {
+                    liff.closeWindow();
+                } else {
+                    alert('在瀏覽器中無法關閉窗口');
+                }
+            });
+        });
+    </script>
 </body>
 </html>
