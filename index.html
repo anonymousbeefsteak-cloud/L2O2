@@ -474,7 +474,7 @@
             }
         });
 
-        orderForm.addEventListener('submit', async (e) => {
+        orderForm.addEventListener('submit', (e) => {
             e.preventDefault();
             if (cart.length === 0) {
                 showFormError('請至少選擇一項餐點');
@@ -487,25 +487,21 @@
             const customerLineId = formData.get('customerLineId');
             const customerPhone = formData.get('customerPhone');
             
-            const payload = {
-                customerName: formData.get('customerName'),
-                customerPhone: customerPhone,
-                customerLineId: customerLineId,
-                pickupTime: formData.get('pickupTime'),
-                notes: formData.get('notes'),
-                items: cart.map(({ id, name, price, quantity }) => ({ id, name, price, quantity })),
-                totalAmount: totalAmount,
-                source: liffUserId ? 'liff' : 'web'
-            };
+            const params = new URLSearchParams();
+            params.append('customerName', formData.get('customerName'));
+            params.append('customerPhone', customerPhone);
+            params.append('customerLineId', customerLineId);
+            params.append('pickupTime', formData.get('pickupTime'));
+            params.append('notes', formData.get('notes'));
+            params.append('items', JSON.stringify(cart.map(({ id, name, price, quantity }) => ({ id, name, price, quantity }))));
+            params.append('totalAmount', totalAmount.toString());
+            params.append('source', liffUserId ? 'liff' : 'web');
 
-            try {
-                await fetch(API_ENDPOINT, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(payload),
-                    mode: 'no-cors' // Use no-cors to avoid CORS issues with Google Scripts
-                });
-                
+            fetch(API_ENDPOINT, {
+                method: 'POST',
+                body: params,
+                mode: 'no-cors'
+            }).then(() => {
                 // In no-cors mode, we can't read the response, so we assume success.
                 const displayId = customerLineId || customerPhone;
                 const hasLineId = !!customerLineId;
@@ -519,13 +515,12 @@
                 }
                 setDefaultPickupTime();
                 showSuccessModal(displayId, hasLineId);
-
-            } catch (err) {
+            }).catch(err => {
                 console.error("Fetch error:", err);
                 showFormError('訂單提交失敗，請檢查您的網路連線。');
-            } finally {
+            }).finally(() => {
                 setLoadingState(false);
-            }
+            });
         });
         
         modalCloseButton.addEventListener('click', hideSuccessModal);
