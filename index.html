@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="zh-TW" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>台灣小吃店 - 線上訂餐</title>
+    <title>無名牛排 - 線上訂餐</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,10 +16,10 @@
             theme: {
                 extend: {
                     colors: {
-                        primary: '#00C300', // LINE Green
-                        secondary: '#FF6B00',
+                        primary: '#B71C1C', // A deep red for beefsteak
+                        secondary: '#FFC107', // An amber accent
                         neutral: '#F5F5F5',
-                        dark: '#333333'
+                        dark: '#212121'
                     },
                     fontFamily: {
                         sans: ['Noto Sans TC', 'sans-serif']
@@ -55,15 +56,16 @@
             }
         }
     </style>
+<link rel="stylesheet" href="/index.css">
 </head>
 <body class="bg-gray-50 font-sans text-dark">
 
     <!-- Navbar -->
     <nav id="navbar" class="fixed w-full z-20 transition-all duration-300 bg-white shadow-md py-3">
         <div class="container mx-auto px-4 flex justify-between items-center">
-            <div class="flex items-center space-x-2">
+            <div class="flex items-center space-x-3">
                 <i class="fa fa-cutlery text-primary text-2xl"></i>
-                <h1 class="text-xl font-bold">台灣小吃店</h1>
+                <h1 class="text-xl font-bold">無名牛排</h1>
             </div>
             <div class="hidden md:flex items-center space-x-6">
                 <a href="#menu" class="hover:text-primary transition-colors">菜單</a>
@@ -88,8 +90,8 @@
         <header class="pt-20 bg-gradient-to-r from-primary/90 to-primary text-white">
             <div class="container mx-auto px-4 py-16 md:py-24">
                 <div class="max-w-3xl">
-                    <h2 class="text-3xl md:text-5xl font-bold mb-4">美味不用等，線上訂餐更輕鬆</h2>
-                    <p class="text-lg md:text-xl mb-8 opacity-90">快速訂購您喜愛的台灣小吃，節省等待時間，到店即可取餐</p>
+                    <h2 class="text-3xl md:text-5xl font-bold mb-4">頂級牛排，美味無需等待</h2>
+                    <p class="text-lg md:text-xl mb-8 opacity-90">線上預訂您最愛的牛排套餐，節省排隊時間，到店即享熱騰騰的美味。</p>
                     <a href="#order" class="inline-block bg-white text-primary border-2 border-white py-3 px-6 rounded-full font-medium transition-all duration-300 hover:bg-transparent hover:text-white hover:shadow-lg active:scale-95">
                         立即訂餐 <i class="fa fa-arrow-right ml-2"></i>
                     </a>
@@ -106,21 +108,21 @@
                             <i class="fa fa-clock-o text-primary text-2xl"></i>
                         </div>
                         <h3 class="text-xl font-semibold mb-2">節省時間</h3>
-                        <p class="text-gray-600">線上提前訂餐，到店即可取餐，不用現場等候</p>
+                        <p class="text-gray-600">線上提前訂餐，到店即可取餐，不用現場等候。</p>
                     </div>
                     <div class="text-center p-6 rounded-lg shadow-sm">
                         <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                             <i class="fa fa-shopping-cart text-primary text-2xl"></i>
                         </div>
                         <h3 class="text-xl font-semibold mb-2">輕鬆訂購</h3>
-                        <p class="text-gray-600">簡單幾步，完成訂餐，支持多種餐點組合</p>
+                        <p class="text-gray-600">簡單幾步，完成訂餐，支持多種餐點組合。</p>
                     </div>
                     <div class="text-center p-6 rounded-lg shadow-sm">
                         <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                             <i class="fa fa-check-circle text-primary text-2xl"></i>
                         </div>
-                        <h3 class="text-xl font-semibold mb-2">訂單確認</h3>
-                        <p class="text-gray-600">即時收到訂單確認，輕鬆掌握取餐時間</p>
+                        <h3 class="text-xl font-semibold mb-2">LINE即時通知</h3>
+                        <p class="text-gray-600">訂單確認後，您與店家將同步收到LINE通知。</p>
                     </div>
                 </div>
             </div>
@@ -131,7 +133,7 @@
             <div class="container mx-auto px-4">
                 <div class="text-center mb-12">
                     <h2 class="text-3xl font-bold mb-4">選擇餐點</h2>
-                    <p class="text-gray-600 max-w-2xl mx-auto">請從下拉選單中選擇餐點，即可加入下方訂單明細</p>
+                    <p class="text-gray-600 max-w-2xl mx-auto">請從下拉選單中選擇餐點，即可加入下方訂單明細。</p>
                 </div>
                 <div class="max-w-2xl mx-auto">
                     <div class="bg-white p-4 rounded-xl shadow-sm">
@@ -149,7 +151,7 @@
             <div class="container mx-auto px-4">
                 <div class="text-center mb-12">
                     <h2 class="text-3xl font-bold mb-4">訂單內容與資訊</h2>
-                    <p class="text-gray-600 max-w-2xl mx-auto">確認您的餐點，填寫取餐資訊，輕鬆完成訂購</p>
+                    <p class="text-gray-600 max-w-2xl mx-auto">確認您的餐點，填寫取餐資訊，輕鬆完成訂購。</p>
                 </div>
                 <div class="max-w-4xl mx-auto">
                     <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
@@ -174,7 +176,7 @@
                             <!-- Order Form -->
                             <form id="order-form" class="space-y-4">
                                 <div>
-                                    <label class="block text-sm font-medium mb-1" for="customerName">姓名 <span class="text-red-500">*</span></label>
+                                    <label class="block text-sm font-medium mb-1" for="customerName">姓名 (將自動帶入LINE名稱) <span class="text-red-500">*</span></label>
                                     <input type="text" id="customerName" name="customerName" required autocomplete="name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition"/>
                                 </div>
                                 <div>
@@ -183,12 +185,8 @@
                                     <p class="text-xs text-gray-500 mt-1">請輸入10位數手機號碼</p>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium mb-1" for="customerLineId">LINE ID (選填)</label>
-                                    <input type="text" id="customerLineId" name="customerLineId" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition"/>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium mb-1" for="customerLineUserId">LINE User ID (選填)</label>
-                                    <input type="text" id="customerLineUserId" name="customerLineUserId" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition"/>
+                                    <label class="block text-sm font-medium mb-1" for="customerLineUserId">LINE User ID (將自動綁定)</label>
+                                    <input type="text" id="customerLineUserId" name="customerLineUserId" readonly class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"/>
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium mb-1" for="pickupTime">取餐時間 <span class="text-red-500">*</span></label>
@@ -196,7 +194,7 @@
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium mb-1" for="notes">備註 (選填)</label>
-                                    <textarea id="notes" name="notes" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition"></textarea>
+                                    <textarea id="notes" name="notes" rows="3" placeholder="例如：牛排七分熟、醬料分開" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition"></textarea>
                                 </div>
                                 <div id="form-error" class="text-sm text-red-500 text-center hidden"></div>
                                 <button id="submit-button" type="submit" class="w-full btn-primary flex items-center justify-center">
@@ -219,22 +217,12 @@
                         <h2 class="text-3xl font-bold mb-4">聯絡我們</h2>
                         <p class="text-gray-600">如有任何問題或建議，歡迎隨時聯繫我們</p>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div class="bg-white p-6 rounded-xl shadow-sm">
-                            <h3 class="text-xl font-semibold mb-4">店舖資訊</h3>
-                            <div class="space-y-4">
-                                <div class="flex items-start"><i class="fa fa-map-marker text-primary mt-1 mr-3"></i><p>臺北市信義區松壽路123號</p></div>
-                                <div class="flex items-start"><i class="fa fa-phone text-primary mt-1 mr-3"></i><p>02-1234-5678</p></div>
-                                <div class="flex items-start"><i class="fa fa-clock-o text-primary mt-1 mr-3"></i><p>營業時間: 10:00 - 22:00</p></div>
-                            </div>
-                        </div>
-                        <div class="bg-white p-6 rounded-xl shadow-sm">
-                            <h3 class="text-xl font-semibold mb-4">常見問題</h3>
-                            <div class="space-y-4">
-                                <div><h4 class="font-medium flex items-center"><i class="fa fa-question-circle text-primary mr-2"></i>線上訂單需要提前多久訂購？</h4><p class="text-gray-600 text-sm mt-1">建議提前至少15-30分鐘訂購，以便我們準備新鮮美味的餐點。</p></div>
-                                <div><h4 class="font-medium flex items-center"><i class="fa fa-question-circle text-primary mr-2"></i>如何取消或修改訂單？</h4><p class="text-gray-600 text-sm mt-1">請致電我們的店舖電話，提供您的訂單編號進行修改或取消。</p></div>
-                                <div><h4 class="font-medium flex items-center"><i class="fa fa-question-circle text-primary mr-2"></i>可以指定取餐時間嗎？</h4><p class="text-gray-600 text-sm mt-1">當然可以，訂購時請選擇您方便的取餐時間，我們會準時準備好。</p></div>
-                            </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm text-center">
+                        <h3 class="text-xl font-semibold mb-4">店舖資訊</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-center"><i class="fa fa-map-marker text-primary mt-1 mr-3"></i><p>臺北市信義區松壽路123號</p></div>
+                            <div class="flex items-center justify-center"><i class="fa fa-phone text-primary mt-1 mr-3"></i><p>02-1234-5678</p></div>
+                            <div class="flex items-center justify-center"><i class="fa fa-clock-o text-primary mt-1 mr-3"></i><p>營業時間: 10:00 - 22:00</p></div>
                         </div>
                     </div>
                 </div>
@@ -245,12 +233,12 @@
     <!-- Footer -->
     <footer class="bg-dark text-white py-8">
         <div class="container mx-auto px-4 text-center">
-            <div class="flex items-center justify-center space-x-2 mb-4">
+            <div class="flex items-center justify-center space-x-3 mb-4">
                 <i class="fa fa-cutlery text-primary"></i>
-                <h2 class="text-xl font-bold">台灣小吃店</h2>
+                <h2 class="text-xl font-bold">無名牛排</h2>
             </div>
-            <p class="text-gray-400 mb-4">道地台灣味，滿足您的味蕾</p>
-            <p class="text-gray-500 text-sm">© 2024 台灣小吃店 版權所有</p>
+            <p class="text-gray-400 mb-4">為您帶來最頂級的牛排饗宴</p>
+            <p class="text-gray-500 text-sm">© 2024 無名牛排 版權所有</p>
         </div>
     </footer>
 
@@ -262,9 +250,9 @@
                     <i class="fa fa-check text-2xl text-green-500"></i>
                 </div>
                 <h3 class="text-2xl font-bold mb-2">訂單提交成功！</h3>
-                <p class="text-gray-600 mb-4">您的訂單已順利提交，我們會盡快準備您的餐點</p>
+                <p class="text-gray-600 mb-4">您的訂單已順利提交。訂單確認訊息稍後將發送至您的LINE，請留意查收。</p>
                 <div class="bg-gray-50 p-4 rounded-lg mb-6">
-                    <p class="text-sm text-gray-500 mb-1">訂單編號 (參考用)</p>
+                    <p class="text-sm text-gray-500 mb-1">訂單編號</p>
                     <p id="modal-order-id" class="font-semibold text-lg"></p>
                 </div>
                 <button id="modal-close-button" class="w-full btn-primary">完成</button>
@@ -272,25 +260,15 @@
         </div>
     </div>
 
-
     <script>
     document.addEventListener('DOMContentLoaded', () => {
-        // --- CONSTANTS & STATE ---
+        // --- CONFIGURATION ---
         const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwq-f23BaguX9-ThylkeXY0sSVRDB2tzg_YfgBlC9nLE39ukT47BNFQtKZ94uvYdRZZmQ/exec';
         const LIFF_ID = '2008276630-bYNjwMx7';
-        const MENU_ITEMS = [
-            { id: 1, name: "滷肉飯", price: 35, emoji: "🍜" },
-            { id: 2, name: "雞肉飯", price: 40, emoji: "🍚" },
-            { id: 3, name: "蚵仔煎", price: 65, emoji: "🦪" },
-            { id: 4, name: "大腸麵線", price: 50, emoji: "🍲" },
-            { id: 5, name: "珍珠奶茶", price: 45, emoji: "🥤" },
-            { id: 6, name: "鹽酥雞", price: 60, emoji: "🍗" },
-            { id: 7, name: "甜不辣", price: 40, emoji: "🐟" },
-            { id: 8, name: "蚵仔酥", price: 70, emoji: "🦪" },
-            { id: 9, name: "肉圓", price: 45, emoji: "🥟" },
-            { id: 10, name: "碗粿", price: 35, emoji: "🍮" }
-        ];
-        let cart = []; // State for cart items
+        
+        // --- STATE ---
+        let MENU_ITEMS = [];
+        let cart = [];
 
         // --- DOM ELEMENTS ---
         const menuSelect = document.getElementById('menu-select');
@@ -301,12 +279,24 @@
         const submitButtonText = document.getElementById('submit-button-text');
         const formErrorEl = document.getElementById('form-error');
         const successModal = document.getElementById('success-modal');
-        const successModalContent = document.getElementById('success-modal-content');
         const modalOrderIdEl = document.getElementById('modal-order-id');
         const modalCloseButton = document.getElementById('modal-close-button');
         const navbar = document.getElementById('navbar');
         const mobileMenuButton = document.getElementById('mobile-menu-button');
         const mobileMenu = document.getElementById('mobile-menu');
+        
+        // --- HELPER FUNCTIONS ---
+        const getEmojiForItem = (item) => {
+            const name = item.name;
+            if (name.includes('牛排')) return '🥩';
+            if (name.includes('雞')) return '🍗';
+            if (name.includes('魚')) return '🐟';
+            if (name.includes('麵')) return '🍝';
+            if (name.includes('湯')) return '🥣';
+            if (name.includes('麵包')) return '🥖';
+            if (name.includes('紅茶')) return '🥤';
+            return '🍴';
+        };
 
         // --- RENDER FUNCTIONS ---
         const renderMenuDropdown = () => {
@@ -389,23 +379,14 @@
             try {
                 await liff.init({ liffId: LIFF_ID });
                 if (!liff.isLoggedIn()) {
-                    console.log("User not logged in to LINE. LIFF features disabled.");
+                    console.log("User not logged in to LINE.");
                     return;
                 }
                 const profile = await liff.getProfile();
                 
-                // Prefill form fields
-                const customerNameInput = document.getElementById('customerName');
-                const customerLineUserIdInput = document.getElementById('customerLineUserId');
-                
-                if (profile.displayName) {
-                    customerNameInput.value = profile.displayName;
-                }
-                if (profile.userId) {
-                    customerLineUserIdInput.value = profile.userId;
-                    customerLineUserIdInput.readOnly = true;
-                    customerLineUserIdInput.classList.add('bg-gray-100', 'cursor-not-allowed');
-                }
+                document.getElementById('customerName').value = profile.displayName || '';
+                document.getElementById('customerLineUserId').value = profile.userId || '';
+
             } catch (error) {
                 console.error('LIFF initialization failed', error);
                 showFormError('無法載入 LINE 會員資料');
@@ -416,7 +397,6 @@
         const showFormError = (message) => {
             formErrorEl.textContent = message;
             formErrorEl.classList.remove('hidden');
-            setTimeout(() => formErrorEl.classList.add('hidden'), 3000);
         };
 
         const setLoadingState = (isLoading) => {
@@ -436,24 +416,19 @@
         const showSuccessModal = (orderId) => {
             modalOrderIdEl.textContent = orderId;
             successModal.classList.remove('hidden');
-            setTimeout(() => {
-                successModalContent.classList.add('opacity-100', 'scale-100');
-            }, 10);
         };
         
         const hideSuccessModal = () => {
-            successModalContent.classList.remove('opacity-100', 'scale-100');
-            setTimeout(() => {
-                successModal.classList.add('hidden');
-            }, 300);
+            successModal.classList.add('hidden');
         };
         
         const setDefaultPickupTime = () => {
             const pickupTimeInput = document.getElementById('pickupTime');
             const now = new Date();
-            now.setMinutes(now.getMinutes() + 30);
+            now.setMinutes(now.getMinutes() + 30); // Default to 30 mins from now
             const localISOString = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
             pickupTimeInput.value = localISOString;
+            pickupTimeInput.min = localISOString;
         };
 
         // --- EVENT HANDLERS ---
@@ -462,7 +437,7 @@
             if (itemId) {
                 addToCart(itemId);
                 document.getElementById('order').scrollIntoView({ behavior: 'smooth', block: 'start' });
-                e.target.value = '';
+                e.target.value = ''; // Reset dropdown
             }
         });
 
@@ -470,16 +445,15 @@
             const addButton = e.target.closest('.cart-add-btn');
             const removeButton = e.target.closest('.cart-remove-btn');
             if (addButton) {
-                const itemId = parseInt(addButton.dataset.itemId, 10);
-                addToCart(itemId);
+                addToCart(parseInt(addButton.dataset.itemId, 10));
             } else if (removeButton) {
-                const itemId = parseInt(removeButton.dataset.itemId, 10);
-                removeFromCart(itemId);
+                removeFromCart(parseInt(removeButton.dataset.itemId, 10));
             }
         });
 
         orderForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            formErrorEl.classList.add('hidden');
             if (cart.length === 0) {
                 showFormError('請至少選擇一項餐點');
                 return;
@@ -491,11 +465,10 @@
             const payload = {
                 customerName: formData.get('customerName'),
                 customerPhone: formData.get('customerPhone'),
-                customerLineId: formData.get('customerLineId'),
                 customerLineUserId: formData.get('customerLineUserId'),
                 pickupTime: formData.get('pickupTime'),
                 notes: formData.get('notes'),
-                items: cart.map(({ id, name, price, quantity }) => ({ id, name, price, quantity })),
+                items: cart.map(({ id, quantity }) => ({ id, quantity })),
                 source: 'web'
             };
 
@@ -504,49 +477,35 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify(payload),
-                    redirect: 'follow'
                 });
-                if (!response.ok) throw new Error(`伺服器錯誤: ${response.status}`);
                 
                 const result = await response.json();
-                if (result.status === 'success') {
-                    let messageSent = false;
-                    if (liff && liff.isInClient() && liff.getContext()?.type !== 'none') {
-                        try {
-                            const totalAmountForMessage = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
-                            const itemsSummary = cart.map(item => `• ${item.name} x${item.quantity}`).join('\n');
-                            
-                            await liff.sendMessages([{
-                                type: 'text',
-                                text: `感謝您的訂購！✅\n\n您的訂單已成功送出：\n--------------------\n${itemsSummary}\n--------------------\n總金額: $${totalAmountForMessage}\n訂單編號: ${result.orderId}\n\n請依預約時間取餐，謝謝！`
-                            }]);
-                            messageSent = true;
-                        } catch (sendError) {
-                            console.error('Failed to send LIFF message:', sendError);
-                        }
-                    }
 
+                if (result.status === 'success' && result.orderId) {
+                    showSuccessModal(result.orderId);
                     cart = [];
                     renderCart();
                     orderForm.reset();
                     setDefaultPickupTime();
-
-                    if (messageSent) {
-                        liff.closeWindow();
-                    } else {
-                        showSuccessModal(result.orderId);
-                    }
+                    initializeLiff();
                 } else {
-                    throw new Error(result.message || '訂單提交失敗');
+                    throw new Error(result.message || '訂單提交失敗，請重試。');
                 }
+
             } catch (err) {
-                showFormError(err.message);
+                console.error('Fetch error:', err);
+                showFormError(err.message || '網路連線錯誤，請稍後再試。');
             } finally {
                 setLoadingState(false);
             }
         });
         
-        modalCloseButton.addEventListener('click', hideSuccessModal);
+        modalCloseButton.addEventListener('click', () => {
+            hideSuccessModal();
+            if (liff && liff.isInClient()) {
+                liff.closeWindow();
+            }
+        });
         
         window.addEventListener('scroll', () => {
             if (window.scrollY > 50) {
@@ -573,6 +532,27 @@
 
         // --- INITIALIZATION ---
         const main = async () => {
+            menuSelect.disabled = true;
+            menuSelect.innerHTML = `<option>菜單載入中...</option>`;
+            
+            try {
+                const response = await fetch(`${API_ENDPOINT}?action=getMenu`);
+                if (!response.ok) throw new Error(`Network response was not ok, status: ${response.status}`);
+                const result = await response.json();
+                if (result.success && Array.isArray(result.data)) {
+                    MENU_ITEMS = result.data.map(item => ({...item, emoji: getEmojiForItem(item)}));
+                } else {
+                    throw new Error(result.message || 'Failed to parse menu data.');
+                }
+            } catch (error) {
+                console.error('Failed to fetch menu:', error);
+                menuSelect.innerHTML = `<option>菜單載入失敗，請稍後重試</option>`;
+                showFormError('無法載入菜單，請重新整理頁面。');
+                return; // Stop initialization if menu fails to load
+            } finally {
+                 menuSelect.disabled = false;
+            }
+
             await initializeLiff();
             renderMenuDropdown();
             renderCart();
@@ -582,5 +562,6 @@
         main();
     });
     </script>
+<script type="module" src="/index.tsx"></script>
 </body>
 </html>
