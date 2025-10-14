@@ -427,7 +427,7 @@
         };
 
         const showSuccessModal = (displayId, hasLineId) => {
-            modalIdLabel.textContent = hasLineId ? '用戶ID (參考用)' : '訂單編號 (參考用)';
+            modalIdLabel.textContent = hasLineId ? '用戶ID (參考用)' : '手機號碼 (參考用)';
             modalOrderIdEl.textContent = displayId;
             successModal.classList.remove('hidden');
             // Timeout to allow display:flex to apply before starting animation
@@ -485,10 +485,11 @@
             const formData = new FormData(orderForm);
             const totalAmount = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
             const customerLineId = formData.get('customerLineId');
+            const customerPhone = formData.get('customerPhone');
             
             const payload = {
                 customerName: formData.get('customerName'),
-                customerPhone: formData.get('customerPhone'),
+                customerPhone: customerPhone,
                 customerLineId: customerLineId,
                 pickupTime: formData.get('pickupTime'),
                 notes: formData.get('notes'),
@@ -498,31 +499,30 @@
             };
 
             try {
-                const response = await fetch(API_ENDPOINT, {
+                await fetch(API_ENDPOINT, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify(payload),
-                    redirect: 'follow'
+                    mode: 'no-cors' // Use no-cors to avoid CORS issues with Google Scripts
                 });
-                if (!response.ok) throw new Error(`伺服器錯誤: ${response.status}`);
                 
-                const result = await response.json();
-                if (result.status === 'success') {
-                    const displayId = customerLineId || result.orderId;
-                    cart = [];
-                    renderCart();
-                    orderForm.reset();
-                    if(liffUserId) {
-                        const customerLineIdInput = document.getElementById('customerLineId');
-                        if (customerLineIdInput) customerLineIdInput.value = liffUserId;
-                    }
-                    setDefaultPickupTime();
-                    showSuccessModal(displayId, !!customerLineId);
-                } else {
-                    throw new Error(result.message || '訂單提交失敗');
+                // In no-cors mode, we can't read the response, so we assume success.
+                const displayId = customerLineId || customerPhone;
+                const hasLineId = !!customerLineId;
+
+                cart = [];
+                renderCart();
+                orderForm.reset();
+                if(liffUserId) {
+                    const customerLineIdInput = document.getElementById('customerLineId');
+                    if (customerLineIdInput) customerLineIdInput.value = liffUserId;
                 }
+                setDefaultPickupTime();
+                showSuccessModal(displayId, hasLineId);
+
             } catch (err) {
-                showFormError(err.message);
+                console.error("Fetch error:", err);
+                showFormError('訂單提交失敗，請檢查您的網路連線。');
             } finally {
                 setLoadingState(false);
             }
