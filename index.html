@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="zh-TW" class="scroll-smooth">
 <head>
@@ -469,30 +468,30 @@
             };
 
             try {
-                // Using 'no-cors' mode is a common workaround for simple POSTs to Google Apps Script.
-                // It prevents CORS errors but means we cannot read the response from the server.
-                // The backend is responsible for sending all notifications.
-                await fetch(API_ENDPOINT, {
+                const response = await fetch(API_ENDPOINT, {
                     method: 'POST',
-                    mode: 'no-cors', 
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // Use text/plain for 'no-cors'
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload),
                 });
 
-                // Since we can't read the real Order ID from the response, we generate a temporary one for display.
-                const tempOrderId = "WEB" + Date.now().toString().slice(-6);
-                showSuccessModal(tempOrderId);
+                const result = await response.json();
 
-                // Reset form state
-                cart = [];
-                renderCart();
-                orderForm.reset();
-                setDefaultPickupTime();
-                initializeLiff(); // Re-populate LIFF info
+                if (response.ok && result.status === 'success') {
+                    showSuccessModal(result.orderId);
+
+                    // Reset form state
+                    cart = [];
+                    renderCart();
+                    orderForm.reset();
+                    setDefaultPickupTime();
+                    initializeLiff(); // Re-populate LIFF info
+                } else {
+                    throw new Error(result.message || '訂單提交失敗，請檢查網路連線。');
+                }
 
             } catch (err) {
                 console.error('Fetch error:', err);
-                showFormError('網路連線錯誤，請稍後再試。');
+                showFormError(err.message);
             } finally {
                 setLoadingState(false);
             }
