@@ -1,23 +1,19 @@
 /**
  * LINE訂餐機器人系統 - 無名牛排 (雙階段綁定)
- * 版本：7.1.1
+ * 版本：7.2.0
  * 開發者：AI Assistant
- * 最後更新：2025/10/16
+ * 最後更新：2025/10/18
  * 功能：支持LINE follow事件捕獲用戶、訂單處理、LIFF訂餐
- * 修正：將模板字符串改為傳統字符串拼接，以提高在Google Apps Script環境中的兼容性，解決"Failed to fetch"問題。
+ * 修正：將CacheService的初始化移出全域範圍，改為在需要時於函數內部進行，以防止初始化失敗導致整個腳本無法執行，從而解決"Failed to fetch"問題。
  */
 
-/**
- * Declare Google Apps Script global variables to resolve "Cannot find name" errors in a TypeScript environment.
- * These declarations ensure compatibility with Google Apps Script's runtime.
- */
+// Fix: Declare Google Apps Script global variables to resolve "Cannot find name" errors in a TypeScript environment.
 declare var CacheService: any;
 declare var UrlFetchApp: any;
 declare var SpreadsheetApp: any;
 declare var ContentService: any;
 
 // ==================== 配置設定 ====================
-var SCRIPT_CACHE = CacheService.getScriptCache();
 var MENU_CACHE_KEY = 'menu_data';
 
 var CONFIG = {
@@ -28,8 +24,8 @@ var CONFIG = {
     openingHours: "10:00-22:00"
   },
   sheetId: "101phIlp8Eu9czR8rKnIBfv8c1wPVLftlva1eaAl3nCs", // Replace with your actual Google Sheet ID
-  lineToken: "hJ/VCrwaX67qCzgw0GL+pZ4gYduAYrnPV3D9UtwnaKNXnEVYGpefCO1Lu2chiXLGWf+vSyn35bwq2rm2srj96L3r8UCXluH2PA/VV/ldKSjZo7a0rPo/4whRWlERB/1MoDqYQXqx4y9oaRhFA6xFoAdB04t89/1O/w1cDnyilFU="
-  // Menu is fetched dynamically from the Google Sheet
+  lineToken: "hJ/VCrwaX67qCzgw0GL+pZ4gYduAYrnPV3D9UtwnaKNXnEVYGpefCO1Lu2chiXLGWf+vSyn35bwq2rm2srj96L3r8UCXluH2PA/VV/ldKSjZo7a0rPo/4whRWlERB/1MoDqYQXqx4y9oaRhFA6xFoAdB04t89/1O/w1cDnyilFU=",
+  // Menu is now fetched dynamically from the Google Sheet.
 };
 
 // ==================== 工具函數 ====================
@@ -55,7 +51,7 @@ function formatPhone(phone) {
 }
 
 function getMenuItemById(id) {
-  return getMenuItems().find(function(item) { return item.id === id; }) || null;
+  return getMenuItems().find(item => item.id === id) || null;
 }
 
 function validatePhone(phone) {
@@ -103,9 +99,9 @@ function getMenuItemsFromSheet() {
       var id = parseInt(row[0]);
       var name = row[1];
       var price = parseInt(row[2]);
-      var category = row[3] || "";
+      var category = row[3];
       if (!isNaN(id) && name && !isNaN(price)) {
-        menuItems.push({ id: id, name: name, price: price, category: category });
+        menuItems.push({ id: id, name: name, price: price, category: category || "" });
       }
     }
     return menuItems;
@@ -116,14 +112,27 @@ function getMenuItemsFromSheet() {
 }
 
 function getMenuItems() {
-  var cached = SCRIPT_CACHE.get(MENU_CACHE_KEY);
-  if (cached !== null) {
-    return JSON.parse(cached);
+  try {
+    var cache = CacheService.getScriptCache();
+    var cached = cache.get(MENU_CACHE_KEY);
+    if (cached != null) {
+      return JSON.parse(cached);
+    }
+  } catch (e) {
+    logMessage("Cache read error: " + e.message, "system");
   }
+
   var menu = getMenuItemsFromSheet();
-  SCRIPT_CACHE.put(MENU_CACHE_KEY, JSON.stringify(menu), 600); // Cache for 10 minutes
+  
+  try {
+    var cache = CacheService.getScriptCache();
+    cache.put(MENU_CACHE_KEY, JSON.stringify(menu), 600); // Cache for 10 minutes
+  } catch(e) {
+    logMessage("Cache write error: " + e.message, "system");
+  }
   return menu;
 }
+
 
 function getSheet(name) {
   try {
@@ -151,14 +160,14 @@ function getSheet(name) {
         var headerRange = sheet.getRange(1, 1, 1, 4);
         headerRange.setFontWeight("bold").setBackground("#f0f0f0");
         var initialMenu = [
-          { id: 1, name: "經典沙朗牛排", price: 250, category: "主餐" },
-          { id: 2, name: "特級菲力牛排", price: 320, category: "主餐" },
-          { id: 3, name: "香煎雞腿排", price: 220, category: "主餐" },
-          { id: 4, name: "酥炸鱈魚排", price: 230, category: "主餐" },
-          { id: 5, name: "鐵板麵套餐", price: 150, category: "主餐" },
-          { id: 6, name: "玉米濃湯", price: 40, category: "湯品" },
-          { id: 7, name: "香蒜麵包", price: 30, category: "副餐" },
-          { id: 8, name: "紅茶", price: 25, category: "飲料" }
+            { id: 1, name: "經典沙朗牛排", price: 250, category: "主餐" },
+            { id: 2, name: "特級菲力牛排", price: 320, category: "主餐" },
+            { id: 3, name: "香煎雞腿排", price: 220, category: "主餐" },
+            { id: 4, name: "酥炸鱈魚排", price: 230, category: "主餐" },
+            { id: 5, name: "鐵板麵套餐", price: 150, category: "主餐" },
+            { id: 6, name: "玉米濃湯", price: 40, category: "湯品" },
+            { id: 7, name: "香蒜麵包", price: 30, category: "副餐" },
+            { id: 8, name: "紅茶", price: 25, category: "飲料" }
         ];
         initialMenu.forEach(function(item) {
           sheet.appendRow([item.id, item.name, item.price, item.category]);
