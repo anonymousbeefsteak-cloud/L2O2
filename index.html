@@ -504,6 +504,29 @@
             color: #666;
         }
         
+        .liff-login-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #06C755, #06C755);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .liff-login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(6, 199, 85, 0.4);
+        }
+        
         @media (max-width: 576px) {
             body {
                 padding: 10px;
@@ -558,6 +581,11 @@
                 <p style="margin-top: 10px;">您的LINE資訊已自動填入表單中</p>
             </div>
             
+            <!-- LINE 登入按鈕 -->
+            <button class="liff-login-btn" id="liffLoginBtn" style="display: none;">
+                📱 使用 LINE 帳號登入
+            </button>
+            
             <!-- 取餐方式 -->
             <div class="form-group">
                 <label class="required">取餐方式</label>
@@ -605,7 +633,7 @@
             <div class="form-group">
                 <label for="customerLineId">LINE帳號 (選填)</label>
                 <input type="text" id="customerLineId" placeholder="請輸入您的LINE帳號或User ID">
-                <div class="line-info">輸入LINE帳號可接收訂單狀態通知（如何取得LINE User ID：打開LINE → 設定 → 個人檔案 → 用戶ID）</div>
+                <div class="line-info">輸入LINE帳號可接收訂單狀態通知</div>
             </div>
             
             <!-- 外送地址（僅外帶顯示） -->
@@ -705,11 +733,12 @@
     <div id="notification" class="notification"></div>
 
     <script>
-        // Web App URL
+        // Web App URL - 使用您提供的URL
         const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzKCu4Vd346AIKzbUiwpsTxjA85-2z92LWfrqWGPxiumY289M5khgKVgvlGK-VTNqSZ/exec';
         
-        // LINE LIFF ID - 請替換為您的LIFF ID
-        const LIFF_ID = '2000000000-XXXXXXXX'; // 請將此處替換為您的LIFF ID
+        // LINE LIFF ID - 請替換為您的實際LIFF ID
+        // 如果沒有LIFF ID，系統仍可正常運作，只是沒有LINE功能
+        const LIFF_ID = ''; // 請在此處填入您的LIFF ID
         
         // 菜單資料
         const menuItems = [
@@ -730,9 +759,17 @@
         
         // 初始化LIFF
         async function initializeLiff() {
+            // 如果沒有設定LIFF ID，跳過LIFF初始化
+            if (!LIFF_ID) {
+                console.log('未設定LIFF ID，跳過LINE功能初始化');
+                document.getElementById('liffLoginBtn').style.display = 'none';
+                return;
+            }
+            
             try {
                 await liff.init({ liffId: LIFF_ID });
                 liffInitialized = true;
+                console.log('LIFF初始化成功');
                 
                 // 檢查是否已登入
                 if (liff.isLoggedIn()) {
@@ -758,7 +795,9 @@
                     console.log('LINE用戶資料:', profile);
                 } else {
                     // 如果未登入，顯示登入按鈕
-                    showNotification('請先登入LINE帳號以使用完整功能', 'warning', 5000);
+                    document.getElementById('liffLoginBtn').style.display = 'block';
+                    document.getElementById('liffLoginBtn').addEventListener('click', loginToLine);
+                    console.log('用戶未登入，顯示登入按鈕');
                 }
                 
                 // 根據LIFF環境調整UI
@@ -769,7 +808,15 @@
                 
             } catch (error) {
                 console.error('LIFF初始化失敗:', error);
+                document.getElementById('liffLoginBtn').style.display = 'none';
                 showNotification('LINE功能載入失敗，但仍可正常訂餐', 'warning', 5000);
+            }
+        }
+        
+        // LINE 登入
+        function loginToLine() {
+            if (liffInitialized) {
+                liff.login();
             }
         }
         
@@ -1096,19 +1143,18 @@
                     deliveryAddress: document.getElementById('deliveryAddress').value,
                     paymentMethod: document.getElementById('paymentMethod').value,
                     orderNotes: document.getElementById('orderNotes').value,
-                    orderItems: orderItems,
+                    items: orderItems.map(item => `${item.name} x${item.quantity}`).join(', '),
                     subtotal: orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0),
                     shippingFee: currentOrderType === '外帶' ? 30 : 0,
-                    totalAmount: orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0) + (currentOrderType === '外帶' ? 30 : 0),
+                    total: orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0) + (currentOrderType === '外帶' ? 30 : 0),
                     timestamp: new Date().toISOString(),
-                    source: 'LINE LIFF'
+                    source: liffInitialized ? 'LINE LIFF' : 'Web'
                 };
                 
                 // 如果有LINE用戶資料，添加到訂單中
                 if (lineUserProfile) {
                     orderData.lineUserId = lineUserProfile.userId;
                     orderData.lineDisplayName = lineUserProfile.displayName;
-                    orderData.linePictureUrl = lineUserProfile.pictureUrl;
                 }
                 
                 console.log('訂單資料:', orderData);
@@ -1129,8 +1175,8 @@
                     // 重置表單
                     resetForm();
                     
-                    // 顯示分享按鈕
-                    if (liffInitialized && liff.isApiAvailable('shareTargetPicker')) {
+                    // 顯示分享按鈕（如果已登入LINE）
+                    if (liffInitialized && liff.isLoggedIn() && liff.isApiAvailable('shareTargetPicker')) {
                         document.getElementById('shareBtn').style.display = 'block';
                     }
                 } else {
@@ -1183,10 +1229,14 @@
         
         // 重置表單
         function resetForm() {
-            // 重置表單欄位
-            document.getElementById('customerName').value = lineUserProfile ? lineUserProfile.displayName : '';
+            // 重置表單欄位（保留LINE用戶資訊）
+            if (!lineUserProfile) {
+                document.getElementById('customerName').value = '';
+            }
             document.getElementById('customerPhone').value = '';
-            document.getElementById('customerLineId').value = lineUserProfile ? lineUserProfile.userId : '';
+            if (!lineUserProfile) {
+                document.getElementById('customerLineId').value = '';
+            }
             document.getElementById('deliveryAddress').value = '';
             document.getElementById('pickupTime').value = '';
             document.getElementById('paymentMethod').value = '';
