@@ -271,6 +271,15 @@
             color: var(--gray);
             display: none;
         }
+
+        .line-user-info {
+            background: #E3F2FD;
+            padding: 8px;
+            border-radius: 5px;
+            margin-top: 5px;
+            font-size: 11px;
+            color: #1976D2;
+        }
     </style>
 </head>
 <body>
@@ -284,6 +293,11 @@
             <!-- LINE 用戶資訊 -->
             <div class="user-info" id="userInfo">
                 🔄 載入 LINE 資訊中...
+            </div>
+
+            <!-- LINE User ID 顯示 -->
+            <div class="line-user-info" id="lineUserInfo" style="display: none;">
+                📱 LINE User ID: <span id="lineUserIdDisplay"></span>
             </div>
             
             <!-- 顧客資訊 -->
@@ -381,7 +395,7 @@
     <div class="notification" id="notification"></div>
 
     <script>
-        // 系統配置 - 使用您提供的網址
+        // 系統配置
         const CONFIG = {
             LIFF_ID: '2008289130-9XPR8Kpj',
             API_ENDPOINT: 'https://script.google.com/macros/s/AKfycbxx9vKha_MlKheBt44PR0Aldt43VkaT7HW0Mho04FXVBV0zAtJOJ9ni0kGnlhGUrymM/exec'
@@ -413,25 +427,44 @@
         
         let cart = [];
         let userProfile = null;
+        let lineUserId = '';
         
         // 初始化 LIFF
         async function initializeLiff() {
             try {
+                console.log('開始初始化 LIFF...');
                 await liff.init({ liffId: CONFIG.LIFF_ID });
+                console.log('LIFF 初始化成功');
                 
                 if (liff.isLoggedIn()) {
+                    console.log('用戶已登入，獲取用戶資料...');
                     userProfile = await liff.getProfile();
+                    lineUserId = userProfile.userId;
+                    
+                    console.log('獲取到的用戶資料:', {
+                        displayName: userProfile.displayName,
+                        userId: userProfile.userId,
+                        pictureUrl: userProfile.pictureUrl
+                    });
+                    
+                    // 更新介面顯示
                     document.getElementById('customerName').value = userProfile.displayName;
-                    document.getElementById('userInfo').innerHTML = 
-                        `👋 歡迎，${userProfile.displayName}`;
+                    document.getElementById('userInfo').innerHTML = `👋 歡迎，${userProfile.displayName}`;
+                    
+                    // 顯示 LINE User ID
+                    document.getElementById('lineUserInfo').style.display = 'block';
+                    document.getElementById('lineUserIdDisplay').textContent = lineUserId;
+                    
+                    console.log('LINE User ID 已設定:', lineUserId);
+                    
                 } else {
-                    document.getElementById('userInfo').innerHTML = 
-                        `⚠️ 請在 LINE 中開啟以獲得最佳體驗`;
+                    console.log('用戶未登入，要求登入...');
+                    document.getElementById('userInfo').innerHTML = `⚠️ 請登入 LINE 以使用完整功能`;
+                    liff.login();
                 }
             } catch (error) {
                 console.error('LIFF 初始化失敗:', error);
-                document.getElementById('userInfo').innerHTML = 
-                    `⚠️ LINE 功能載入失敗`;
+                document.getElementById('userInfo').innerHTML = `⚠️ LINE 功能載入失敗: ${error.message}`;
             }
         }
         
@@ -597,22 +630,6 @@
                 submitBtn.style.display = 'block';
             }
         }
-
-        // 測試後端連線
-        async function testBackendConnection() {
-            try {
-                console.log('測試後端連線...');
-                const response = await fetch(CONFIG.API_ENDPOINT, {
-                    method: 'GET',
-                    mode: 'no-cors' // 嘗試 no-cors 模式
-                });
-                console.log('連線測試回應:', response);
-                return true;
-            } catch (error) {
-                console.error('後端連線測試失敗:', error);
-                return false;
-            }
-        }
         
         // 提交訂單
         async function submitOrder() {
@@ -628,12 +645,13 @@
             const deliveryAddress = document.getElementById('deliveryAddress').value.trim();
             const notes = document.getElementById('notes').value.trim();
             
+            // 準備訂單資料 - 確保包含 LINE User ID
             const orderData = {
                 action: 'createOrder',
                 orderData: {
                     customerName: customerName,
                     customerPhone: customerPhone,
-                    customerLineUserId: userProfile ? userProfile.userId : '',
+                    customerLineUserId: lineUserId, // 這裡使用正確的 lineUserId
                     pickupTime: pickupTime,
                     deliveryAddress: deliveryAddress,
                     notes: notes,
@@ -642,15 +660,16 @@
                 }
             };
             
-            console.log('發送訂單資料:', orderData);
+            console.log('準備發送的訂單資料:', JSON.stringify(orderData, null, 2));
+            console.log('LINE User ID:', lineUserId);
+            
             setLoading(true);
             
             try {
-                // 使用 text/plain 來避免 CORS 預檢請求
                 const response = await fetch(CONFIG.API_ENDPOINT, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'text/plain', // 改用 text/plain
+                        'Content-Type': 'application/json',
                     },
                     body: JSON.stringify(orderData)
                 });
@@ -663,7 +682,16 @@
                 console.log('伺服器回應:', result);
                 
                 if (result.success) {
-                    showNotification(`✅ 訂單成功！\n訂單編號: ${result.data.orderId}\n總金額: $${result.data.orderData.totalAmount}`, 5000);
+                    let successMessage = `✅ 訂單成功！\n訂單編號: ${result.data.orderId}\n總金額: $${result.data.orderData.totalAmount}`;
+                    
+                    // 根據是否有 LINE User ID 顯示不同訊息
+                    if (lineUserId) {
+                        successMessage += `\n📱 LINE通知已發送`;
+                    } else {
+                        successMessage += `\n⚠️ 未發送LINE通知 (缺少用戶ID)`;
+                    }
+                    
+                    showNotification(successMessage, 5000);
                     resetOrder();
                 } else {
                     throw new Error(result.message || '訂單發送失敗');
@@ -678,6 +706,7 @@
                 document.getElementById('debugInfo').innerHTML = `
                     <strong>除錯資訊:</strong><br>
                     錯誤: ${error.message}<br>
+                    LINE User ID: ${lineUserId || '未取得'}<br>
                     網址: ${CONFIG.API_ENDPOINT}<br>
                     時間: ${new Date().toLocaleString()}
                 `;
@@ -764,15 +793,11 @@
         
         // 頁面載入初始化
         document.addEventListener('DOMContentLoaded', async function() {
+            console.log('頁面載入完成，開始初始化...');
             await initializeLiff();
             setDefaultPickupTime();
             initializeEventListeners();
-            
-            // 測試後端連線
-            const isConnected = await testBackendConnection();
-            if (!isConnected) {
-                showNotification('⚠️ 後端服務連線異常，請檢查網址設定', 5000, true);
-            }
+            console.log('初始化完成');
         });
     </script>
 </body>
