@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>台灣小吃店 - 線上訂餐</title>
+    <title>台灣小吃店 - 訂餐</title>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
+        /* 保持原有 CSS 樣式不變 */
         * {
             margin: 0;
             padding: 0;
@@ -252,6 +254,15 @@
             100% { transform: rotate(360deg); }
         }
         
+        .user-info {
+            background: rgba(255,255,255,0.2);
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+        
         .section-title {
             font-size: 1.1rem;
             font-weight: 700;
@@ -276,28 +287,15 @@
             display: block;
         }
 
-        .line-id-info {
+        .line-user-info {
             background: #E3F2FD;
-            padding: 12px;
+            padding: 10px;
             border-radius: 8px;
             margin-top: 8px;
-            font-size: 0.85rem;
-            color: #1976D2;
-        }
-
-        .line-id-info p {
-            margin-bottom: 8px;
-            font-weight: 600;
-        }
-
-        .line-id-info ul {
-            padding-left: 20px;
-            margin-bottom: 8px;
-        }
-
-        .line-id-info li {
-            margin-bottom: 4px;
             font-size: 0.8rem;
+            color: #1976D2;
+            text-align: center;
+            word-break: break-all;
         }
 
         @media (max-width: 360px) {
@@ -325,38 +323,31 @@
     <div class="container">
         <div class="header">
             <h1>🍜 台灣小吃店</h1>
-            <p>線上訂餐系統</p>
+            <p>快速訂餐</p>
         </div>
         
         <div class="order-form">
-            <!-- LINE User ID 說明 -->
-            <div class="line-id-info">
-                <p>📱 LINE User ID 填寫說明</p>
-                <ul>
-                    <li>在 LINE App 中點擊「設定」→「個人檔案」</li>
-                    <li>找到「用戶ID」並複製貼到下方欄位</li>
-                    <li>填寫後可接收訂單狀態通知</li>
-                </ul>
+            <!-- LINE 用戶資訊 -->
+            <div class="user-info" id="userInfo">
+                <div>🔄 載入 LINE 資訊中...</div>
+            </div>
+
+            <!-- LINE User ID 顯示 (綁定欄位) -->
+            <div class="form-group">
+                <label>🆔 LINE 用戶識別碼</label>
+                <input type="text" id="lineUserId" placeholder="自動帶入 LINE User ID" readonly>
             </div>
             
             <!-- 顧客資訊 -->
             <div class="form-group">
                 <label>👤 姓名</label>
-                <input type="text" id="customerName" placeholder="請輸入您的姓名" required>
+                <input type="text" id="customerName" placeholder="自動帶入 LINE 名稱">
             </div>
             
             <div class="form-group" id="phoneGroup">
                 <label>📞 手機號碼</label>
                 <input type="tel" id="customerPhone" placeholder="0912345678" inputmode="tel" required>
                 <div class="error-message" id="phoneError">請輸入正確的手機號碼 (09開頭，10位數字)</div>
-            </div>
-
-            <div class="form-group">
-                <label>🆔 LINE User ID</label>
-                <input type="text" id="customerLineUserId" placeholder="請輸入您的 LINE User ID (選填)">
-                <div style="font-size: 0.8rem; color: var(--gray); margin-top: 4px;">
-                    填寫後可接收訂單通知
-                </div>
             </div>
             
             <!-- 取餐時間 -->
@@ -442,7 +433,8 @@
     <script>
         // 系統配置
         const CONFIG = {
-            API_ENDPOINT: 'https://script.google.com/macros/s/AKfycbzKCu4Vd346AIKzbUiwpsTxjA85-2z92LWfrqWGPxiumY289M5khgKVgvlGK-VTNqSZ/exec'
+            LIFF_ID: '2008289130-9XPR8Kpj', // 請替換為您的 LIFF ID
+            API_ENDPOINT: 'https://script.google.com/macros/s/AKfycbzKCu4Vd346AIKzbUiwpsTxjA85-2z92LWfrqWGPxiumY289M5khgKVgvlGK-VTNqSZ/exec' // 請替換為您的 Google Apps Script 部署 URL
         };
         
         // 菜單價格
@@ -470,6 +462,66 @@
         };
         
         let cart = [];
+        let userProfile = null;
+        let lineUserId = ''; // 用來儲存 LINE User ID
+
+        // 初始化 LIFF
+        async function initializeLiff() {
+            try {
+                console.log('開始初始化 LIFF...');
+                
+                await liff.init({ 
+                    liffId: CONFIG.LIFF_ID 
+                });
+                
+                console.log('LIFF 初始化成功');
+                
+                if (liff.isLoggedIn()) {
+                    console.log('用戶已登入，獲取用戶資料...');
+                    await loadUserProfile();
+                } else {
+                    console.log('用戶未登入。');
+                    // 如果不是在 LIFF 環境中，這裡不會自動跳轉登入
+                    // 為了測試，可以選擇性地在此處添加 liff.login()，但正式環境通常由 LINE 應用程式處理
+                    document.getElementById('userInfo').innerHTML = '⚠️ 請在 LINE 應用程式中開啟此頁面以獲取 LINE 資訊';
+                    document.getElementById('lineUserId').value = '未獲取';
+                }
+                
+            } catch (error) {
+                console.error('LIFF 初始化失敗:', error);
+                showNotification('LINE 功能載入失敗', 5000, 'error');
+                document.getElementById('userInfo').innerHTML = '⚠️ LINE 功能載入失敗';
+                document.getElementById('lineUserId').value = '載入失敗';
+            }
+        }
+        
+        // 載入用戶資料
+        async function loadUserProfile() {
+            try {
+                userProfile = await liff.getProfile();
+                lineUserId = userProfile.userId;
+                
+                console.log('獲取到的用戶資料:', {
+                    displayName: userProfile.displayName,
+                    userId: userProfile.userId
+                });
+                
+                // 更新介面顯示
+                document.getElementById('customerName').value = userProfile.displayName;
+                document.getElementById('userInfo').innerHTML = `👋 歡迎，${userProfile.displayName}`;
+                
+                // 綁定 LINE User ID 到欄位
+                document.getElementById('lineUserId').value = lineUserId;
+                
+                console.log('LINE User ID 已設定並綁定到欄位:', lineUserId);
+                
+            } catch (error) {
+                console.error('獲取用戶資料失敗:', error);
+                showNotification('無法獲取用戶資料', 3000, 'error');
+                document.getElementById('userInfo').innerHTML = '⚠️ 無法獲取 LINE 資訊';
+                document.getElementById('lineUserId').value = '獲取失敗';
+            }
+        }
         
         // 添加到購物車
         function addToCart() {
@@ -564,7 +616,7 @@
             });
             
             const deliveryAddress = document.getElementById('deliveryAddress').value.trim();
-            const deliveryFee = deliveryAddress ? 30 : 0;
+            const deliveryFee = deliveryAddress ? 30 : 0; // 外送費邏輯不變
             const total = subtotal + deliveryFee;
             
             document.getElementById('subtotal').textContent = `$${subtotal}`;
@@ -585,13 +637,6 @@
         // 驗證表單
         function validateForm() {
             let isValid = true;
-            
-            // 驗證姓名
-            const name = document.getElementById('customerName').value.trim();
-            if (!name) {
-                showNotification('請輸入姓名', 3000, 'error');
-                isValid = false;
-            }
             
             // 驗證手機號碼
             const phone = document.getElementById('customerPhone').value.trim();
@@ -656,7 +701,6 @@
             
             const customerName = document.getElementById('customerName').value.trim();
             const customerPhone = document.getElementById('customerPhone').value.trim();
-            const customerLineUserId = document.getElementById('customerLineUserId').value.trim();
             const pickupTime = document.getElementById('pickupTime').value;
             const deliveryAddress = document.getElementById('deliveryAddress').value.trim();
             const notes = document.getElementById('notes').value.trim();
@@ -666,7 +710,7 @@
                 orderData: {
                     customerName: customerName,
                     customerPhone: customerPhone,
-                    customerLineUserId: customerLineUserId,
+                    customerLineUserId: lineUserId, // 使用綁定的 LINE User ID
                     pickupTime: pickupTime,
                     deliveryAddress: deliveryAddress,
                     notes: notes,
@@ -697,9 +741,7 @@
                 if (result.success) {
                     let successMessage = `✅ 訂單成功！\n訂單編號: ${result.data.orderId}\n總金額: $${result.data.orderData.totalAmount}`;
                     
-                    if (customerLineUserId) {
-                        successMessage += `\n📱 LINE通知已發送`;
-                    }
+                    // 這裡不再發送 LINE 通知，因為移除了相關邏輯
                     
                     showNotification(successMessage, 6000);
                     resetOrder();
@@ -732,9 +774,7 @@
         function resetOrder() {
             cart = [];
             renderCart();
-            document.getElementById('customerName').value = '';
             document.getElementById('customerPhone').value = '';
-            document.getElementById('customerLineUserId').value = '';
             document.getElementById('deliveryAddress').value = '';
             document.getElementById('notes').value = '';
             document.getElementById('phoneGroup').classList.remove('error');
@@ -782,10 +822,11 @@
         }
         
         // 頁面載入初始化
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             console.log('頁面載入完成，開始初始化...');
             setDefaultPickupTime();
             initializeEventListeners();
+            await initializeLiff(); // 仍然初始化 LIFF 以獲取用戶資料
             console.log('初始化完成');
         });
     </script>
