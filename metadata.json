@@ -1,5 +1,5 @@
 {
-  "name": "Copy of Taiwanese Snack Shop Online Orderingokkk",
-  "description": "A web application for ordering delicious Taiwanese snacks online for quick pickup. Users can browse the menu, add items to their cart, and submit their order with their contact information and preferred pickup time.",
+  "name": "台灣小吃店 - 線上訂餐系統",
+  "description": "一個使用 React 和 LIFF 建立的台灣小吃店線上訂餐系統，讓顧客可以快速方便地預訂餐點。",
   "requestFramePermissions": []
 }
