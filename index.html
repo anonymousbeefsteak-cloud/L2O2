@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>美食訂餐系統</title>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
         * {
             margin: 0;
@@ -451,6 +452,26 @@
             color: var(--gray);
             margin-top: 5px;
         }
+
+        .line-user-info {
+            background: #E3F2FD;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #1976D2;
+            text-align: center;
+        }
+
+        .debug-info {
+            background: var(--light);
+            padding: 10px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-size: 13px;
+            color: var(--gray);
+            display: none;
+        }
         
         @media (max-width: 576px) {
             body {
@@ -493,6 +514,9 @@
         </div>
         
         <div class="order-form">
+            <!-- LINE 用戶資訊 -->
+            <div class="line-user-info" id="lineUserInfo">🔄 載入 LINE 資訊中...</div>
+
             <!-- 取餐方式 -->
             <div class="form-group">
                 <label class="required">取餐方式</label>
@@ -532,16 +556,12 @@
             
             <div class="form-group">
                 <label for="customerPhone" class="required">聯絡電話</label>
-                <input type="tel" id="customerPhone" placeholder="請輸入您的電話" required>
-                <div class="error-message">請輸入有效的電話號碼</div>
+                <input type="tel" id="customerPhone" placeholder="請輸入您的電話" pattern="09[0-9]{8}" required>
+                <div class="error-message">請輸入有效的電話號碼 (09開頭，10位數字)</div>
             </div>
             
-            <!-- 添加LINE帳號輸入框 -->
-            <div class="form-group">
-                <label for="customerLineId">LINE帳號 (選填)</label>
-                <input type="text" id="customerLineId" placeholder="請輸入您的LINE帳號或User ID">
-                <div class="line-info">輸入LINE帳號可接收訂單狀態通知（如何取得LINE User ID：打開LINE → 設定 → 個人檔案 → 用戶ID）</div>
-            </div>
+            <!-- LINE User ID（隱藏，自動填入） -->
+            <input type="hidden" id="customerLineId">
             
             <!-- 外送地址（僅外帶顯示） -->
             <div class="form-group delivery-address-group show" id="deliveryAddressGroup">
@@ -590,7 +610,7 @@
                     </div>
                 </div>
                 
-                <div id="emptyCartMessage" class="empty-cart" style="display: none;">
+                <div id="emptyCartMessage" class="empty-cart">
                     尚未選擇任何餐點
                 </div>
             </div>
@@ -628,6 +648,9 @@
             <button class="submit-btn" onclick="submitOrder()" id="submitBtn">
                 🚀 送出訂單
             </button>
+
+            <!-- 除錯資訊 -->
+            <div class="debug-info" id="debugInfo"></div>
         </div>
     </div>
     
@@ -635,8 +658,11 @@
     <div id="notification" class="notification"></div>
 
     <script>
-        // Web App URL
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxx9vKha_MlKheBt44PR0Aldt43VkaT7HW0Mho04FXVBV0zAtJOJ9ni0kGnlhGUrymM/exec';
+        // 系統配置
+        const CONFIG = {
+            LIFF_ID: '2008289130-9XPR8Kpj', // Replace with your LIFF ID
+            WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbxx9vKha_MlKheBt44PR0Aldt43VkaT7HW0Mho04FXVBV0zAtJOJ9ni0kGnlhGUrymM/exec'
+        };
         
         // 菜單資料
         const menuItems = [
@@ -652,9 +678,57 @@
         
         let orderItems = [];
         let currentOrderType = '外帶';
+        let userProfile = null;
+        let lineUserId = '';
+
+        // 初始化 LIFF
+        async function initializeLiff() {
+            try {
+                console.log('Starting LIFF initialization...');
+                await liff.init({ liffId: CONFIG.LIFF_ID });
+                console.log('LIFF initialized successfully');
+
+                if (!liff.isInClient()) {
+                    console.warn('Not running in LINE client.');
+                    document.getElementById('lineUserInfo').innerHTML = `⚠️ 請在 LINE 應用程式中開啟此頁面`;
+                    return;
+                }
+
+                if (liff.isLoggedIn()) {
+                    console.log('User is logged in, fetching profile...');
+                    userProfile = await liff.getProfile();
+                    lineUserId = userProfile.userId;
+
+                    console.log('User profile:', {
+                        displayName: userProfile.displayName,
+                        userId: userProfile.userId,
+                        pictureUrl: userProfile.pictureUrl
+                    });
+
+                    document.getElementById('customerName').value = userProfile.displayName;
+                    document.getElementById('customerLineId').value = userProfile.userId;
+                    document.getElementById('lineUserInfo').innerHTML = `👋 歡迎，${userProfile.displayName} (LINE ID: ${userProfile.userId})`;
+                } else {
+                    console.log('User not logged in, prompting login...');
+                    document.getElementById('lineUserInfo').innerHTML = `⚠️ 請登入 LINE 以使用完整功能`;
+                    liff.login({ redirectUri: window.location.href });
+                }
+            } catch (error) {
+                console.error('LIFF initialization failed:', error);
+                document.getElementById('lineUserInfo').innerHTML = `⚠️ LINE 功能載入失敗: ${error.message}`;
+                document.getElementById('debugInfo').style.display = 'block';
+                document.getElementById('debugInfo').innerHTML = `
+                    <strong>除錯資訊:</strong><br>
+                    錯誤: ${error.message}<br>
+                    LIFF ID: ${CONFIG.LIFF_ID}<br>
+                    時間: ${new Date().toLocaleString()}
+                `;
+            }
+        }
         
         // 初始化
-        function init() {
+        async function init() {
+            await initializeLiff();
             setDefaultDates();
             updateOrderSummary();
             setupEventListeners();
@@ -670,22 +744,21 @@
         
         // 設定事件監聽
         function setupEventListeners() {
-            // 表單驗證
             document.getElementById('customerPhone').addEventListener('blur', validatePhone);
             document.getElementById('customerName').addEventListener('blur', validateName);
             document.getElementById('deliveryAddress').addEventListener('blur', validateAddress);
             document.getElementById('pickupTime').addEventListener('blur', validatePickupTime);
             document.getElementById('paymentMethod').addEventListener('change', validatePaymentMethod);
+            document.getElementById('deliveryAddress').addEventListener('input', updateOrderSummary);
         }
         
         // 驗證電話
         function validatePhone() {
             const phone = document.getElementById('customerPhone').value.trim();
-            const phoneRegex = /^[0-9]{10}$/;
+            const phoneRegex = /^09[0-9]{8}$/;
             const isValid = phoneRegex.test(phone);
             
             toggleFieldError('customerPhone', !isValid && phone !== '');
-            
             return isValid || phone === '';
         }
         
@@ -694,8 +767,7 @@
             const name = document.getElementById('customerName').value.trim();
             const isValid = name.length > 0;
             
-            toggleFieldError('customerName', !isValid && name !== '');
-            
+            toggleFieldError('customerName', !isValid);
             return isValid;
         }
         
@@ -706,8 +778,7 @@
             const address = document.getElementById('deliveryAddress').value.trim();
             const isValid = address.length > 0;
             
-            toggleFieldError('deliveryAddress', !isValid && address !== '');
-            
+            toggleFieldError('deliveryAddress', !isValid);
             return isValid;
         }
         
@@ -717,7 +788,6 @@
             const isValid = time.length > 0;
             
             toggleFieldError('pickupTime', !isValid);
-            
             return isValid;
         }
         
@@ -727,7 +797,6 @@
             const isValid = method !== '';
             
             toggleFieldError('paymentMethod', !isValid);
-            
             return isValid;
         }
         
@@ -747,14 +816,12 @@
         function selectOrderType(type) {
             currentOrderType = type;
             
-            // 更新按鈕狀態
             document.querySelectorAll('.order-type-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
             event.target.classList.add('active');
             document.getElementById('orderType').value = type;
             
-            // 顯示/隱藏外送地址
             const addressGroup = document.getElementById('deliveryAddressGroup');
             if (type === '外帶') {
                 addressGroup.classList.add('show');
@@ -779,7 +846,6 @@
             const menuItem = menuItems.find(item => item.id === itemId);
             
             if (menuItem) {
-                // 檢查是否已經存在
                 const existingItem = orderItems.find(item => item.id === itemId);
                 
                 if (existingItem) {
@@ -795,10 +861,7 @@
                 updateOrderSummary();
                 updateEmptyCartMessage();
                 
-                // 重置下拉選單
                 menuSelect.value = '';
-                
-                // 顯示成功訊息
                 showNotification(`已添加 ${menuItem.name}`, 'success', 2000);
             }
         }
@@ -814,12 +877,8 @@
             }
             
             container.style.display = 'block';
-            list.innerHTML = '';
-            
-            orderItems.forEach(item => {
-                const itemElement = document.createElement('div');
-                itemElement.className = 'selected-item';
-                itemElement.innerHTML = `
+            list.innerHTML = orderItems.map(item => `
+                <div class="selected-item">
                     <div class="menu-item-info">
                         <div class="menu-item-name">${item.image} ${item.name}</div>
                         <div class="menu-item-price">$${item.price} x ${item.quantity} = $${item.price * item.quantity}</div>
@@ -830,9 +889,8 @@
                         <button class="quantity-btn" onclick="increaseQuantity(${item.id})">+</button>
                         <button class="remove-btn" onclick="removeItem(${item.id})">×</button>
                     </div>
-                `;
-                list.appendChild(itemElement);
-            });
+                </div>
+            `).join('');
         }
         
         // 更新購物車為空訊息
@@ -882,8 +940,6 @@
                 renderSelectedItems();
                 updateOrderSummary();
                 updateEmptyCartMessage();
-                
-                // 顯示移除訊息
                 showNotification(`已移除 ${itemName}`, 'warning', 2000);
             }
         }
@@ -946,18 +1002,16 @@
                 return false;
             }
             
-            return isNameValid && isPhoneValid && isAddressValid && isTimeValid && isPaymentValid && hasItems;
+            return isNameValid && isPhoneValid && isAddressValid && isTimeValid && isPaymentValid;
         }
         
         // 提交訂單
         async function submitOrder() {
-            // 驗證表單
             if (!validateForm()) {
                 showNotification('請檢查表單中的錯誤', 'error');
                 return;
             }
             
-            // 收集表單資料
             const orderDate = document.getElementById('orderDate').value;
             const pickupDate = document.getElementById('pickupDate').value;
             const pickupTime = document.getElementById('pickupTime').value.trim();
@@ -969,50 +1023,55 @@
             const paymentMethod = document.getElementById('paymentMethod').value;
             const orderNotes = document.getElementById('orderNotes').value.trim();
             
-            // 準備訂單資料
             const subtotal = orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
             const shippingFee = orderType === '外帶' ? 30 : 0;
             const total = subtotal + shippingFee;
             
             const orderData = {
-                orderTime: new Date().toLocaleString('zh-TW'),
-                orderNumber: 'ORD-' + Date.now(),
-                orderDate: orderDate,
-                pickupDate: pickupDate,
-                pickupTime: pickupTime,
-                orderType: orderType,
-                customerName: customerName,
-                customerPhone: customerPhone,
-                customerLineId: customerLineId,
-                deliveryAddress: orderType === '外帶' ? deliveryAddress : '自取',
-                paymentMethod: paymentMethod,
-                orderNotes: orderNotes,
-                items: orderItems.map(item => `${item.name} x${item.quantity}`).join(', '),
-                subtotal: subtotal,
-                shippingFee: shippingFee,
-                total: total
+                action: 'createOrder',
+                orderData: {
+                    orderTime: new Date().toLocaleString('zh-TW'),
+                    orderNumber: 'ORD-' + Date.now(),
+                    orderDate: orderDate,
+                    pickupDate: pickupDate,
+                    pickupTime: pickupTime,
+                    orderType: orderType,
+                    customerName: customerName,
+                    customerPhone: customerPhone,
+                    customerLineId: customerLineId,
+                    deliveryAddress: orderType === '外帶' ? deliveryAddress : '自取',
+                    paymentMethod: paymentMethod,
+                    orderNotes: orderNotes,
+                    items: orderItems,
+                    subtotal: subtotal,
+                    shippingFee: shippingFee,
+                    total: total
+                }
             };
             
-            console.log('發送訂單:', orderData);
+            console.log('Sending order:', orderData);
             
             setLoading(true);
             
             try {
-                const encodedData = encodeURIComponent(JSON.stringify(orderData));
-                const url = `${WEB_APP_URL}?orderData=${encodedData}`;
-                
-                const response = await fetch(url);
+                const response = await fetch(CONFIG.WEB_APP_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(orderData)
+                });
+
+                if (response.status < 200 || response.status >= 400) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
                 const result = await response.json();
-                
-                console.log('伺服器回應:', result);
+                console.log('Server response:', result);
                 
                 if (result.status === 'success') {
                     let notificationMessage = `✅ 訂單成功！\n訂單編號: ${orderData.orderNumber}\n取餐時間: ${orderData.pickupTime}\n總金額: $${total}`;
-                    
                     if (customerLineId) {
                         notificationMessage += `\n📱 LINE通知已發送`;
                     }
-                    
                     if (result.spreadsheetUrl) {
                         notificationMessage += `\n📊 訂單已記錄到Google Sheet`;
                     }
@@ -1024,8 +1083,16 @@
                 }
                 
             } catch (error) {
-                console.error('錯誤:', error);
+                console.error('Error:', error);
                 showNotification(`❌ 發送失敗: ${error.message}`, 'error');
+                document.getElementById('debugInfo').style.display = 'block';
+                document.getElementById('debugInfo').innerHTML = `
+                    <strong>除錯資訊:</strong><br>
+                    錯誤: ${error.message}<br>
+                    LINE User ID: ${lineUserId || '未取得'}<br>
+                    網址: ${CONFIG.WEB_APP_URL}<br>
+                    時間: ${new Date().toLocaleString()}
+                `;
             } finally {
                 setLoading(false);
             }
@@ -1033,16 +1100,15 @@
         
         // 重置表單
         function resetForm() {
-            document.getElementById('customerName').value = '';
+            document.getElementById('customerName').value = userProfile ? userProfile.displayName : '';
             document.getElementById('customerPhone').value = '';
-            document.getElementById('customerLineId').value = '';
+            document.getElementById('customerLineId').value = userProfile ? userProfile.userId : '';
             document.getElementById('deliveryAddress').value = '';
             document.getElementById('paymentMethod').value = '';
             document.getElementById('orderNotes').value = '';
             document.getElementById('pickupTime').value = '';
             document.getElementById('menuSelect').value = '';
             
-            // 清除錯誤狀態
             document.querySelectorAll('.form-group').forEach(group => {
                 group.classList.remove('error');
             });
