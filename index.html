@@ -278,6 +278,17 @@
             text-align: center;
             border: 1px solid #2196F3;
         }
+        
+        .line-id-display {
+            background: #F3E5F5;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-size: 11px;
+            word-break: break-all;
+            border: 1px solid #9C27B0;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -296,6 +307,11 @@
             <!-- LINE 用戶資訊 -->
             <div class="user-info" id="userInfo" style="display: none;">
                 ✅ LINE 帳號已綁定
+            </div>
+            
+            <!-- LINE User ID 顯示 -->
+            <div class="line-id-display" id="lineIdDisplay">
+                <strong>LINE User ID:</strong> <span id="lineUserId"></span>
             </div>
             
             <!-- 顧客資訊 -->
@@ -392,7 +408,7 @@
     <script>
         // 系統配置
         const CONFIG = {
-            LIFF_ID: '2008276630-bYNjwMx7', // 您的 LIFF ID
+            LIFF_ID: '2008276630-bYNjwMx7',
             API_ENDPOINT: 'https://script.google.com/macros/s/AKfycbwfuLTjLeHzIQOGjYM2Wk7AYveL6GeG96yI_sMPIPuE_VYEhv7TX_s-PE5MS-UD06qk/exec'
         };
         
@@ -423,13 +439,13 @@
         let cart = [];
         let userProfile = null;
         let lineUserId = '';
+        let isLineBound = false;
         
-        // 初始化 LIFF - 修復版本
+        // 初始化 LIFF
         async function initializeLiff() {
             try {
                 document.getElementById('liffStatus').innerHTML = '🔄 正在初始化 LINE 功能...';
                 
-                // 初始化 LIFF
                 await liff.init({ 
                     liffId: CONFIG.LIFF_ID 
                 });
@@ -440,11 +456,16 @@
                     // 獲取用戶資料
                     userProfile = await liff.getProfile();
                     lineUserId = userProfile.userId;
+                    isLineBound = true;
                     
                     // 更新 UI
                     document.getElementById('customerName').value = userProfile.displayName;
                     document.getElementById('userInfo').innerHTML = `✅ LINE 帳號已綁定<br>👋 歡迎，${userProfile.displayName}`;
                     document.getElementById('userInfo').style.display = 'block';
+                    
+                    // 顯示 LINE User ID
+                    document.getElementById('lineIdDisplay').style.display = 'block';
+                    document.getElementById('lineUserId').textContent = lineUserId;
                     
                     document.getElementById('liffStatus').innerHTML = '✅ LINE 功能已就緒';
                     
@@ -459,14 +480,7 @@
                 
             } catch (error) {
                 console.error('LIFF 初始化失敗:', error);
-                
-                // 更友好的錯誤訊息
-                let errorMessage = '⚠️ LINE 功能載入失敗';
-                if (error.message.includes('access token expired') || error.message.includes('invalid config')) {
-                    errorMessage += '<br><br>💡 請確認：<br>1. LIFF Endpoint URL 設定為<br>https://anonymousbeefsteak-cloud.github.io/L2O2/<br>2. LIFF ID 是否正確';
-                }
-                
-                document.getElementById('liffStatus').innerHTML = errorMessage;
+                document.getElementById('liffStatus').innerHTML = '❌ LINE 功能初始化失敗';
                 document.getElementById('liffStatus').style.background = '#FFF3CD';
                 document.getElementById('liffStatus').style.borderColor = '#FFEBA8';
                 document.getElementById('liffStatus').style.color = '#856404';
@@ -629,7 +643,7 @@
             }
         }
         
-        // 提交訂單
+        // 提交訂單 - 修復 LINE User ID 傳送問題
         async function submitOrder() {
             if (!validateForm()) {
                 return;
@@ -642,17 +656,21 @@
             const deliveryAddress = document.getElementById('deliveryAddress').value.trim();
             const notes = document.getElementById('notes').value.trim();
             
+            // 確保 LINE User ID 正確傳送
             const orderData = {
                 customerName: customerName,
                 customerPhone: customerPhone,
-                customerLineId: lineUserId || '未綁定',
+                customerLineId: isLineBound ? lineUserId : '未綁定', // 確保這個欄位存在
+                customerLineUserId: isLineBound ? lineUserId : '未綁定', // 多一個備用欄位
+                lineUserId: isLineBound ? lineUserId : '未綁定', // 再一個備用欄位
                 pickupTime: pickupTime,
                 deliveryAddress: deliveryAddress,
                 notes: notes,
                 items: JSON.stringify(cart),
                 totalAmount: calculateTotal(),
                 timestamp: new Date().toISOString(),
-                source: 'liff_app'
+                source: 'liff_app',
+                lineBindingStatus: isLineBound ? 'success' : 'failed'
             };
             
             console.log('發送訂單資料:', orderData);
@@ -660,9 +678,18 @@
             
             try {
                 const formData = new FormData();
+                // 確保所有欄位都正確加入
                 Object.keys(orderData).forEach(key => {
-                    formData.append(key, orderData[key]);
+                    if (orderData[key] !== undefined && orderData[key] !== null) {
+                        formData.append(key, orderData[key]);
+                    }
                 });
+                
+                // 檢查 FormData 內容
+                console.log('FormData 內容:');
+                for (let pair of formData.entries()) {
+                    console.log(pair[0] + ': ' + pair[1]);
+                }
                 
                 const response = await fetch(CONFIG.API_ENDPOINT, {
                     method: 'POST',
@@ -679,15 +706,19 @@
                         const orderId = result.orderId || result.data?.orderId || 'N/A';
                         let successMessage = `✅ 訂單成功！\n訂單編號: ${orderId}\n總金額: $${orderData.totalAmount}`;
                         
-                        if (lineUserId) {
+                        if (isLineBound) {
                             successMessage += '\n📱 LINE 帳號已綁定';
                             
                             // 發送 LINE 訊息
                             if (liff.isInClient()) {
                                 try {
+                                    const itemsText = cart.map(item => 
+                                        `${item.name} x${item.quantity}`
+                                    ).join('\n');
+                                    
                                     await liff.sendMessages([{
                                         type: 'text',
-                                        text: `感謝您的訂購！\n訂單編號: ${orderId}\n總金額: $${orderData.totalAmount}\n我們會儘快為您準備餐點。`
+                                        text: `感謝您的訂購！\n訂單編號: ${orderId}\n餐點:\n${itemsText}\n總金額: $${orderData.totalAmount}\n取餐時間: ${new Date(pickupTime).toLocaleString('zh-TW')}\n我們會儘快為您準備餐點。`
                                     }]);
                                     successMessage += '\n💬 已發送訂單通知';
                                 } catch (sendError) {
@@ -711,7 +742,12 @@
             } catch (error) {
                 console.error('錯誤:', error);
                 let errorMessage = `❌ 發送失敗: ${error.message}`;
-                showNotification(errorMessage, 'error', 5000);
+                
+                if (error.message.includes('缺少請求資料')) {
+                    errorMessage += '\n\n請確認 LINE User ID 欄位設定正確';
+                }
+                
+                showNotification(errorMessage, 'error', 6000);
             } finally {
                 setLoading(false);
             }
