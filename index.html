@@ -204,6 +204,7 @@
             display: none;
             z-index: 1000;
             max-width: 300px;
+            white-space: pre-line;
         }
         
         .notification.error {
@@ -450,36 +451,29 @@
         // 初始化 LIFF
         async function initializeLiff() {
             try {
-                // 更新狀態
                 document.getElementById('liffStatus').innerHTML = '🔄 正在初始化 LINE 功能...';
                 
                 await liff.init({ liffId: CONFIG.LIFF_ID });
                 
                 if (liff.isLoggedIn()) {
-                    // 獲取用戶資料
                     userProfile = await liff.getProfile();
                     lineUserId = userProfile.userId;
                     
-                    // 更新 UI
                     document.getElementById('customerName').value = userProfile.displayName;
                     document.getElementById('userInfo').innerHTML = 
                         `✅ LINE 帳號綁定成功<br>👋 歡迎，${userProfile.displayName}`;
                     document.getElementById('userInfo').className = 'user-info success';
                     
-                    // 顯示 LINE User ID
                     document.getElementById('lineIdDisplay').style.display = 'block';
                     document.getElementById('lineUserId').textContent = lineUserId;
                     
                     document.getElementById('liffStatus').innerHTML = '✅ LINE 功能已就緒';
                     
                     console.log('LINE User ID:', lineUserId);
-                    console.log('用戶名稱:', userProfile.displayName);
                     
                 } else {
-                    // 未登入，嘗試登入
                     document.getElementById('liffStatus').innerHTML = '⚠️ 需要 LINE 登入';
                     document.getElementById('userInfo').innerHTML = '🔐 正在進行 LINE 登入...';
-                    
                     liff.login();
                 }
                 
@@ -488,31 +482,8 @@
                 document.getElementById('liffStatus').innerHTML = '❌ LINE 功能初始化失敗';
                 document.getElementById('userInfo').innerHTML = '⚠️ LINE 功能載入失敗，請重新整理頁面';
                 document.getElementById('userInfo').className = 'user-info warning';
-                
                 showNotification('LINE 功能載入失敗，但仍可訂餐', 'warning', 5000);
             }
-        }
-        
-        // 綁定 LINE User ID 到訂單
-        function bindLineUserIdToOrder(orderData) {
-            if (lineUserId) {
-                orderData.customerLineUserId = lineUserId;
-                orderData.lineBindingStatus = 'success';
-                orderData.lineDisplayName = userProfile ? userProfile.displayName : '';
-            } else {
-                orderData.customerLineUserId = '未綁定';
-                orderData.lineBindingStatus = 'failed';
-            }
-            return orderData;
-        }
-        
-        // 檢查 LINE 綁定狀態
-        function checkLineBinding() {
-            if (!lineUserId) {
-                showNotification('⚠️ LINE 帳號未綁定，部分功能可能受限', 'warning', 4000);
-                return false;
-            }
-            return true;
         }
         
         // 添加到購物車
@@ -522,7 +493,6 @@
             
             if (!selectedItem) return;
             
-            // 檢查是否已在購物車中
             const existingItem = cart.find(item => item.name === selectedItem);
             
             if (existingItem) {
@@ -535,14 +505,9 @@
                 });
             }
             
-            // 重置下拉選單
             menuSelect.value = '';
-            
-            // 更新購物車顯示
             renderCart();
             updateOrderSummary();
-            
-            // 顯示成功訊息
             showNotification(`已添加 ${selectedItem}`, 'success', 2000);
         }
         
@@ -605,7 +570,6 @@
                 subtotal += item.price * item.quantity;
             });
             
-            // 檢查是否需要外送費
             const deliveryAddress = document.getElementById('deliveryAddress').value.trim();
             const deliveryFee = deliveryAddress ? 30 : 0;
             const total = subtotal + deliveryFee;
@@ -614,7 +578,6 @@
             document.getElementById('deliveryFee').textContent = `$${deliveryFee}`;
             document.getElementById('totalAmount').textContent = `$${total}`;
             
-            // 啟用/禁用提交按鈕
             document.getElementById('submitBtn').disabled = cart.length === 0;
         }
         
@@ -643,7 +606,6 @@
                 document.getElementById('timeGroup').classList.remove('error');
             }
             
-            // 驗證購物車
             if (cart.length === 0) {
                 showNotification('請選擇至少一樣餐點', 'error', 3000);
                 isValid = false;
@@ -678,77 +640,86 @@
             }
         }
         
-        // 提交訂單
+        // 提交訂單 - 修復版本
         async function submitOrder() {
-            // 驗證表單
             if (!validateForm()) {
                 return;
             }
             
-            // 檢查 LINE 綁定狀態
-            checkLineBinding();
-            
-            // 收集訂單資料
+            // 收集訂單資料 - 簡化結構
             const customerName = document.getElementById('customerName').value.trim();
             const customerPhone = document.getElementById('customerPhone').value.trim();
             const pickupTime = document.getElementById('pickupTime').value;
             const deliveryAddress = document.getElementById('deliveryAddress').value.trim();
             const notes = document.getElementById('notes').value.trim();
             
-            let orderData = {
-                action: 'createOrder',
-                orderData: {
-                    customerName: customerName,
-                    customerPhone: customerPhone,
-                    pickupTime: pickupTime,
-                    deliveryAddress: deliveryAddress,
-                    notes: notes,
-                    items: cart,
-                    totalAmount: calculateTotal(),
-                    timestamp: new Date().toISOString(),
-                    source: 'liff_app'
-                }
+            // 簡化訂單資料結構
+            const orderData = {
+                customerName: customerName,
+                customerPhone: customerPhone,
+                customerLineId: lineUserId || '未綁定',
+                pickupTime: pickupTime,
+                deliveryAddress: deliveryAddress,
+                notes: notes,
+                items: JSON.stringify(cart), // 將購物車轉為字串
+                totalAmount: calculateTotal(),
+                timestamp: new Date().toISOString(),
+                source: 'liff_app'
             };
             
-            // 綁定 LINE User ID
-            orderData = bindLineUserIdToOrder(orderData);
-            
-            console.log('發送訂單:', orderData);
+            console.log('發送訂單資料:', orderData);
             setLoading(true);
             
             try {
-                const response = await fetch(CONFIG.API_ENDPOINT, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(orderData)
+                // 使用 FormData 格式發送，避免 CORS 問題
+                const formData = new FormData();
+                Object.keys(orderData).forEach(key => {
+                    formData.append(key, orderData[key]);
                 });
                 
-                const result = await response.json();
+                const response = await fetch(CONFIG.API_ENDPOINT, {
+                    method: 'POST',
+                    body: formData
+                });
                 
-                if (result.success) {
-                    let successMessage = `✅ 訂單成功！\n訂單編號: ${result.data.orderId}\n總金額: $${result.data.orderData.totalAmount}`;
+                console.log('回應狀態:', response.status, response.statusText);
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('伺服器回應:', result);
                     
-                    if (lineUserId) {
-                        successMessage += `\n📱 LINE 帳號已綁定`;
+                    if (result.status === 'success' || result.success) {
+                        const orderId = result.orderId || result.data?.orderId || 'N/A';
+                        const successMessage = `✅ 訂單成功！\n訂單編號: ${orderId}\n總金額: $${orderData.totalAmount}`;
+                        showNotification(successMessage, 'success', 6000);
+                        resetOrder();
+                        
+                        // 發送 LINE 訊息
+                        if (liff.isInClient()) {
+                            await sendLineMessage(orderId);
+                        }
+                    } else {
+                        throw new Error(result.message || '訂單處理失敗');
                     }
-                    
-                    showNotification(successMessage, 'success', 6000);
-                    resetOrder();
-                    
-                    // 發送 LINE 訊息
-                    if (liff.isInClient()) {
-                        await sendLineMessage(result.data.orderId);
-                    }
-                    
                 } else {
-                    throw new Error(result.message || '訂單發送失敗');
+                    const errorText = await response.text();
+                    console.error('伺服器錯誤回應:', errorText);
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
                 
             } catch (error) {
-                console.error('錯誤:', error);
-                showNotification(`❌ 發送失敗: ${error.message}`, 'error', 5000);
+                console.error('訂單提交錯誤:', error);
+                let errorMessage = `❌ 訂單發送失敗\n`;
+                
+                if (error.message.includes('400')) {
+                    errorMessage += '請檢查訂單資料格式';
+                } else if (error.message.includes('500')) {
+                    errorMessage += '伺服器錯誤，請稍後再試';
+                } else {
+                    errorMessage += error.message;
+                }
+                
+                showNotification(errorMessage, 'error', 6000);
             } finally {
                 setLoading(false);
             }
@@ -763,7 +734,6 @@
                         text: `感謝您的訂購！\n訂單編號: ${orderId}\n我們會儘快為您準備餐點。`
                     }]);
                     
-                    // 關閉視窗
                     setTimeout(() => {
                         liff.closeWindow();
                     }, 2000);
@@ -788,29 +758,21 @@
         
         // 重置訂單
         function resetOrder() {
-            // 清空購物車
             cart = [];
             renderCart();
-            
-            // 清空表單
             document.getElementById('customerPhone').value = '';
             document.getElementById('deliveryAddress').value = '';
             document.getElementById('notes').value = '';
-            
-            // 清除錯誤狀態
             document.getElementById('phoneGroup').classList.remove('error');
             document.getElementById('timeGroup').classList.remove('error');
-            
-            // 設定預設取餐時間
             setDefaultPickupTime();
-            
             updateOrderSummary();
         }
         
         // 設定預設取餐時間
         function setDefaultPickupTime() {
             const now = new Date();
-            now.setMinutes(now.getMinutes() + 30); // 預設 30 分鐘後
+            now.setMinutes(now.getMinutes() + 30);
             
             const year = now.getFullYear();
             const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -824,10 +786,8 @@
         
         // 初始化事件監聽
         function initializeEventListeners() {
-            // 當外送地址改變時更新總計
             document.getElementById('deliveryAddress').addEventListener('input', updateOrderSummary);
             
-            // 即時驗證手機號碼
             document.getElementById('customerPhone').addEventListener('input', function() {
                 const phone = this.value.trim();
                 const phoneRegex = /^09\d{8}$/;
@@ -838,7 +798,6 @@
                 }
             });
             
-            // 即時驗證取餐時間
             document.getElementById('pickupTime').addEventListener('change', function() {
                 if (this.value) {
                     document.getElementById('timeGroup').classList.remove('error');
