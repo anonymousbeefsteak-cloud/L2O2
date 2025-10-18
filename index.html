@@ -12,7 +12,7 @@
             box-sizing: border-box;
             font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
         }
-        
+
         :root {
             --primary: #00C300;
             --primary-dark: #00A300;
@@ -24,13 +24,13 @@
             --danger: #E74C3C;
             --warning: #F39C12;
         }
-        
+
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 15px;
         }
-        
+
         .container {
             max-width: 400px;
             margin: 0 auto;
@@ -39,7 +39,7 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             overflow: hidden;
         }
-        
+
         .header {
             background: var(--primary);
             color: white;
@@ -47,12 +47,12 @@
             text-align: center;
             position: relative;
         }
-        
+
         .header h1 {
             font-size: 1.4em;
             margin-bottom: 5px;
         }
-        
+
         .header::after {
             content: '';
             position: absolute;
@@ -63,15 +63,15 @@
             background: rgba(255,255,255,0.3);
             border-radius: 3px;
         }
-        
+
         .order-form {
             padding: 20px;
         }
-        
+
         .form-group {
             margin-bottom: 15px;
         }
-        
+
         .form-group label {
             display: block;
             margin-bottom: 8px;
@@ -79,7 +79,7 @@
             color: var(--dark);
             font-size: 14px;
         }
-        
+
         .form-group input,
         .form-group select,
         .form-group textarea {
@@ -90,7 +90,7 @@
             font-size: 14px;
             transition: all 0.3s ease;
         }
-        
+
         .form-group input:focus,
         .form-group select:focus,
         .form-group textarea:focus {
@@ -98,7 +98,7 @@
             border-color: var(--primary);
             box-shadow: 0 0 0 3px rgba(0, 195, 0, 0.1);
         }
-        
+
         .menu-section {
             background: var(--light);
             padding: 15px;
@@ -106,7 +106,7 @@
             margin: 15px 0;
             border: 2px solid var(--border);
         }
-        
+
         .cart-section {
             background: #FFF9E6;
             padding: 15px;
@@ -114,7 +114,7 @@
             margin: 15px 0;
             border: 2px solid #FFE082;
         }
-        
+
         .cart-item {
             display: flex;
             justify-content: space-between;
@@ -123,24 +123,24 @@
             border-bottom: 1px solid var(--border);
             transition: all 0.3s ease;
         }
-        
+
         .cart-item:hover {
             background: rgba(255, 255, 255, 0.5);
             border-radius: 5px;
             padding-left: 5px;
             padding-right: 5px;
         }
-        
+
         .cart-item:last-child {
             border-bottom: none;
         }
-        
+
         .quantity-controls {
             display: flex;
             align-items: center;
             gap: 10px;
         }
-        
+
         .quantity-btn {
             width: 28px;
             height: 28px;
@@ -153,12 +153,12 @@
             font-size: 12px;
             transition: all 0.3s ease;
         }
-        
+
         .quantity-btn:hover {
             background: var(--primary-dark);
             transform: scale(1.1);
         }
-        
+
         .remove-btn {
             background: var(--danger);
             color: white;
@@ -170,19 +170,19 @@
             margin-left: 5px;
             transition: all 0.3s ease;
         }
-        
+
         .remove-btn:hover {
             background: #c0392b;
             transform: scale(1.05);
         }
-        
+
         .empty-cart {
             text-align: center;
             color: var(--gray);
             padding: 20px;
             font-style: italic;
         }
-        
+
         .order-summary {
             background: #E8F5E8;
             padding: 15px;
@@ -191,13 +191,13 @@
             font-size: 14px;
             border: 2px solid #C8E6C9;
         }
-        
+
         .summary-row {
             display: flex;
             justify-content: space-between;
             margin-bottom: 5px;
         }
-        
+
         .total-row {
             font-weight: bold;
             font-size: 16px;
@@ -205,7 +205,7 @@
             padding-top: 10px;
             margin-top: 10px;
         }
-        
+
         .submit-btn {
             width: 100%;
             padding: 15px;
@@ -220,28 +220,24 @@
             position: relative;
             overflow: hidden;
         }
-        
+
         .submit-btn:hover {
             background: var(--primary-dark);
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
-        
+
         .submit-btn:active {
             transform: translateY(0);
         }
-        
+
         .submit-btn:disabled {
             background: var(--gray);
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
         }
-        
-        .submit-btn:disabled:hover {
-            background: var(--gray);
-        }
-        
+
         .notification {
             position: fixed;
             top: 20px;
@@ -257,15 +253,15 @@
             white-space: pre-line;
             animation: slideIn 0.3s ease;
         }
-        
+
         .notification.error {
             background: var(--danger);
         }
-        
+
         .notification.warning {
             background: var(--warning);
         }
-        
+
         @keyframes slideIn {
             from {
                 transform: translateX(100%);
@@ -276,13 +272,13 @@
                 opacity: 1;
             }
         }
-        
+
         .loading {
             display: none;
             text-align: center;
             padding: 20px;
         }
-        
+
         .spinner {
             border: 3px solid #f3f3f3;
             border-top: 3px solid var(--primary);
@@ -292,12 +288,12 @@
             animation: spin 1s linear infinite;
             margin: 0 auto 10px;
         }
-        
+
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        
+
         .user-info {
             background: #E8F5E8;
             padding: 10px;
@@ -307,7 +303,7 @@
             text-align: center;
             border: 1px solid var(--success);
         }
-        
+
         .section-title {
             font-size: 16px;
             font-weight: bold;
@@ -342,7 +338,7 @@
         .form-group.error .error-message {
             display: block;
         }
-        
+
         .liff-status {
             background: #E3F2FD;
             padding: 8px 12px;
@@ -352,7 +348,7 @@
             text-align: center;
             border: 1px solid #2196F3;
         }
-        
+
         .line-id-display {
             background: #F3E5F5;
             padding: 8px 12px;
@@ -363,7 +359,7 @@
             border: 1px solid #9C27B0;
             display: none;
         }
-        
+
         .quick-add-buttons {
             display: flex;
             flex-wrap: wrap;
@@ -389,7 +385,7 @@
             color: white;
             transform: translateY(-1px);
         }
-        
+
         .footer {
             text-align: center;
             padding: 15px;
@@ -398,12 +394,12 @@
             border-top: 1px solid var(--border);
             background: var(--light);
         }
-        
+
         .required::after {
             content: ' *';
             color: var(--danger);
         }
-        
+
         .delivery-note {
             font-size: 11px;
             color: var(--gray);
@@ -429,53 +425,53 @@
             <h1>🍜 台灣小吃店</h1>
             <p>LINE 快速訂餐</p>
         </div>
-        
+
         <div class="order-form">
             <!-- LINE 狀態 -->
             <div class="liff-status" id="liffStatus">
                 🔄 初始化 LINE 功能中...
             </div>
-            
+
             <!-- LINE 用戶資訊 -->
             <div class="user-info" id="userInfo" style="display: none;">
                 ✅ LINE 帳號已綁定
             </div>
-            
+
             <!-- LINE User ID 顯示 -->
             <div class="line-id-display" id="lineIdDisplay">
                 <strong>LINE User ID:</strong> <span id="lineUserId"></span>
             </div>
-            
+
             <!-- 顧客資訊 -->
             <div class="form-group">
                 <label class="required">姓名</label>
-                <input type="text" id="customerName" placeholder="自動帶入 LINE 名稱">
+                <input type="text" id="customerName" placeholder="自動帶入 LINE 名稱" required>
             </div>
-            
+
             <div class="form-group" id="phoneGroup">
                 <label class="required">手機號碼</label>
                 <input type="tel" id="customerPhone" placeholder="0912345678" required>
                 <div class="error-message" id="phoneError">請輸入正確的手機號碼 (09開頭，10位數字)</div>
             </div>
-            
+
             <!-- 取餐時間 -->
             <div class="form-group" id="timeGroup">
                 <label class="required">取餐時間</label>
                 <input type="datetime-local" id="pickupTime" required>
                 <div class="error-message" id="timeError">請選擇取餐時間</div>
             </div>
-            
+
             <!-- 外送地點 -->
             <div class="form-group">
                 <label>外送地點 (選填)</label>
                 <input type="text" id="deliveryAddress" placeholder="如需外送請填寫地址">
                 <div class="delivery-note">※ 填寫地址將自動加收 $30 外送費</div>
             </div>
-            
+
             <!-- 菜單選擇 -->
             <div class="menu-section">
                 <div class="section-title">📝 選擇餐點</div>
-                
+
                 <div class="form-group">
                     <label>選擇餐點</label>
                     <select id="menuSelect" onchange="addToCart()">
@@ -490,7 +486,7 @@
                         <option value="肉圓">🥟 肉圓 - $45</option>
                     </select>
                 </div>
-                
+
                 <div style="margin-top: 15px; padding: 10px; background: white; border-radius: 5px;">
                     <div style="font-size: 12px; color: var(--gray); margin-bottom: 5px;">快速選擇：</div>
                     <div class="quick-add-buttons">
@@ -501,7 +497,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- 購物車 -->
             <div class="cart-section">
                 <div class="section-title">🛒 訂單明細</div>
@@ -509,13 +505,13 @@
                     <div class="empty-cart">尚未選擇餐點</div>
                 </div>
             </div>
-            
+
             <!-- 備註 -->
             <div class="form-group">
                 <label>備註 (選填)</label>
                 <textarea id="notes" rows="2" placeholder="例如：不要香菜、加辣、餐具數量等"></textarea>
             </div>
-            
+
             <!-- 訂單總計 -->
             <div class="order-summary">
                 <div class="summary-row">
@@ -531,13 +527,13 @@
                     <span id="totalAmount">$0</span>
                 </div>
             </div>
-            
+
             <!-- 載入動畫 -->
             <div class="loading" id="loading">
                 <div class="spinner"></div>
                 <p>訂單發送中...</p>
             </div>
-            
+
             <!-- 提交按鈕 -->
             <button class="submit-btn" onclick="submitOrder()" id="submitBtn" disabled>
                 ✅ 送出訂單
@@ -548,16 +544,16 @@
                 <strong>除錯資訊:</strong>
                 <div id="debugContent"></div>
             </div>
-            
+
             <div class="footer">
                 <p>📍 營業時間: 10:00-21:00</p>
                 <p>📞 聯絡電話: 02-1234-5678</p>
-                <p style="margin-top: 5px; font-size: 10px; opacity: 0.7;">系統版本: 2.1.1</p>
+                <p style="margin-top: 5px; font-size: 10px; opacity: 0.7;">系統版本: 2.1.2</p>
                 <button onclick="toggleDebug()" style="margin-top: 5px; padding: 2px 8px; font-size: 9px; background: #6c757d; color: white; border: none; border-radius: 3px; cursor: pointer;">顯示除錯資訊</button>
             </div>
         </div>
     </div>
-    
+
     <!-- 通知訊息 -->
     <div class="notification" id="notification"></div>
 
@@ -567,7 +563,7 @@
             LIFF_ID: '2008276630-bYNjwMx7',
             API_ENDPOINT: 'https://script.google.com/macros/s/AKfycbzheIrh2K8dQS3DgSd_0Y6fY_JiW6d7Qqp9Us5lUpPrGClNE_s42yVkSGbJGv1Jb-S7/exec'
         };
-        
+
         // 菜單價格
         const menuPrices = {
             '滷肉飯': 35,
@@ -579,7 +575,7 @@
             '甜不辣': 40,
             '肉圓': 45
         };
-        
+
         // 餐點圖示
         const menuIcons = {
             '滷肉飯': '🍚',
@@ -591,12 +587,12 @@
             '甜不辣': '🍢',
             '肉圓': '🥟'
         };
-        
+
         let cart = [];
         let userProfile = null;
         let lineUserId = '';
         let isLineBound = false;
-        
+
         // 除錯函數
         function debugLog(message) {
             console.log(message);
@@ -605,51 +601,39 @@
                 debugContent.innerHTML += `<div>${new Date().toLocaleTimeString()}: ${message}</div>`;
             }
         }
-        
+
         function toggleDebug() {
             const debugInfo = document.getElementById('debugInfo');
             debugInfo.style.display = debugInfo.style.display === 'none' ? 'block' : 'none';
         }
-        
+
         // 初始化 LIFF
         async function initializeLiff() {
             try {
                 document.getElementById('liffStatus').innerHTML = '🔄 正在初始化 LINE 功能...';
                 debugLog('開始初始化 LIFF...');
-                
-                await liff.init({ 
-                    liffId: CONFIG.LIFF_ID 
-                });
-                
+
+                await liff.init({ liffId: CONFIG.LIFF_ID });
                 debugLog('LIFF 初始化成功');
-                console.log('LIFF 初始化成功');
-                
+
                 if (liff.isLoggedIn()) {
-                    // 獲取用戶資料
                     userProfile = await liff.getProfile();
                     lineUserId = userProfile.userId;
                     isLineBound = true;
-                    
-                    // 更新 UI
+
                     document.getElementById('customerName').value = userProfile.displayName;
                     document.getElementById('userInfo').innerHTML = `✅ LINE 帳號已綁定<br>👋 歡迎，${userProfile.displayName}`;
                     document.getElementById('userInfo').style.display = 'block';
-                    
-                    // 顯示 LINE User ID
                     document.getElementById('lineIdDisplay').style.display = 'block';
                     document.getElementById('lineUserId').textContent = lineUserId;
-                    
                     document.getElementById('liffStatus').innerHTML = '✅ LINE 功能已就緒';
-                    
+
                     debugLog(`LINE User ID: ${lineUserId}`);
                     debugLog(`用戶名稱: ${userProfile.displayName}`);
-                    
                 } else {
-                    // 在 LINE 環境中但未登入，自動登入
                     document.getElementById('liffStatus').innerHTML = '🔐 正在進行 LINE 登入...';
                     liff.login();
                 }
-                
             } catch (error) {
                 console.error('LIFF 初始化失敗:', error);
                 debugLog(`LIFF 初始化失敗: ${error.message}`);
@@ -657,15 +641,15 @@
                 document.getElementById('liffStatus').style.background = '#FFF3CD';
                 document.getElementById('liffStatus').style.borderColor = '#FFEBA8';
                 document.getElementById('liffStatus').style.color = '#856404';
-                
+
                 showNotification('LINE 功能載入失敗，但仍可訂餐', 'warning', 5000);
             }
         }
-        
+
         // 快速添加餐點
         function quickAdd(itemName) {
             const existingItem = cart.find(item => item.name === itemName);
-            
+
             if (existingItem) {
                 existingItem.quantity++;
             } else {
@@ -675,21 +659,21 @@
                     quantity: 1
                 });
             }
-            
+
             renderCart();
             updateOrderSummary();
             showNotification(`已添加 ${itemName}`, 'success', 2000);
         }
-        
+
         // 添加到購物車
         function addToCart() {
             const menuSelect = document.getElementById('menuSelect');
             const selectedItem = menuSelect.value;
-            
+
             if (!selectedItem) return;
-            
+
             const existingItem = cart.find(item => item.name === selectedItem);
-            
+
             if (existingItem) {
                 existingItem.quantity++;
             } else {
@@ -699,22 +683,22 @@
                     quantity: 1
                 });
             }
-            
+
             menuSelect.value = '';
             renderCart();
             updateOrderSummary();
             showNotification(`已添加 ${selectedItem}`, 'success', 2000);
         }
-        
+
         // 渲染購物車
         function renderCart() {
             const cartItems = document.getElementById('cartItems');
-            
+
             if (cart.length === 0) {
                 cartItems.innerHTML = '<div class="empty-cart">尚未選擇餐點</div>';
                 return;
             }
-            
+
             cartItems.innerHTML = cart.map(item => `
                 <div class="cart-item">
                     <div>
@@ -732,14 +716,14 @@
                 </div>
             `).join('');
         }
-        
+
         // 調整數量
         function adjustQuantity(itemName, change) {
             const item = cart.find(item => item.name === itemName);
-            
+
             if (item) {
                 item.quantity += change;
-                
+
                 if (item.quantity <= 0) {
                     removeItem(itemName);
                 } else {
@@ -748,7 +732,7 @@
                 }
             }
         }
-        
+
         // 移除項目
         function removeItem(itemName) {
             cart = cart.filter(item => item.name !== itemName);
@@ -756,127 +740,116 @@
             updateOrderSummary();
             showNotification(`已移除 ${itemName}`, 'success', 2000);
         }
-        
+
         // 更新訂單總計
         function updateOrderSummary() {
-            let subtotal = 0;
-            
-            cart.forEach(item => {
-                subtotal += item.price * item.quantity;
-            });
-            
+            const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
             const deliveryAddress = document.getElementById('deliveryAddress').value.trim();
             const deliveryFee = deliveryAddress ? 30 : 0;
             const total = subtotal + deliveryFee;
-            
+
             document.getElementById('subtotal').textContent = `$${subtotal}`;
             document.getElementById('deliveryFee').textContent = `$${deliveryFee}`;
             document.getElementById('totalAmount').textContent = `$${total}`;
-            
+
             document.getElementById('submitBtn').disabled = cart.length === 0;
         }
-        
+
         // 驗證表單
         function validateForm() {
             let isValid = true;
-            
+
             // 驗證手機號碼
             const phone = document.getElementById('customerPhone').value.trim();
             const phoneRegex = /^09\d{8}$/;
-            const isPhoneValid = phoneRegex.test(phone);
-            
-            if (!isPhoneValid) {
+            if (!phoneRegex.test(phone)) {
                 document.getElementById('phoneGroup').classList.add('error');
                 isValid = false;
             } else {
                 document.getElementById('phoneGroup').classList.remove('error');
             }
-            
+
             // 驗證取餐時間
             const pickupTime = document.getElementById('pickupTime').value;
             if (!pickupTime) {
                 document.getElementById('timeGroup').classList.add('error');
                 isValid = false;
             } else {
-                document.getElementById('timeGroup').classList.remove('error');
+                const selectedTime = new Date(pickupTime);
+                const now = new Date();
+                if (selectedTime < now) {
+                    document.getElementById('timeGroup').classList.add('error');
+                    showNotification('取餐時間不能是過去時間', 'error', 3000);
+                    isValid = false;
+                } else {
+                    document.getElementById('timeGroup').classList.remove('error');
+                }
             }
-            
+
+            // 驗證購物車
             if (cart.length === 0) {
                 showNotification('請選擇至少一樣餐點', 'error', 3000);
                 isValid = false;
             }
-            
+
             return isValid;
         }
-        
+
         // 顯示通知
         function showNotification(message, type = 'success', duration = 3000) {
             const notification = document.getElementById('notification');
             notification.textContent = message;
             notification.className = `notification ${type}`;
             notification.style.display = 'block';
-            
+
             setTimeout(() => {
                 notification.style.display = 'none';
             }, duration);
         }
-        
+
         // 設定載入狀態
         function setLoading(loading) {
             const loadingElement = document.getElementById('loading');
             const submitBtn = document.getElementById('submitBtn');
-            
-            if (loading) {
-                loadingElement.style.display = 'block';
-                submitBtn.style.display = 'none';
-            } else {
-                loadingElement.style.display = 'none';
-                submitBtn.style.display = 'block';
-            }
+
+            loadingElement.style.display = loading ? 'block' : 'none';
+            submitBtn.style.display = loading ? 'none' : 'block';
         }
-        
-        // 提交訂單 - 修正請求格式
+
+        // 提交訂單
         async function submitOrder() {
-            if (!validateForm()) {
-                return;
-            }
-            
-            // 收集訂單資料
+            if (!validateForm()) return;
+
             const customerName = document.getElementById('customerName').value.trim();
             const customerPhone = document.getElementById('customerPhone').value.trim();
             const pickupTime = document.getElementById('pickupTime').value;
             const deliveryAddress = document.getElementById('deliveryAddress').value.trim();
             const notes = document.getElementById('notes').value.trim();
-            
-            // 計算總金額
+
             const totalAmount = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
             const deliveryFee = deliveryAddress ? 30 : 0;
             const finalTotal = totalAmount + deliveryFee;
-            
-            // 創建訂單資料
+
             const orderData = {
                 action: 'createOrder',
                 orderData: {
-                    customerName: customerName,
-                    customerPhone: customerPhone,
+                    customerName,
+                    customerPhone,
                     customerLineUserId: isLineBound ? lineUserId : '未綁定',
                     items: cart,
                     totalAmount: finalTotal,
-                    pickupTime: pickupTime,
-                    deliveryAddress: deliveryAddress,
-                    notes: notes,
+                    pickupTime,
+                    deliveryAddress,
+                    notes,
                     timestamp: new Date().toISOString()
                 }
             };
-            
+
             debugLog('準備發送訂單資料...');
             debugLog(`訂單資料: ${JSON.stringify(orderData)}`);
             setLoading(true);
-            
+
             try {
-                // 方法1: 直接使用 JSON 格式發送
-                debugLog('使用 JSON 格式發送請求...');
-                
                 const response = await fetch(CONFIG.API_ENDPOINT, {
                     method: 'POST',
                     headers: {
@@ -884,89 +857,72 @@
                     },
                     body: JSON.stringify(orderData)
                 });
-                
+
                 debugLog(`回應狀態: ${response.status} ${response.statusText}`);
-                
-                if (response.ok) {
-                    const result = await response.json();
-                    debugLog(`伺服器回應: ${JSON.stringify(result)}`);
-                    
-                    if (result.success) {
-                        const orderId = result.data?.orderId || 'N/A';
-                        let successMessage = `✅ 訂單成功！\n訂單編號: ${orderId}\n總金額: $${finalTotal}`;
-                        
-                        if (isLineBound) {
-                            successMessage += '\n📱 LINE 帳號已綁定';
-                            
-                            // 發送 LINE 訊息
-                            if (liff.isInClient()) {
-                                try {
-                                    const itemsText = cart.map(item => 
-                                        `${item.name} x${item.quantity}`
-                                    ).join('\n');
-                                    
-                                    await liff.sendMessages([{
-                                        type: 'text',
-                                        text: `感謝您的訂購！\n訂單編號: ${orderId}\n餐點:\n${itemsText}\n總金額: $${finalTotal}\n取餐時間: ${new Date(pickupTime).toLocaleString('zh-TW')}\n我們會儘快為您準備餐點。`
-                                    }]);
-                                    successMessage += '\n💬 已發送訂單通知';
-                                } catch (sendError) {
-                                    debugLog(`LINE 訊息發送失敗: ${sendError}`);
-                                }
-                            }
-                        }
-                        
-                        showNotification(successMessage, 'success', 6000);
-                        resetOrder();
-                        
-                    } else {
-                        throw new Error(result.message || '訂單處理失敗');
-                    }
-                } else {
-                    let errorDetail = '';
+
+                if (!response.ok) {
+                    let errorDetail = '無法讀取錯誤詳情';
                     try {
-                        const errorText = await response.text();
-                        errorDetail = errorText;
-                    } catch (e) {
-                        errorDetail = '無法讀取錯誤詳情';
-                    }
+                        errorDetail = await response.text();
+                    } catch (e) {}
                     debugLog(`伺服器錯誤回應: ${errorDetail}`);
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
-                
+
+                const result = await response.json();
+                debugLog(`伺服器回應: ${JSON.stringify(result)}`);
+
+                if (result.success) {
+                    const orderId = result.data?.orderId || 'N/A';
+                    let successMessage = `✅ 訂單成功！\n訂單編號: ${orderId}\n總金額: $${finalTotal}`;
+
+                    if (isLineBound && liff.isInClient()) {
+                        successMessage += '\n📱 LINE 帳號已綁定';
+                        try {
+                            const itemsText = cart.map(item => `${item.name} x${item.quantity}`).join('\n');
+                            await liff.sendMessages([{
+                                type: 'text',
+                                text: `感謝您的訂購！\n訂單編號: ${orderId}\n餐點:\n${itemsText}\n總金額: $${finalTotal}\n取餐時間: ${new Date(pickupTime).toLocaleString('zh-TW')}\n我們會儘快為您準備餐點。`
+                            }]);
+                            successMessage += '\n💬 已發送訂單通知';
+                        } catch (sendError) {
+                            debugLog(`LINE 訊息發送失敗: ${sendError.message}`);
+                        }
+                    }
+
+                    showNotification(successMessage, 'success', 6000);
+                    resetOrder();
+                } else {
+                    throw new Error(result.message || '訂單處理失敗');
+                }
             } catch (error) {
                 console.error('錯誤:', error);
                 debugLog(`發送錯誤: ${error.message}`);
-                
                 let errorMessage = `❌ 發送失敗\n${error.message}`;
-                
                 if (error.message.includes('Failed to fetch')) {
                     errorMessage += '\n\n網路連線問題，請檢查：\n1. 網路連線\n2. 後端服務狀態';
-                } else if (error.message.includes('缺少請求資料')) {
-                    errorMessage += '\n\n請嘗試重新整理頁面後再試';
                 }
-                
                 showNotification(errorMessage, 'error', 8000);
             } finally {
                 setLoading(false);
             }
         }
-        
+
         // 設定預設取餐時間
         function setDefaultPickupTime() {
             const now = new Date();
             now.setMinutes(now.getMinutes() + 30);
-            
+
             const year = now.getFullYear();
             const month = String(now.getMonth() + 1).padStart(2, '0');
             const day = String(now.getDate()).padStart(2, '0');
             const hours = String(now.getHours()).padStart(2, '0');
             const minutes = String(now.getMinutes()).padStart(2, '0');
-            
+
             document.getElementById('pickupTime').value = `${year}-${month}-${day}T${hours}:${minutes}`;
             document.getElementById('pickupTime').min = `${year}-${month}-${day}T${hours}:${minutes}`;
         }
-        
+
         // 重置訂單
         function resetOrder() {
             cart = [];
@@ -978,57 +934,46 @@
             document.getElementById('timeGroup').classList.remove('error');
             setDefaultPickupTime();
             updateOrderSummary();
-            
-            // 保留 LINE 用戶名稱
+
             if (userProfile) {
                 document.getElementById('customerName').value = userProfile.displayName;
             }
         }
-        
+
         // 初始化事件監聽
         function initializeEventListeners() {
             document.getElementById('deliveryAddress').addEventListener('input', updateOrderSummary);
-            
+
             document.getElementById('customerPhone').addEventListener('input', function() {
                 const phone = this.value.trim();
                 const phoneRegex = /^09\d{8}$/;
-                if (phone && !phoneRegex.test(phone)) {
-                    document.getElementById('phoneGroup').classList.add('error');
-                } else {
-                    document.getElementById('phoneGroup').classList.remove('error');
-                }
+                document.getElementById('phoneGroup').classList.toggle('error', phone && !phoneRegex.test(phone));
             });
-            
+
             document.getElementById('pickupTime').addEventListener('change', function() {
-                if (this.value) {
-                    document.getElementById('timeGroup').classList.remove('error');
-                    // 檢查時間是否為過去
-                    if (new Date(this.value) < new Date()) {
-                        document.getElementById('timeGroup').classList.add('error');
-                        showNotification('取餐時間不能是過去時間', 'error', 3000);
-                    }
+                const selectedTime = new Date(this.value);
+                const now = new Date();
+                document.getElementById('timeGroup').classList.toggle('error', this.value && selectedTime < now);
+                if (this.value && selectedTime < now) {
+                    showNotification('取餐時間不能是過去時間', 'error', 3000);
                 }
             });
         }
-        
-        // 頁面載入初始化
-        document.addEventListener('DOMContentLoaded', async function() {
-            await initializeLiff();
-            setDefaultPickupTime();
-            initializeEventListeners();
-            
-            // 測試後端連線
-            testBackendConnection();
-        });
 
         // 測試後端連線
         async function testBackendConnection() {
             try {
                 debugLog('測試後端連線...');
-                const response = await fetch(CONFIG.API_ENDPOINT + '?action=healthCheck');
+                const response = await fetch(`${CONFIG.API_ENDPOINT}?action=healthCheck`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
                 if (response.ok) {
                     const result = await response.json();
-                    debugLog('後端連線正常');
+                    debugLog(`後端連線正常: ${JSON.stringify(result)}`);
                 } else {
                     debugLog('後端連線測試失敗');
                     showNotification('後端服務連線異常', 'warning', 3000);
@@ -1038,6 +983,14 @@
                 showNotification('無法連線到後端服務', 'warning', 3000);
             }
         }
+
+        // 頁面載入初始化
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initializeLiff();
+            setDefaultPickupTime();
+            initializeEventListeners();
+            testBackendConnection();
+        });
     </script>
 </body>
 </html>
