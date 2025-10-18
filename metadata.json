@@ -1,5 +1,5 @@
 {
-  "name": "台灣小吃店 - 線上訂餐系統",
-  "description": "一個使用 React 和 LIFF 建立的台灣小吃店線上訂餐系統，讓顧客可以快速方便地預訂餐點。",
+  "name": "Taiwan Snack Shop LINE Ordering",
+  "description": "A simple and fast LINE-based ordering system for a Taiwanese snack shop, allowing users to select items, place orders, and track their status.",
   "requestFramePermissions": []
 }
