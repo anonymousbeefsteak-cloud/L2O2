@@ -552,7 +552,7 @@
             <div class="footer">
                 <p>📍 營業時間: 10:00-21:00</p>
                 <p>📞 聯絡電話: 02-1234-5678</p>
-                <p style="margin-top: 5px; font-size: 10px; opacity: 0.7;">系統版本: 2.1.0</p>
+                <p style="margin-top: 5px; font-size: 10px; opacity: 0.7;">系統版本: 2.1.1</p>
                 <button onclick="toggleDebug()" style="margin-top: 5px; padding: 2px 8px; font-size: 9px; background: #6c757d; color: white; border: none; border-radius: 3px; cursor: pointer;">顯示除錯資訊</button>
             </div>
         </div>
@@ -565,7 +565,7 @@
         // 系統配置
         const CONFIG = {
             LIFF_ID: '2008276630-bYNjwMx7',
-            API_ENDPOINT: 'https://script.google.com/macros/s/AKfycbzheIrh2K8dQS3DgSd_0Y6fY_JiW6d7Qqp9Us5lUpPrGClNE_s42yVkSGbJGv1Jb-S7/exec'
+            API_ENDPOINT: 'https://script.google.com/macros/s/AKfycbw8mhc_mmDZ4D5wuKGYJKmIJbmezC8-RhakUZMEQM_TmM75maf_jIbFNcZHuVSUJCol/exec'
         };
         
         // 菜單價格
@@ -835,7 +835,7 @@
             }
         }
         
-        // 提交訂單 - 使用 FormData 避免 CORS 問題
+        // 提交訂單 - 修正請求格式
         async function submitOrder() {
             if (!validateForm()) {
                 return;
@@ -874,15 +874,15 @@
             setLoading(true);
             
             try {
-                // 方法1: 使用 FormData 避免 CORS
-                const formData = new FormData();
-                formData.append('data', JSON.stringify(orderData));
-                
-                debugLog('使用 FormData 發送請求...');
+                // 方法1: 直接使用 JSON 格式發送
+                debugLog('使用 JSON 格式發送請求...');
                 
                 const response = await fetch(CONFIG.API_ENDPOINT, {
                     method: 'POST',
-                    body: formData
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(orderData)
                 });
                 
                 debugLog(`回應狀態: ${response.status} ${response.statusText}`);
@@ -941,7 +941,9 @@
                 let errorMessage = `❌ 發送失敗\n${error.message}`;
                 
                 if (error.message.includes('Failed to fetch')) {
-                    errorMessage += '\n\n網路連線問題，請檢查：\n1. 網路連線\n2. 後端服務狀態\n3. CORS 設定';
+                    errorMessage += '\n\n網路連線問題，請檢查：\n1. 網路連線\n2. 後端服務狀態';
+                } else if (error.message.includes('缺少請求資料')) {
+                    errorMessage += '\n\n請嘗試重新整理頁面後再試';
                 }
                 
                 showNotification(errorMessage, 'error', 8000);
@@ -1029,7 +1031,7 @@
                     debugLog('後端連線正常');
                 } else {
                     debugLog('後端連線測試失敗');
-                showNotification('後端服務連線異常', 'warning', 3000);
+                    showNotification('後端服務連線異常', 'warning', 3000);
                 }
             } catch (error) {
                 debugLog(`後端連線測試異常: ${error.message}`);
