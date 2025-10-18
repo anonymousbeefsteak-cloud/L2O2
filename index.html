@@ -643,7 +643,7 @@
             }
         }
         
-        // 提交訂單 - 修復 LINE User ID 傳送問題
+        // 提交訂單 - 修復資料格式問題
         async function submitOrder() {
             if (!validateForm()) {
                 return;
@@ -656,32 +656,49 @@
             const deliveryAddress = document.getElementById('deliveryAddress').value.trim();
             const notes = document.getElementById('notes').value.trim();
             
-            // 確保 LINE User ID 正確傳送
+            // 計算總金額
+            const totalAmount = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const deliveryFee = deliveryAddress ? 30 : 0;
+            const finalTotal = totalAmount + deliveryFee;
+            
+            // 創建完整的訂單資料 - 包含所有可能的欄位名稱
             const orderData = {
+                // 基本顧客資訊
                 customerName: customerName,
                 customerPhone: customerPhone,
-                customerLineId: isLineBound ? lineUserId : '未綁定', // 確保這個欄位存在
-                customerLineUserId: isLineBound ? lineUserId : '未綁定', // 多一個備用欄位
-                lineUserId: isLineBound ? lineUserId : '未綁定', // 再一個備用欄位
+                
+                // LINE 相關欄位 (多個備用名稱)
+                customerLineId: isLineBound ? lineUserId : '未綁定',
+                customerLineUserId: isLineBound ? lineUserId : '未綁定', 
+                lineUserId: isLineBound ? lineUserId : '未綁定',
+                lineUserID: isLineBound ? lineUserId : '未綁定',
+                lineId: isLineBound ? lineUserId : '未綁定',
+                
+                // 訂單內容
+                product: cart.map(item => `${item.name} x${item.quantity}`).join(', '),
+                items: JSON.stringify(cart),
+                totalAmount: finalTotal,
+                
+                // 時間和地點
                 pickupTime: pickupTime,
                 deliveryAddress: deliveryAddress,
                 notes: notes,
-                items: JSON.stringify(cart),
-                totalAmount: calculateTotal(),
+                
+                // 系統資訊
                 timestamp: new Date().toISOString(),
                 source: 'liff_app',
-                lineBindingStatus: isLineBound ? 'success' : 'failed'
+                status: 'pending'
             };
             
             console.log('發送訂單資料:', orderData);
             setLoading(true);
             
             try {
+                // 方法1: 使用 FormData
                 const formData = new FormData();
-                // 確保所有欄位都正確加入
                 Object.keys(orderData).forEach(key => {
                     if (orderData[key] !== undefined && orderData[key] !== null) {
-                        formData.append(key, orderData[key]);
+                        formData.append(key, orderData[key].toString());
                     }
                 });
                 
@@ -704,7 +721,7 @@
                     
                     if (result.status === 'success' || result.success) {
                         const orderId = result.orderId || result.data?.orderId || 'N/A';
-                        let successMessage = `✅ 訂單成功！\n訂單編號: ${orderId}\n總金額: $${orderData.totalAmount}`;
+                        let successMessage = `✅ 訂單成功！\n訂單編號: ${orderId}\n總金額: $${finalTotal}`;
                         
                         if (isLineBound) {
                             successMessage += '\n📱 LINE 帳號已綁定';
@@ -718,7 +735,7 @@
                                     
                                     await liff.sendMessages([{
                                         type: 'text',
-                                        text: `感謝您的訂購！\n訂單編號: ${orderId}\n餐點:\n${itemsText}\n總金額: $${orderData.totalAmount}\n取餐時間: ${new Date(pickupTime).toLocaleString('zh-TW')}\n我們會儘快為您準備餐點。`
+                                        text: `感謝您的訂購！\n訂單編號: ${orderId}\n餐點:\n${itemsText}\n總金額: $${finalTotal}\n取餐時間: ${new Date(pickupTime).toLocaleString('zh-TW')}\n我們會儘快為您準備餐點。`
                                     }]);
                                     successMessage += '\n💬 已發送訂單通知';
                                 } catch (sendError) {
@@ -734,36 +751,45 @@
                         throw new Error(result.message || '訂單處理失敗');
                     }
                 } else {
-                    const errorText = await response.text();
-                    console.error('伺服器錯誤回應:', errorText);
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    // 嘗試獲取詳細錯誤訊息
+                    let errorDetail = '';
+                    try {
+                        const errorText = await response.text();
+                        errorDetail = errorText;
+                    } catch (e) {
+                        errorDetail = '無法讀取錯誤詳情';
+                    }
+                    console.error('伺服器錯誤回應:', errorDetail);
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}\n${errorDetail}`);
                 }
                 
             } catch (error) {
                 console.error('錯誤:', error);
-                let errorMessage = `❌ 發送失敗: ${error.message}`;
+                let errorMessage = `❌ 發送失敗\n${error.message}`;
                 
                 if (error.message.includes('缺少請求資料')) {
-                    errorMessage += '\n\n請確認 LINE User ID 欄位設定正確';
+                    errorMessage += '\n\n請檢查後端需要的欄位名稱';
                 }
                 
-                showNotification(errorMessage, 'error', 6000);
+                showNotification(errorMessage, 'error', 8000);
             } finally {
                 setLoading(false);
             }
         }
         
-        // 計算總金額
-        function calculateTotal() {
-            let subtotal = 0;
-            cart.forEach(item => {
-                subtotal += item.price * item.quantity;
-            });
+        // 設定預設取餐時間
+        function setDefaultPickupTime() {
+            const now = new Date();
+            now.setMinutes(now.getMinutes() + 30);
             
-            const deliveryAddress = document.getElementById('deliveryAddress').value.trim();
-            const deliveryFee = deliveryAddress ? 30 : 0;
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
             
-            return subtotal + deliveryFee;
+            document.getElementById('pickupTime').value = `${year}-${month}-${day}T${hours}:${minutes}`;
+            document.getElementById('pickupTime').min = `${year}-${month}-${day}T${hours}:${minutes}`;
         }
         
         // 重置訂單
@@ -784,21 +810,6 @@
             }
         }
         
-        // 設定預設取餐時間
-        function setDefaultPickupTime() {
-            const now = new Date();
-            now.setMinutes(now.getMinutes() + 30);
-            
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            
-            document.getElementById('pickupTime').value = `${year}-${month}-${day}T${hours}:${minutes}`;
-            document.getElementById('pickupTime').min = `${year}-${month}-${day}T${hours}:${minutes}`;
-        }
-        
         // 初始化事件監聽
         function initializeEventListeners() {
             document.getElementById('deliveryAddress').addEventListener('input', updateOrderSummary);
@@ -816,6 +827,11 @@
             document.getElementById('pickupTime').addEventListener('change', function() {
                 if (this.value) {
                     document.getElementById('timeGroup').classList.remove('error');
+                // 檢查時間是否為過去
+                    if (new Date(this.value) < new Date()) {
+                        document.getElementById('timeGroup').classList.add('error');
+                        showNotification('取餐時間不能是過去時間', 'error', 3000);
+                    }
                 }
             });
         }
