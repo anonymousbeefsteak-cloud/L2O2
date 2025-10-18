@@ -288,14 +288,28 @@
             border: 1px solid #2196F3;
         }
         
-        .line-id-display {
+        .line-binding {
             background: #F3E5F5;
-            padding: 8px 12px;
-            border-radius: 6px;
+            padding: 12px;
+            border-radius: 8px;
             margin: 10px 0;
-            font-size: 11px;
-            word-break: break-all;
             border: 1px solid #9C27B0;
+        }
+        
+        .binding-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-top: 8px;
+        }
+        
+        .binding-btn:disabled {
+            background: var(--gray);
+            cursor: not-allowed;
         }
     </style>
 </head>
@@ -307,36 +321,38 @@
         </div>
         
         <div class="order-form">
-            <!-- LIFF 狀態 -->
+            <!-- LINE 狀態 -->
             <div class="liff-status" id="liffStatus">
                 🔄 初始化 LINE 功能中...
             </div>
             
-            <!-- LINE 用戶資訊 -->
-            <div class="user-info warning" id="userInfo">
-                📱 正在綁定 LINE 帳號...
-            </div>
-            
-            <!-- LINE User ID 顯示 -->
-            <div class="line-id-display" id="lineIdDisplay" style="display: none;">
-                <strong>LINE User ID:</strong> <span id="lineUserId"></span>
+            <!-- LINE 綁定區塊 -->
+            <div class="line-binding" id="lineBinding">
+                <div style="font-weight: bold; margin-bottom: 8px;">📱 LINE 帳號綁定 (選填)</div>
+                <div style="font-size: 12px; color: var(--gray); margin-bottom: 8px;">
+                    綁定 LINE 帳號可接收訂單通知和快速訂餐
+                </div>
+                <button class="binding-btn" onclick="bindLineAccount()" id="bindBtn">
+                    綁定 LINE 帳號
+                </button>
+                <div id="bindingStatus" style="font-size: 11px; margin-top: 8px; display: none;"></div>
             </div>
             
             <!-- 顧客資訊 -->
             <div class="form-group">
-                <label>姓名</label>
-                <input type="text" id="customerName" placeholder="自動帶入 LINE 名稱">
+                <label>姓名 <span style="color: var(--danger);">*</span></label>
+                <input type="text" id="customerName" placeholder="請輸入您的姓名" required>
             </div>
             
             <div class="form-group" id="phoneGroup">
-                <label>手機號碼</label>
+                <label>手機號碼 <span style="color: var(--danger);">*</span></label>
                 <input type="tel" id="customerPhone" placeholder="0912345678" required>
                 <div class="error-message" id="phoneError">請輸入正確的手機號碼 (09開頭，10位數字)</div>
             </div>
             
             <!-- 取餐時間 -->
             <div class="form-group" id="timeGroup">
-                <label>取餐時間</label>
+                <label>取餐時間 <span style="color: var(--danger);">*</span></label>
                 <input type="datetime-local" id="pickupTime" required>
                 <div class="error-message" id="timeError">請選擇取餐時間</div>
             </div>
@@ -417,7 +433,7 @@
         // 系統配置
         const CONFIG = {
             LIFF_ID: '2008289130-9XPR8Kpj',
-            API_ENDPOINT: 'https://script.google.com/macros/s/AKfycbwfuLTjLeHzIQOGjYM2Wk7AYveL6GeG96yI_sMPIPuE_VYEhv7TX_s-PE5MS-UD06qk/exec'
+            API_ENDPOINT: 'https://script.google.com/macros/s/AKfycbx80GlTehHR8y8nqb1TmfXADqPSR-lR_-CHODHRyCA0Z17zCKBryWKTpCzTPoe3_J-L/exec'
         };
         
         // 菜單價格
@@ -445,8 +461,9 @@
         };
         
         let cart = [];
-        let userProfile = null;
         let lineUserId = '';
+        let lineDisplayName = '';
+        let isLineBound = false;
         
         // 初始化 LIFF
         async function initializeLiff() {
@@ -456,33 +473,59 @@
                 await liff.init({ liffId: CONFIG.LIFF_ID });
                 
                 if (liff.isLoggedIn()) {
-                    userProfile = await liff.getProfile();
-                    lineUserId = userProfile.userId;
-                    
-                    document.getElementById('customerName').value = userProfile.displayName;
-                    document.getElementById('userInfo').innerHTML = 
-                        `✅ LINE 帳號綁定成功<br>👋 歡迎，${userProfile.displayName}`;
-                    document.getElementById('userInfo').className = 'user-info success';
-                    
-                    document.getElementById('lineIdDisplay').style.display = 'block';
-                    document.getElementById('lineUserId').textContent = lineUserId;
-                    
                     document.getElementById('liffStatus').innerHTML = '✅ LINE 功能已就緒';
-                    
-                    console.log('LINE User ID:', lineUserId);
-                    
+                    document.getElementById('bindBtn').disabled = false;
                 } else {
-                    document.getElementById('liffStatus').innerHTML = '⚠️ 需要 LINE 登入';
-                    document.getElementById('userInfo').innerHTML = '🔐 正在進行 LINE 登入...';
-                    liff.login();
+                    document.getElementById('liffStatus').innerHTML = '✅ LINE 功能已就緒 (請點擊綁定按鈕)';
+                    document.getElementById('bindBtn').disabled = false;
                 }
                 
             } catch (error) {
                 console.error('LIFF 初始化失敗:', error);
                 document.getElementById('liffStatus').innerHTML = '❌ LINE 功能初始化失敗';
-                document.getElementById('userInfo').innerHTML = '⚠️ LINE 功能載入失敗，請重新整理頁面';
-                document.getElementById('userInfo').className = 'user-info warning';
+                document.getElementById('bindBtn').disabled = true;
+                document.getElementById('bindBtn').innerText = 'LINE 功能不可用';
                 showNotification('LINE 功能載入失敗，但仍可訂餐', 'warning', 5000);
+            }
+        }
+        
+        // 綁定 LINE 帳號
+        async function bindLineAccount() {
+            try {
+                document.getElementById('bindBtn').disabled = true;
+                document.getElementById('bindBtn').innerText = '綁定中...';
+                
+                if (!liff.isLoggedIn()) {
+                    // 如果未登入，先登入
+                    liff.login();
+                    return;
+                }
+                
+                // 獲取用戶資料
+                const profile = await liff.getProfile();
+                lineUserId = profile.userId;
+                lineDisplayName = profile.displayName;
+                isLineBound = true;
+                
+                // 自動填入姓名
+                document.getElementById('customerName').value = lineDisplayName;
+                
+                // 更新 UI
+                document.getElementById('bindingStatus').innerHTML = 
+                    `✅ 已綁定 LINE 帳號<br>👋 歡迎，${lineDisplayName}`;
+                document.getElementById('bindingStatus').style.display = 'block';
+                document.getElementById('bindBtn').innerText = '已綁定';
+                document.getElementById('bindBtn').style.background = 'var(--success)';
+                
+                showNotification('LINE 帳號綁定成功！', 'success', 3000);
+                
+            } catch (error) {
+                console.error('綁定 LINE 帳號失敗:', error);
+                document.getElementById('bindingStatus').innerHTML = '❌ 綁定失敗，請重試';
+                document.getElementById('bindingStatus').style.display = 'block';
+                document.getElementById('bindBtn').disabled = false;
+                document.getElementById('bindBtn').innerText = '綁定 LINE 帳號';
+                showNotification('LINE 帳號綁定失敗', 'error', 3000);
             }
         }
         
@@ -585,6 +628,14 @@
         function validateForm() {
             let isValid = true;
             
+            // 驗證姓名
+            const customerName = document.getElementById('customerName').value.trim();
+            if (!customerName) {
+                showNotification('請填寫姓名', 'error', 3000);
+                document.getElementById('customerName').focus();
+                return false;
+            }
+            
             // 驗證手機號碼
             const phone = document.getElementById('customerPhone').value.trim();
             const phoneRegex = /^09\d{8}$/;
@@ -640,38 +691,37 @@
             }
         }
         
-        // 提交訂單 - 修復版本
+        // 提交訂單
         async function submitOrder() {
             if (!validateForm()) {
                 return;
             }
             
-            // 收集訂單資料 - 簡化結構
+            // 收集訂單資料
             const customerName = document.getElementById('customerName').value.trim();
             const customerPhone = document.getElementById('customerPhone').value.trim();
             const pickupTime = document.getElementById('pickupTime').value;
             const deliveryAddress = document.getElementById('deliveryAddress').value.trim();
             const notes = document.getElementById('notes').value.trim();
             
-            // 簡化訂單資料結構
             const orderData = {
                 customerName: customerName,
                 customerPhone: customerPhone,
-                customerLineId: lineUserId || '未綁定',
+                customerLineId: isLineBound ? lineUserId : '未綁定',
                 pickupTime: pickupTime,
                 deliveryAddress: deliveryAddress,
                 notes: notes,
-                items: JSON.stringify(cart), // 將購物車轉為字串
+                items: JSON.stringify(cart),
                 totalAmount: calculateTotal(),
                 timestamp: new Date().toISOString(),
-                source: 'liff_app'
+                source: 'liff_app',
+                lineBound: isLineBound
             };
             
             console.log('發送訂單資料:', orderData);
             setLoading(true);
             
             try {
-                // 使用 FormData 格式發送，避免 CORS 問題
                 const formData = new FormData();
                 Object.keys(orderData).forEach(key => {
                     formData.append(key, orderData[key]);
@@ -690,14 +740,15 @@
                     
                     if (result.status === 'success' || result.success) {
                         const orderId = result.orderId || result.data?.orderId || 'N/A';
-                        const successMessage = `✅ 訂單成功！\n訂單編號: ${orderId}\n總金額: $${orderData.totalAmount}`;
+                        let successMessage = `✅ 訂單成功！\n訂單編號: ${orderId}\n總金額: $${orderData.totalAmount}`;
+                        
+                        if (isLineBound) {
+                            successMessage += '\n📱 LINE 帳號已綁定';
+                        }
+                        
                         showNotification(successMessage, 'success', 6000);
                         resetOrder();
                         
-                        // 發送 LINE 訊息
-                        if (liff.isInClient()) {
-                            await sendLineMessage(orderId);
-                        }
                     } else {
                         throw new Error(result.message || '訂單處理失敗');
                     }
@@ -725,24 +776,6 @@
             }
         }
         
-        // 發送 LINE 訊息
-        async function sendLineMessage(orderId) {
-            try {
-                if (liff.isInClient()) {
-                    await liff.sendMessages([{
-                        type: 'text',
-                        text: `感謝您的訂購！\n訂單編號: ${orderId}\n我們會儘快為您準備餐點。`
-                    }]);
-                    
-                    setTimeout(() => {
-                        liff.closeWindow();
-                    }, 2000);
-                }
-            } catch (error) {
-                console.log('LINE 訊息發送失敗:', error);
-            }
-        }
-        
         // 計算總金額
         function calculateTotal() {
             let subtotal = 0;
@@ -760,6 +793,7 @@
         function resetOrder() {
             cart = [];
             renderCart();
+            document.getElementById('customerName').value = '';
             document.getElementById('customerPhone').value = '';
             document.getElementById('deliveryAddress').value = '';
             document.getElementById('notes').value = '';
@@ -767,6 +801,11 @@
             document.getElementById('timeGroup').classList.remove('error');
             setDefaultPickupTime();
             updateOrderSummary();
+            
+            // 保留 LINE 綁定狀態
+            if (isLineBound) {
+                document.getElementById('customerName').value = lineDisplayName;
+            }
         }
         
         // 設定預設取餐時間
