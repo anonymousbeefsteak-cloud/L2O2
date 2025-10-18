@@ -222,6 +222,16 @@
             text-align: center;
         }
         
+        .info-text {
+            background: var(--primary);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            text-align: center;
+        }
+        
         @media (max-width: 576px) {
             body {
                 padding: 10px;
@@ -259,9 +269,9 @@
         </div>
         
         <div class="order-form">
-            <!-- LINE 狀態顯示 -->
-            <div id="lineStatus" class="line-warning">
-                ⚠️ 載入中...
+            <!-- 狀態顯示 -->
+            <div id="appStatus" class="info-text">
+                📱 歡迎使用線上訂餐系統
             </div>
             
             <!-- 顧客資訊 -->
@@ -276,9 +286,9 @@
             </div>
             
             <div class="form-group">
-                <label for="customerLineId">Line User ID</label>
-                <input type="text" id="customerLineId" placeholder="載入中..." readonly>
-                <small style="color: var(--gray); font-size: 0.85em;">此欄位會自動偵測您的 Line User ID（需在 LINE App 中開啟）</small>
+                <label for="customerLineId">Line User ID (選填)</label>
+                <input type="text" id="customerLineId" placeholder="可手動輸入您的 Line ID" >
+                <small style="color: var(--gray); font-size: 0.85em;">如需 LINE 訂單通知，請輸入您的 Line ID</small>
             </div>
             
             <!-- 取餐時間 -->
@@ -318,6 +328,13 @@
             <button class="submit-btn" onclick="submitOrder()" id="submitBtn">
                 🚀 送出訂單
             </button>
+            
+            <!-- LINE 分享按鈕 -->
+            <div style="text-align: center; margin-top: 20px;">
+                <button onclick="shareToLine()" style="background: #06c755; color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer;">
+                    📤 分享給朋友
+                </button>
+            </div>
         </div>
     </div>
     
@@ -325,104 +342,46 @@
     <div id="notification" class="notification"></div>
 
     <script>
-        const LIFF_ID = "2008276630-bYNjwMx7";
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwfuLTjLeHzIQOGjYM2Wk7AYveL6GeG96yI_sMPIPuE_VYEhv7TX_s-PE5MS-UD06qk/exec";
 
-        let lineId = '';
-        let isInLine = false;
-        let liffInitialized = false;
-
-        // 檢測是否在 LINE 環境中（不使用 LIFF SDK）
+        // 檢測是否在 LINE 環境中
         function detectLineEnvironment() {
             const userAgent = navigator.userAgent.toLowerCase();
-            const isLine = userAgent.includes('line');
-            
-            // 檢查 URL 參數（LINE 通常會添加 liff.state 參數）
+            return userAgent.includes('line');
+        }
+
+        // 從 URL 參數獲取 LINE 用戶 ID
+        function getLineIdFromUrl() {
             const urlParams = new URLSearchParams(window.location.search);
-            const hasLiffParams = urlParams.has('liff.state') || urlParams.has('liffClientId');
+            return urlParams.get('lineId') || urlParams.get('userId') || '';
+        }
+
+        // 初始化應用
+        function initializeApp() {
+            const isInLine = detectLineEnvironment();
+            const lineIdFromUrl = getLineIdFromUrl();
             
-            return isLine || hasLiffParams;
-        }
-
-        // 簡化的 LIFF 初始化
-        async function initializeLiff() {
-            try {
-                // 先檢測是否在 LINE 環境
-                isInLine = detectLineEnvironment();
-                console.log("檢測到 LINE 環境:", isInLine);
-
-                if (!isInLine) {
-                    // 不在 LINE 環境中
-                    document.getElementById('lineStatus').className = 'line-warning';
-                    document.getElementById('lineStatus').innerHTML = '🌐 一般瀏覽器模式';
-                    document.getElementById('customerLineId').value = "請在 LINE App 中開啟以綁定帳號";
-                    return;
+            // 更新狀態顯示
+            const statusElement = document.getElementById('appStatus');
+            
+            if (isInLine) {
+                statusElement.className = 'line-info';
+                statusElement.innerHTML = '✅ 您在 LINE 環境中';
+                
+                // 如果有從 URL 傳入的 LINE ID，自動填入
+                if (lineIdFromUrl) {
+                    document.getElementById('customerLineId').value = lineIdFromUrl;
+                    document.getElementById('customerLineId').readOnly = true;
+                    statusElement.innerHTML += '<br>📝 LINE ID 已自動填入';
                 }
-
-                // 在 LINE 環境中，嘗試載入 LIFF SDK
-                document.getElementById('lineStatus').className = 'line-info';
-                document.getElementById('lineStatus').innerHTML = '📱 LINE 環境偵測中...';
-                document.getElementById('customerLineId').value = "正在獲取 LINE 用戶資訊...";
-
-                // 嘗試多個 CDN 來源
-                const liffSources = [
-                    'https://static.line-scdn.net/liff/edge/2/sdk.js',
-                    'https://d.line-scdn.net/liff/1.0/sdk.js',
-                    'https://scdn.line-apps.com/liff/edge/2/sdk.js'
-                ];
-
-                let liffLoaded = false;
-
-                for (const source of liffSources) {
-                    try {
-                        await loadScript(source);
-                        liffLoaded = true;
-                        console.log('LIFF SDK 從以下來源載入成功:', source);
-                        break;
-                    } catch (err) {
-                        console.warn('LIFF SDK 載入失敗:', source, err);
-                        continue;
-                    }
-                }
-
-                if (!liffLoaded) {
-                    throw new Error('所有 LIFF SDK 來源都載入失敗');
-                }
-
-                // 初始化 LIFF
-                await liff.init({ liffId: LIFF_ID });
-                liffInitialized = true;
-
-                if (liff.isLoggedIn()) {
-                    const profile = await liff.getProfile();
-                    lineId = profile.userId;
-                    document.getElementById('customerLineId').value = lineId;
-                    document.getElementById('lineStatus').className = 'line-info';
-                    document.getElementById('lineStatus').innerHTML = '✅ LINE 帳號已綁定';
-                    console.log("LINE 用戶 ID:", lineId);
-                } else {
-                    document.getElementById('customerLineId').value = "請重新整理頁面以完成綁定";
-                    document.getElementById('lineStatus').className = 'line-warning';
-                    document.getElementById('lineStatus').innerHTML = '⚠️ 請重新整理頁面完成綁定';
-                }
-
-            } catch (error) {
-                console.error('LIFF 初始化失敗:', error);
-                // 即使在 LINE 環境中，LIFF 失敗時仍可正常使用
-                document.getElementById('lineStatus').className = 'line-warning';
-                document.getElementById('lineStatus').innerHTML = '⚠️ LINE 功能受限，但仍可訂餐';
-                document.getElementById('customerLineId').value = "LINE 功能載入失敗";
+            } else {
+                statusElement.className = 'info-text';
+                statusElement.innerHTML = '🌐 一般瀏覽器模式 - 可正常訂餐';
             }
-        }
-
-        // 載入腳本的輔助函數
-        function loadScript(src) {
-            return new Promise((resolve, reject) => {
-                const script = document.createElement('script');
-                script.src = src;
-                script.onload = resolve;
-                script.onerror = reject;
-                document.head.appendChild(script);
+            
+            console.log("環境檢測:", {
+                inLine: isInLine,
+                lineIdFromUrl: lineIdFromUrl
             });
         }
 
@@ -470,12 +429,21 @@
             }
         }
         
+        // 分享到 LINE
+        function shareToLine() {
+            const currentUrl = window.location.href.split('?')[0]; // 移除現有參數
+            const shareText = '🍜 台灣小吃店線上訂餐系統 - 快速方便的訂餐服務';
+            const shareUrl = `https://line.me/R/msg/text/?${encodeURIComponent(shareText + ' ' + currentUrl)}`;
+            window.open(shareUrl, '_blank');
+        }
+        
         // 提交訂單
         async function submitOrder() {
             // 收集表單資料
             const pickupTime = document.getElementById('pickupTime').value;
             const customerName = document.getElementById('customerName').value.trim();
             const customerPhone = document.getElementById('customerPhone').value.trim();
+            const customerLineId = document.getElementById('customerLineId').value.trim();
             const menuSelect = document.getElementById('menuSelect').value;
             const orderNotes = document.getElementById('orderNotes').value.trim();
             
@@ -500,13 +468,13 @@
             const orderData = {
                 customerName: customerName,
                 customerPhone: customerPhone,
-                customerLineId: lineId || '未綁定',
+                customerLineId: customerLineId || '未提供',
                 product: menuSelect,
                 totalAmount: totalAmount,
                 pickupTime: pickupTime,
                 notes: orderNotes,
                 timestamp: new Date().toISOString(),
-                source: isInLine ? 'line_app' : 'web_browser'
+                source: detectLineEnvironment() ? 'line_browser' : 'web_browser'
             };
             
             console.log('發送訂單:', orderData);
@@ -531,10 +499,8 @@
                 if (result.status === 'success') {
                     let notificationMessage = `✅ 訂單成功！\n訂單編號: ${result.orderId}\n取餐時間: ${new Date(pickupTime).toLocaleString('zh-TW')}\n總金額: $${totalAmount}`;
                     
-                    if (isInLine && liffInitialized) {
-                        notificationMessage += `\n📱 LINE 訂單已記錄`;
-                    } else if (isInLine) {
-                        notificationMessage += `\n📱 請在 LINE 中重新整理以獲得完整功能`;
+                    if (customerLineId) {
+                        notificationMessage += `\n📱 訂單已記錄您的 LINE ID`;
                     }
                     
                     showNotification(notificationMessage, 'success', 8000);
@@ -562,7 +528,7 @@
         // 頁面載入時初始化
         document.addEventListener('DOMContentLoaded', () => {
             setDefaultDateTime();
-            initializeLiff();
+            initializeApp();
         });
     </script>
 </body>
