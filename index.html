@@ -261,7 +261,7 @@
         <div class="order-form">
             <!-- LINE 狀態顯示 -->
             <div id="lineStatus" class="line-warning">
-                ⚠️ 正在載入 LINE 功能...
+                ⚠️ 載入中...
             </div>
             
             <!-- 顧客資訊 -->
@@ -277,8 +277,8 @@
             
             <div class="form-group">
                 <label for="customerLineId">Line User ID</label>
-                <input type="text" id="customerLineId" placeholder="正在載入 LINE 功能..." readonly>
-                <small style="color: var(--gray); font-size: 0.85em;">此欄位會自動填入您的 Line User ID（需在 LINE App 中開啟）</small>
+                <input type="text" id="customerLineId" placeholder="載入中..." readonly>
+                <small style="color: var(--gray); font-size: 0.85em;">此欄位會自動偵測您的 Line User ID（需在 LINE App 中開啟）</small>
             </div>
             
             <!-- 取餐時間 -->
@@ -325,107 +325,112 @@
     <div id="notification" class="notification"></div>
 
     <script>
-        const LIFF_ID = "2008276630-bYNjwMx7"; // 您的 LIFF ID
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwfuLTjLeHzIQOGjYM2Wk7AYveL6GeG96yI_sMPIPuE_VYEhv7TX_s-PE5MS-UD06qk/exec"; // 您的 Google Apps Script 部署 URL
+        const LIFF_ID = "2008276630-bYNjwMx7";
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwfuLTjLeHzIQOGjYM2Wk7AYveL6GeG96yI_sMPIPuE_VYEhv7TX_s-PE5MS-UD06qk/exec";
 
         let lineId = '';
         let isInLine = false;
         let liffInitialized = false;
 
-        // 載入 LIFF SDK
-        function loadLiffSdk() {
-            return new Promise((resolve, reject) => {
-                // 檢查是否已經載入
-                if (window.liff) {
-                    resolve();
+        // 檢測是否在 LINE 環境中（不使用 LIFF SDK）
+        function detectLineEnvironment() {
+            const userAgent = navigator.userAgent.toLowerCase();
+            const isLine = userAgent.includes('line');
+            
+            // 檢查 URL 參數（LINE 通常會添加 liff.state 參數）
+            const urlParams = new URLSearchParams(window.location.search);
+            const hasLiffParams = urlParams.has('liff.state') || urlParams.has('liffClientId');
+            
+            return isLine || hasLiffParams;
+        }
+
+        // 簡化的 LIFF 初始化
+        async function initializeLiff() {
+            try {
+                // 先檢測是否在 LINE 環境
+                isInLine = detectLineEnvironment();
+                console.log("檢測到 LINE 環境:", isInLine);
+
+                if (!isInLine) {
+                    // 不在 LINE 環境中
+                    document.getElementById('lineStatus').className = 'line-warning';
+                    document.getElementById('lineStatus').innerHTML = '🌐 一般瀏覽器模式';
+                    document.getElementById('customerLineId').value = "請在 LINE App 中開啟以綁定帳號";
                     return;
                 }
 
+                // 在 LINE 環境中，嘗試載入 LIFF SDK
+                document.getElementById('lineStatus').className = 'line-info';
+                document.getElementById('lineStatus').innerHTML = '📱 LINE 環境偵測中...';
+                document.getElementById('customerLineId').value = "正在獲取 LINE 用戶資訊...";
+
+                // 嘗試多個 CDN 來源
+                const liffSources = [
+                    'https://static.line-scdn.net/liff/edge/2/sdk.js',
+                    'https://d.line-scdn.net/liff/1.0/sdk.js',
+                    'https://scdn.line-apps.com/liff/edge/2/sdk.js'
+                ];
+
+                let liffLoaded = false;
+
+                for (const source of liffSources) {
+                    try {
+                        await loadScript(source);
+                        liffLoaded = true;
+                        console.log('LIFF SDK 從以下來源載入成功:', source);
+                        break;
+                    } catch (err) {
+                        console.warn('LIFF SDK 載入失敗:', source, err);
+                        continue;
+                    }
+                }
+
+                if (!liffLoaded) {
+                    throw new Error('所有 LIFF SDK 來源都載入失敗');
+                }
+
+                // 初始化 LIFF
+                await liff.init({ liffId: LIFF_ID });
+                liffInitialized = true;
+
+                if (liff.isLoggedIn()) {
+                    const profile = await liff.getProfile();
+                    lineId = profile.userId;
+                    document.getElementById('customerLineId').value = lineId;
+                    document.getElementById('lineStatus').className = 'line-info';
+                    document.getElementById('lineStatus').innerHTML = '✅ LINE 帳號已綁定';
+                    console.log("LINE 用戶 ID:", lineId);
+                } else {
+                    document.getElementById('customerLineId').value = "請重新整理頁面以完成綁定";
+                    document.getElementById('lineStatus').className = 'line-warning';
+                    document.getElementById('lineStatus').innerHTML = '⚠️ 請重新整理頁面完成綁定';
+                }
+
+            } catch (error) {
+                console.error('LIFF 初始化失敗:', error);
+                // 即使在 LINE 環境中，LIFF 失敗時仍可正常使用
+                document.getElementById('lineStatus').className = 'line-warning';
+                document.getElementById('lineStatus').innerHTML = '⚠️ LINE 功能受限，但仍可訂餐';
+                document.getElementById('customerLineId').value = "LINE 功能載入失敗";
+            }
+        }
+
+        // 載入腳本的輔助函數
+        function loadScript(src) {
+            return new Promise((resolve, reject) => {
                 const script = document.createElement('script');
-                script.src = 'https://static.line-scdn.net/liff/sdk/2.22.0/liff.min.js';
-                script.onload = () => {
-                    console.log('LIFF SDK 載入成功');
-                    resolve();
-                };
-                script.onerror = () => {
-                    console.error('LIFF SDK 載入失敗');
-                    reject(new Error('LIFF SDK 載入失敗'));
-                };
+                script.src = src;
+                script.onload = resolve;
+                script.onerror = reject;
                 document.head.appendChild(script);
             });
-        }
-
-        // 初始化 LIFF
-        async function initializeLiff() {
-            try {
-                // 先載入 LIFF SDK
-                await loadLiffSdk();
-                
-                // 初始化 LIFF
-                await liff.init({ 
-                    liffId: LIFF_ID 
-                });
-                
-                console.log("LIFF 初始化成功");
-                liffInitialized = true;
-                
-                // 檢查是否在 LINE 環境中
-                isInLine = liff.isInClient();
-                console.log("在 LINE 環境中:", isInLine);
-                console.log("已登入:", liff.isLoggedIn());
-                
-                if (isInLine) {
-                    // 在 LINE 環境中，顯示狀態
-                    document.getElementById('lineStatus').className = 'line-info';
-                    document.getElementById('lineStatus').innerHTML = '✅ 已連接到 LINE 帳號';
-                    
-                    if (liff.isLoggedIn()) {
-                        // 已登入，獲取用戶資料
-                        await getUserProfile();
-                    } else {
-                        // 在 LINE 環境中但未登入
-                        document.getElementById('customerLineId').value = "請重新整理頁面以綁定 LINE 帳號";
-                        document.getElementById('lineStatus').className = 'line-warning';
-                        document.getElementById('lineStatus').innerHTML = '⚠️ 請重新整理頁面以綁定 LINE 帳號';
-                    }
-                } else {
-                    // 不在 LINE 環境中
-                    document.getElementById('customerLineId').value = "請在 LINE App 中開啟此連結";
-                    document.getElementById('lineStatus').className = 'line-warning';
-                    document.getElementById('lineStatus').innerHTML = '⚠️ 請在 LINE App 中開啟此連結以獲得完整功能';
-                    console.log("不在 LINE 環境中，使用一般模式");
-                }
-                
-            } catch (err) {
-                console.error('LIFF 初始化失敗:', err);
-                liffInitialized = false;
-                
-                // 在一般瀏覽器中正常運作
-                document.getElementById('customerLineId').value = "請在 LINE App 中開啟此連結";
-                document.getElementById('lineStatus').className = 'line-warning';
-                document.getElementById('lineStatus').innerHTML = '⚠️ 請在 LINE App 中開啟此連結以綁定帳號';
-            }
-        }
-
-        // 獲取用戶資料
-        async function getUserProfile() {
-            try {
-                const profile = await liff.getProfile();
-                lineId = profile.userId;
-                document.getElementById('customerLineId').value = lineId;
-                console.log("獲取 LINE 用戶資料成功:", lineId);
-            } catch (err) {
-                console.error('獲取用戶資料失敗:', err);
-                document.getElementById('customerLineId').value = "無法獲取 LINE 用戶 ID";
-            }
         }
 
         // 設定預設日期時間
         function setDefaultDateTime() {
             const now = new Date();
-            now.setMinutes(now.getMinutes() + 30); // 預設30分鐘後取餐
+            now.setMinutes(now.getMinutes() + 30);
             
-            // 格式化成 datetime-local 需要的格式 (YYYY-MM-DDTHH:MM)
             const year = now.getFullYear();
             const month = String(now.getMonth() + 1).padStart(2, '0');
             const day = String(now.getDate()).padStart(2, '0');
@@ -435,7 +440,6 @@
             const datetimeLocal = `${year}-${month}-${day}T${hours}:${minutes}`;
             document.getElementById('pickupTime').value = datetimeLocal;
             
-            // 設定最小時間為現在，避免選擇過去時間
             const minDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
             document.getElementById('pickupTime').min = minDateTime;
         }
@@ -466,22 +470,8 @@
             }
         }
         
-        // 檢查是否在 LINE 環境中且已登入
-        function checkLineEnvironment() {
-            if (isInLine && !liff.isLoggedIn()) {
-                showNotification('請重新整理頁面以綁定您的 LINE 帳號', 'error', 6000);
-                return false;
-            }
-            return true;
-        }
-        
         // 提交訂單
         async function submitOrder() {
-            // 檢查 LINE 環境
-            if (isInLine && !checkLineEnvironment()) {
-                return;
-            }
-            
             // 收集表單資料
             const pickupTime = document.getElementById('pickupTime').value;
             const customerName = document.getElementById('customerName').value.trim();
@@ -495,7 +485,7 @@
                 return;
             }
 
-            // 進一步驗證取餐時間不能是過去時間
+            // 驗證取餐時間
             const selectedTime = new Date(pickupTime);
             const now = new Date();
             if (selectedTime < now) {
@@ -510,13 +500,13 @@
             const orderData = {
                 customerName: customerName,
                 customerPhone: customerPhone,
-                customerLineId: lineId || '未綁定 LINE 帳號',
+                customerLineId: lineId || '未綁定',
                 product: menuSelect,
                 totalAmount: totalAmount,
                 pickupTime: pickupTime,
                 notes: orderNotes,
                 timestamp: new Date().toISOString(),
-                source: isInLine ? 'liff_app' : 'web'
+                source: isInLine ? 'line_app' : 'web_browser'
             };
             
             console.log('發送訂單:', orderData);
@@ -541,30 +531,10 @@
                 if (result.status === 'success') {
                     let notificationMessage = `✅ 訂單成功！\n訂單編號: ${result.orderId}\n取餐時間: ${new Date(pickupTime).toLocaleString('zh-TW')}\n總金額: $${totalAmount}`;
                     
-                    // 在 LINE 環境中發送訊息到聊天室
-                    if (isInLine && liff.isLoggedIn() && liffInitialized) {
-                        try {
-                            await liff.sendMessages([
-                                {
-                                    type: 'text',
-                                    text: `感謝您的訂購！\n訂單編號: ${result.orderId}\n餐點: ${menuSelect}\n取餐時間: ${new Date(pickupTime).toLocaleString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false })}\n總金額: $${totalAmount}\n請憑訂單編號 ${result.orderId} 至櫃檯取餐。`
-                                }
-                            ]);
-                            notificationMessage += `\n📱 已將訂單通知發送至您的 Line`;
-                            
-                            // 延遲一下再關閉視窗，讓用戶看到成功訊息
-                            setTimeout(() => {
-                                if (liff.isInClient()) {
-                                    liff.closeWindow();
-                                }
-                            }, 3000);
-                            
-                        } catch (sendError) {
-                            console.error('發送訊息失敗:', sendError);
-                            notificationMessage += `\n📱 訂單成功但無法發送 Line 通知`;
-                        }
-                    } else {
-                        notificationMessage += `\n（您未在 Line 環境中，無法發送 Line 通知）`;
+                    if (isInLine && liffInitialized) {
+                        notificationMessage += `\n📱 LINE 訂單已記錄`;
+                    } else if (isInLine) {
+                        notificationMessage += `\n📱 請在 LINE 中重新整理以獲得完整功能`;
                     }
                     
                     showNotification(notificationMessage, 'success', 8000);
@@ -574,7 +544,7 @@
                     document.getElementById('customerPhone').value = '';
                     document.getElementById('menuSelect').value = '';
                     document.getElementById('orderNotes').value = '';
-                    setDefaultDateTime(); // 重設取餐時間
+                    setDefaultDateTime();
                     
                 } else {
                     throw new Error(result.message || '訂單發送失敗');
@@ -592,10 +562,7 @@
         // 頁面載入時初始化
         document.addEventListener('DOMContentLoaded', () => {
             setDefaultDateTime();
-            // 延遲初始化 LIFF，確保 DOM 完全載入
-            setTimeout(() => {
-                initializeLiff();
-            }, 100);
+            initializeLiff();
         });
     </script>
 </body>
