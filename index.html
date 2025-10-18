@@ -283,71 +283,26 @@
             margin-top: 10px;
             font-size: 12px;
             color: var(--gray);
-            display: none;
         }
         
-        .order-id-display {
-            background: #E3F2FD;
-            padding: 10px;
-            border-radius: 8px;
-            margin: 10px 0;
-            text-align: center;
-            font-weight: bold;
-            color: var(--info);
-            display: none;
-        }
-        
-        .confirmation-section {
-            background: #E8F5E9;
+        .login-prompt {
+            background: #FFF3CD;
             padding: 15px;
-            border-radius: 10px;
+            border-radius: 8px;
             margin: 15px 0;
-            border: 2px solid #C8E6C9;
-            display: none;
-        }
-        
-        .confirmation-title {
-            font-size: 16px;
-            font-weight: bold;
-            margin-bottom: 10px;
-            color: var(--success);
             text-align: center;
+            border: 1px solid #FFEAA7;
         }
         
-        .confirmation-details {
-            font-size: 14px;
-            line-height: 1.5;
-        }
-        
-        .confirmation-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 5px;
-        }
-        
-        .action-buttons {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-        }
-        
-        .action-btn {
-            flex: 1;
-            padding: 10px;
+        .login-btn {
+            background: var(--primary);
+            color: white;
             border: none;
             border-radius: 5px;
-            font-weight: bold;
+            padding: 10px 20px;
             cursor: pointer;
-        }
-        
-        .confirm-btn {
-            background: var(--success);
-            color: white;
-        }
-        
-        .cancel-btn {
-            background: var(--danger);
-            color: white;
+            font-weight: bold;
+            margin-top: 10px;
         }
         
         .status-badge {
@@ -364,97 +319,30 @@
             color: #856404;
         }
         
-        .status-confirmed {
-            background: #D1ECF1;
-            color: #0C5460;
-        }
-        
-        .status-completed {
+        .status-connected {
             background: #D4EDDA;
             color: #155724;
         }
         
-        .order-tracking {
-            background: #F8F9FA;
+        .troubleshooting {
+            background: #E3F2FD;
             padding: 15px;
-            border-radius: 10px;
+            border-radius: 8px;
             margin: 15px 0;
-            display: none;
+            font-size: 14px;
         }
         
-        .tracking-title {
-            font-size: 16px;
-            font-weight: bold;
+        .troubleshooting h3 {
+            color: var(--info);
             margin-bottom: 10px;
-            color: var(--dark);
-            text-align: center;
         }
         
-        .tracking-steps {
-            display: flex;
-            justify-content: space-between;
-            margin: 20px 0;
-            position: relative;
+        .troubleshooting ul {
+            padding-left: 20px;
         }
         
-        .tracking-steps::before {
-            content: '';
-            position: absolute;
-            top: 15px;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: #E0E0E0;
-            z-index: 1;
-        }
-        
-        .tracking-step {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            position: relative;
-            z-index: 2;
-        }
-        
-        .step-icon {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background: #E0E0E0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 5px;
-            font-size: 14px;
-        }
-        
-        .step-active {
-            background: var(--primary);
-            color: white;
-        }
-        
-        .step-label {
-            font-size: 12px;
-            text-align: center;
-        }
-        
-        .order-details-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 10px 0;
-            font-size: 14px;
-        }
-        
-        .order-details-table th,
-        .order-details-table td {
-            padding: 8px;
-            text-align: left;
-            border-bottom: 1px solid #E0E0E0;
-        }
-        
-        .order-details-table th {
-            background: #F5F5F5;
-            font-weight: bold;
+        .troubleshooting li {
+            margin-bottom: 8px;
         }
     </style>
 </head>
@@ -471,21 +359,27 @@
                 🔄 載入 LINE 資訊中...
             </div>
             
-            <!-- 訂單編號顯示 -->
-            <div class="order-id-display" id="orderIdDisplay">
-                訂單編號: <span id="orderIdValue"></span>
-                <span class="status-badge status-pending" id="orderStatusBadge">處理中</span>
+            <!-- 登入提示 -->
+            <div class="login-prompt" id="loginPrompt" style="display: none;">
+                <p>🔒 需要 LINE 登入才能使用完整功能</p>
+                <button class="login-btn" onclick="loginToLine()">點此登入 LINE</button>
+            </div>
+            
+            <!-- 除錯資訊 -->
+            <div class="debug-info" id="debugInfo">
+                <strong>除錯資訊:</strong><br>
+                <div id="debugContent">載入中...</div>
             </div>
             
             <!-- 顧客資訊 -->
             <div class="form-group">
-                <label>姓名 <small>(自動帶入)</small></label>
-                <input type="text" id="customerName" class="readonly-field" readonly>
+                <label>姓名 <span class="status-badge status-pending" id="nameStatus">未綁定</span></label>
+                <input type="text" id="customerName" class="readonly-field" readonly placeholder="等待 LINE 資訊載入">
             </div>
             
             <div class="form-group">
-                <label>LINE User ID <small>(自動帶入)</small></label>
-                <input type="text" id="customerLineId" class="readonly-field" readonly>
+                <label>LINE User ID <span class="status-badge status-pending" id="userIdStatus">未綁定</span></label>
+                <input type="text" id="customerLineId" class="readonly-field" readonly placeholder="等待 LINE 資訊載入">
             </div>
             
             <div class="form-group" id="phoneGroup">
@@ -557,42 +451,15 @@
                 </div>
             </div>
             
-            <!-- 訂單確認 -->
-            <div class="confirmation-section" id="confirmationSection">
-                <div class="confirmation-title">📋 訂單確認</div>
-                <div class="confirmation-details" id="confirmationDetails">
-                    <!-- 訂單詳細資訊將在這裡動態生成 -->
-                </div>
-                <div class="action-buttons">
-                    <button class="action-btn confirm-btn" onclick="confirmOrder()">確認訂單</button>
-                    <button class="action-btn cancel-btn" onclick="cancelConfirmation()">修改訂單</button>
-                </div>
-            </div>
-            
-            <!-- 訂單追蹤 -->
-            <div class="order-tracking" id="orderTracking">
-                <div class="tracking-title">📦 訂單狀態</div>
-                <div class="tracking-steps">
-                    <div class="tracking-step">
-                        <div class="step-icon step-active" id="step1">1</div>
-                        <div class="step-label">已下單</div>
-                    </div>
-                    <div class="tracking-step">
-                        <div class="step-icon" id="step2">2</div>
-                        <div class="step-label">準備中</div>
-                    </div>
-                    <div class="tracking-step">
-                        <div class="step-icon" id="step3">3</div>
-                        <div class="step-label">可取餐</div>
-                    </div>
-                    <div class="tracking-step">
-                        <div class="step-icon" id="step4">4</div>
-                        <div class="step-label">已完成</div>
-                    </div>
-                </div>
-                <div id="trackingDetails">
-                    <!-- 追蹤詳細資訊將在這裡動態生成 -->
-                </div>
+            <!-- 疑難排解 -->
+            <div class="troubleshooting">
+                <h3>💡 疑難排解</h3>
+                <ul>
+                    <li>確保您已在 LINE 中開啟此頁面</li>
+                    <li>如果無法自動登入，請點擊上方「點此登入 LINE」按鈕</li>
+                    <li>LINE User ID 綁定失敗時，系統會自動嘗試重新連接</li>
+                    <li>如持續遇到問題，請聯繫客服人員</li>
+                </ul>
             </div>
             
             <!-- 載入動畫 -->
@@ -602,12 +469,9 @@
             </div>
             
             <!-- 提交按鈕 -->
-            <button class="submit-btn" onclick="prepareOrder()" id="submitBtn" disabled>
+            <button class="submit-btn" onclick="submitOrder()" id="submitBtn" disabled>
                 ✅ 送出訂單
             </button>
-
-            <!-- 除錯資訊 -->
-            <div class="debug-info" id="debugInfo"></div>
         </div>
     </div>
     
@@ -647,27 +511,94 @@
         
         let cart = [];
         let userProfile = null;
-        let currentOrderId = null;
+        let liffInitialized = false;
+        
+        // 更新除錯資訊
+        function updateDebugInfo(message) {
+            const debugContent = document.getElementById('debugContent');
+            const timestamp = new Date().toLocaleTimeString();
+            debugContent.innerHTML += `[${timestamp}] ${message}<br>`;
+        }
         
         // 初始化 LIFF
         async function initializeLiff() {
+            updateDebugInfo('開始初始化 LIFF...');
+            
             try {
                 await liff.init({ liffId: CONFIG.LIFF_ID });
+                updateDebugInfo('LIFF 初始化成功');
+                liffInitialized = true;
                 
                 if (liff.isLoggedIn()) {
-                    userProfile = await liff.getProfile();
-                    document.getElementById('customerName').value = userProfile.displayName;
-                    document.getElementById('customerLineId').value = userProfile.userId;
-                    document.getElementById('userInfo').innerHTML = 
-                        `👋 歡迎，${userProfile.displayName}`;
+                    updateDebugInfo('用戶已登入，獲取用戶資料...');
+                    await loadUserProfile();
                 } else {
+                    updateDebugInfo('用戶未登入，顯示登入提示');
+                    document.getElementById('loginPrompt').style.display = 'block';
                     document.getElementById('userInfo').innerHTML = 
-                        `⚠️ 請在 LINE 中開啟以獲得最佳體驗`;
+                        `⚠️ 請登入 LINE 以使用完整功能`;
                 }
+                
             } catch (error) {
                 console.error('LIFF 初始化失敗:', error);
+                updateDebugInfo(`LIFF 初始化失敗: ${error.message}`);
                 document.getElementById('userInfo').innerHTML = 
-                    `⚠️ LINE 功能載入失敗`;
+                    `❌ LINE 功能載入失敗`;
+                document.getElementById('loginPrompt').style.display = 'block';
+                
+                // 顯示詳細錯誤資訊
+                showNotification(`LINE 功能載入失敗: ${error.message}`, 5000, true);
+            }
+        }
+        
+        // 載入用戶資料
+        async function loadUserProfile() {
+            try {
+                userProfile = await liff.getProfile();
+                updateDebugInfo(`用戶資料獲取成功: ${userProfile.displayName}`);
+                
+                // 更新UI顯示
+                document.getElementById('customerName').value = userProfile.displayName;
+                document.getElementById('customerLineId').value = userProfile.userId;
+                document.getElementById('userInfo').innerHTML = 
+                    `👋 歡迎，${userProfile.displayName} (LINE User ID 綁定成功)`;
+                
+                // 更新狀態標籤
+                document.getElementById('nameStatus').textContent = '已綁定';
+                document.getElementById('nameStatus').className = 'status-badge status-connected';
+                document.getElementById('userIdStatus').textContent = '已綁定';
+                document.getElementById('userIdStatus').className = 'status-badge status-connected';
+                
+                // 隱藏登入提示
+                document.getElementById('loginPrompt').style.display = 'none';
+                
+                showNotification('LINE 用戶資訊綁定成功！', 3000);
+                
+            } catch (error) {
+                console.error('獲取用戶資料失敗:', error);
+                updateDebugInfo(`獲取用戶資料失敗: ${error.message}`);
+                document.getElementById('userInfo').innerHTML = 
+                    `⚠️ 用戶資料獲取失敗，請重新整理頁面`;
+                
+                showNotification('用戶資料獲取失敗，請重新整理頁面', 5000, true);
+            }
+        }
+        
+        // LINE 登入
+        async function loginToLine() {
+            updateDebugInfo('開始 LINE 登入流程...');
+            
+            if (!liffInitialized) {
+                updateDebugInfo('LIFF 未初始化，重新初始化...');
+                await initializeLiff();
+            }
+            
+            if (liff.isLoggedIn()) {
+                updateDebugInfo('用戶已登入，重新載入用戶資料...');
+                await loadUserProfile();
+            } else {
+                updateDebugInfo('跳轉至 LINE 登入頁面...');
+                liff.login();
             }
         }
         
@@ -771,12 +702,19 @@
             document.getElementById('totalAmount').textContent = `$${total}`;
             
             // 啟用/禁用提交按鈕
-            document.getElementById('submitBtn').disabled = cart.length === 0;
+            document.getElementById('submitBtn').disabled = cart.length === 0 || !userProfile;
         }
         
         // 驗證表單
         function validateForm() {
             let isValid = true;
+            
+            // 驗證 LINE 用戶綁定
+            if (!userProfile) {
+                showNotification('請先完成 LINE 用戶綁定', 3000, true);
+                document.getElementById('loginPrompt').style.display = 'block';
+                return false;
+            }
             
             // 驗證手機號碼
             const phone = document.getElementById('customerPhone').value.trim();
@@ -834,103 +772,13 @@
             }
         }
         
-        // 準備訂單（顯示確認畫面）
-        function prepareOrder() {
+        // 提交訂單
+        async function submitOrder() {
+            // 驗證表單
             if (!validateForm()) {
                 return;
             }
             
-            // 收集訂單資料
-            const customerName = document.getElementById('customerName').value.trim();
-            const customerPhone = document.getElementById('customerPhone').value.trim();
-            const pickupTime = document.getElementById('pickupTime').value;
-            const deliveryAddress = document.getElementById('deliveryAddress').value.trim();
-            const notes = document.getElementById('notes').value.trim();
-            
-            // 格式化取餐時間
-            const formattedPickupTime = new Date(pickupTime).toLocaleString('zh-TW');
-            
-            // 生成確認內容
-            let confirmationHTML = `
-                <div class="confirmation-row">
-                    <span>姓名:</span>
-                    <span>${customerName}</span>
-                </div>
-                <div class="confirmation-row">
-                    <span>手機:</span>
-                    <span>${customerPhone}</span>
-                </div>
-                <div class="confirmation-row">
-                    <span>取餐時間:</span>
-                    <span>${formattedPickupTime}</span>
-                </div>
-            `;
-            
-            if (deliveryAddress) {
-                confirmationHTML += `
-                    <div class="confirmation-row">
-                        <span>外送地址:</span>
-                        <span>${deliveryAddress}</span>
-                    </div>
-                `;
-            }
-            
-            confirmationHTML += `
-                <table class="order-details-table">
-                    <thead>
-                        <tr>
-                            <th>餐點</th>
-                            <th>數量</th>
-                            <th>單價</th>
-                            <th>小計</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-            
-            cart.forEach(item => {
-                confirmationHTML += `
-                    <tr>
-                        <td>${menuIcons[item.name]} ${item.name}</td>
-                        <td>${item.quantity}</td>
-                        <td>$${item.price}</td>
-                        <td>$${item.price * item.quantity}</td>
-                    </tr>
-                `;
-            });
-            
-            confirmationHTML += `
-                    </tbody>
-                </table>
-                <div class="confirmation-row total-row">
-                    <span>總金額:</span>
-                    <span>$${calculateTotal()}</span>
-                </div>
-            `;
-            
-            if (notes) {
-                confirmationHTML += `
-                    <div class="confirmation-row">
-                        <span>備註:</span>
-                        <span>${notes}</span>
-                    </div>
-                `;
-            }
-            
-            document.getElementById('confirmationDetails').innerHTML = confirmationHTML;
-            document.getElementById('confirmationSection').style.display = 'block';
-            
-            // 滾動到確認區域
-            document.getElementById('confirmationSection').scrollIntoView({ behavior: 'smooth' });
-        }
-        
-        // 取消確認
-        function cancelConfirmation() {
-            document.getElementById('confirmationSection').style.display = 'none';
-        }
-        
-        // 確認訂單
-        async function confirmOrder() {
             // 收集訂單資料
             const customerName = document.getElementById('customerName').value.trim();
             const customerPhone = document.getElementById('customerPhone').value.trim();
@@ -949,10 +797,12 @@
                     notes: notes,
                     items: cart,
                     totalAmount: calculateTotal(),
-                    status: 'pending'
+                    status: 'pending',
+                    orderTime: new Date().toISOString()
                 }
             };
             
+            updateDebugInfo(`準備提交訂單: ${JSON.stringify(orderData)}`);
             console.log('發送訂單資料:', orderData);
             setLoading(true);
             
@@ -962,6 +812,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'text/plain',
+                    'X-Debug-Info': 'LIFF-Order-Submission'
                     },
                     body: JSON.stringify(orderData)
                 });
@@ -971,74 +822,57 @@
                 }
 
                 const result = await response.json();
+                updateDebugInfo(`伺服器回應: ${JSON.stringify(result)}`);
                 console.log('伺服器回應:', result);
                 
                 if (result.success) {
-                    currentOrderId = result.data.orderId;
-                    
-                    // 顯示訂單編號
-                    document.getElementById('orderIdValue').textContent = currentOrderId;
-                    document.getElementById('orderIdDisplay').style.display = 'block';
-                    
-                    // 隱藏確認區域
-                    document.getElementById('confirmationSection').style.display = 'none';
-                    
-                    // 顯示訂單追蹤
-                    document.getElementById('orderTracking').style.display = 'block';
-                    
-                    // 顯示成功訊息
-                    showNotification(`✅ 訂單成功！\n訂單編號: ${currentOrderId}\n總金額: $${result.data.orderData.totalAmount}`, 5000);
+                    showNotification(`✅ 訂單成功！\n訂單編號: ${result.data.orderId}\n總金額: $${result.data.orderData.totalAmount}`, 5000);
                     
                     // 發送 LINE 通知給用戶
-                    sendLineNotificationToCustomer(result.data.orderData);
+                    sendLineNotificationToCustomer(result.data.orderData, result.data.orderId);
                     
                     // 發送 LINE 通知給商家
-                    sendLineNotificationToStore(result.data.orderData, currentOrderId);
+                    sendLineNotificationToStore(result.data.orderData, result.data.orderId);
                     
+                    // 重置表單
+                    resetOrder();
                 } else {
                     throw new Error(result.message || '訂單發送失敗');
                 }
                 
             } catch (error) {
                 console.error('提交訂單錯誤:', error);
+                updateDebugInfo(`訂單提交失敗: ${error.message}`);
                 showNotification(`❌ 發送失敗: ${error.message}`, 5000, true);
-                
-                // 顯示除錯資訊
-                document.getElementById('debugInfo').style.display = 'block';
-                document.getElementById('debugInfo').innerHTML = `
-                    <strong>除錯資訊:</strong><br>
-                    錯誤: ${error.message}<br>
-                    網址: ${CONFIG.API_ENDPOINT}<br>
-                    時間: ${new Date().toLocaleString()}
-                `;
             } finally {
                 setLoading(false);
             }
         }
         
         // 發送 LINE 通知給用戶
-        function sendLineNotificationToCustomer(orderData) {
+        function sendLineNotificationToCustomer(orderData, orderId) {
+            updateDebugInfo(`發送 LINE 通知給用戶: ${orderData.customerLineUserId}`);
+            
             // 這裡應該呼叫 LINE Notify 或 Messaging API 來發送通知給用戶
             // 由於 LINE 通知需要特定的權限和設定，這裡僅模擬流程
-            
-            console.log('發送 LINE 通知給用戶:', orderData.customerLineUserId);
             
             // 模擬發送通知
             setTimeout(() => {
                 showNotification('📱 訂單確認通知已發送到您的 LINE', 4000);
+                updateDebugInfo('用戶 LINE 通知發送完成');
             }, 1000);
         }
         
         // 發送 LINE 通知給商家
         function sendLineNotificationToStore(orderData, orderId) {
+            updateDebugInfo(`發送 LINE 通知給商家，訂單編號: ${orderId}`);
+            
             // 這裡應該呼叫 LINE Notify 或 Messaging API 來發送通知給商家
             // 由於 LINE 通知需要特定的權限和設定，這裡僅模擬流程
             
-            console.log('發送 LINE 通知給商家，訂單編號:', orderId);
-            
             // 模擬發送通知
             setTimeout(() => {
-                console.log('商家已收到新訂單通知');
+                updateDebugInfo('商家 LINE 通知發送完成');
             }, 1000);
         }
         
@@ -1069,14 +903,6 @@
             // 清除錯誤狀態
             document.getElementById('phoneGroup').classList.remove('error');
             document.getElementById('timeGroup').classList.remove('error');
-            
-            // 隱藏除錯資訊
-            document.getElementById('debugInfo').style.display = 'none';
-            
-            // 隱藏訂單確認和追蹤
-            document.getElementById('confirmationSection').style.display = 'none';
-            document.getElementById('orderTracking').style.display = 'none';
-            document.getElementById('orderIdDisplay').style.display = 'none';
             
             // 設定預設取餐時間
             setDefaultPickupTime();
@@ -1125,9 +951,11 @@
         
         // 頁面載入初始化
         document.addEventListener('DOMContentLoaded', async function() {
+            updateDebugInfo('頁面載入完成，開始初始化...');
             await initializeLiff();
             setDefaultPickupTime();
             initializeEventListeners();
+            updateDebugInfo('系統初始化完成');
         });
     </script>
 </body>
