@@ -421,6 +421,26 @@
             border: 1px solid #e9ecef;
             display: none;
         }
+        
+        .notification-status {
+            margin-top: 10px;
+            padding: 8px;
+            border-radius: 5px;
+            font-size: 11px;
+            text-align: center;
+        }
+        
+        .notification-status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .notification-status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
     </style>
 </head>
 <body>
@@ -532,6 +552,9 @@
                 </div>
             </div>
             
+            <!-- 通知狀態 -->
+            <div id="notificationStatus"></div>
+            
             <!-- 載入動畫 -->
             <div class="loading" id="loading">
                 <div class="spinner"></div>
@@ -552,7 +575,7 @@
             <div class="footer">
                 <p>📍 營業時間: 10:00-21:00</p>
                 <p>📞 聯絡電話: 02-1234-5678</p>
-                <p style="margin-top: 5px; font-size: 10px; opacity: 0.7;">系統版本: 2.2.0</p>
+                <p style="margin-top: 5px; font-size: 10px; opacity: 0.7;">系統版本: 2.3.0</p>
                 <button onclick="toggleDebug()" style="margin-top: 5px; padding: 2px 8px; font-size: 9px; background: #6c757d; color: white; border: none; border-radius: 3px; cursor: pointer;">顯示除錯資訊</button>
             </div>
         </div>
@@ -562,7 +585,7 @@
     <div class="notification" id="notification"></div>
 
     <script>
-        // 系統配置 - 使用 JSONP 代理解決 CORS 問題
+        // 系統配置
         const CONFIG = {
             LIFF_ID: '2008276630-bYNjwMx7',
             API_ENDPOINT: 'https://script.google.com/macros/s/AKfycbxB-nyWntKlMDJH0KM5I5-lC1dGceY1a1C_dJBmcKAJIAOMQ4bv7b5AItV1bn8BrRm7/exec'
@@ -622,7 +645,6 @@
                 });
                 
                 debugLog('LIFF 初始化成功');
-                console.log('LIFF 初始化成功');
                 
                 if (liff.isLoggedIn()) {
                     // 獲取用戶資料
@@ -835,6 +857,26 @@
             }
         }
         
+        // 顯示通知狀態
+        function showNotificationStatus(storeResult, customerResult) {
+            const statusContainer = document.getElementById('notificationStatus');
+            let statusHtml = '';
+            
+            if (storeResult && storeResult.success) {
+                statusHtml += '<div class="notification-status success">✅ 店家已收到訂單通知</div>';
+            } else {
+                statusHtml += `<div class="notification-status error">⚠️ 店家通知: ${storeResult?.message || '發送失敗'}</div>`;
+            }
+            
+            if (customerResult && customerResult.success) {
+                statusHtml += '<div class="notification-status success">✅ 已發送 LINE 通知給您</div>';
+            } else {
+                statusHtml += `<div class="notification-status error">⚠️ 客戶通知: ${customerResult?.message || '未發送'}</div>`;
+            }
+            
+            statusContainer.innerHTML = statusHtml;
+        }
+        
         // 使用 Google Apps Script 的 doGet 作為代理
         function submitOrderViaGet(orderData) {
             return new Promise((resolve, reject) => {
@@ -903,6 +945,15 @@
                 
                 if (result.success) {
                     const orderId = result.data?.orderId || 'N/A';
+                    
+                    // 顯示通知狀態
+                    if (result.data.notifications) {
+                        showNotificationStatus(
+                            result.data.notifications.store,
+                            result.data.notifications.customer
+                        );
+                    }
+                    
                     let successMessage = `✅ 訂單成功！\n訂單編號: ${orderId}\n總金額: $${finalTotal}`;
                     
                     if (isLineBound) {
@@ -973,6 +1024,7 @@
             document.getElementById('notes').value = '';
             document.getElementById('phoneGroup').classList.remove('error');
             document.getElementById('timeGroup').classList.remove('error');
+            document.getElementById('notificationStatus').innerHTML = '';
             setDefaultPickupTime();
             updateOrderSummary();
             
