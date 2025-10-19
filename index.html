@@ -480,14 +480,24 @@
                     <label>選擇餐點</label>
                     <select id="menuSelect" onchange="addToCart()">
                         <option value="">-- 請選擇餐點 --</option>
-                        <!-- 菜單會由 JS 動態載入 -->
+                        <option value="滷肉飯">🍚 滷肉飯 - $35</option>
+                        <option value="雞肉飯">🍗 雞肉飯 - $40</option>
+                        <option value="蚵仔煎">🍳 蚵仔煎 - $65</option>
+                        <option value="大腸麵線">🍜 大腸麵線 - $50</option>
+                        <option value="珍珠奶茶">🥤 珍珠奶茶 - $45</option>
+                        <option value="鹽酥雞">🍖 鹽酥雞 - $60</option>
+                        <option value="甜不辣">🍢 甜不辣 - $40</option>
+                        <option value="肉圓">🥟 肉圓 - $45</option>
                     </select>
                 </div>
                 
                 <div style="margin-top: 15px; padding: 10px; background: white; border-radius: 5px;">
                     <div style="font-size: 12px; color: var(--gray); margin-bottom: 5px;">快速選擇：</div>
-                    <div class="quick-add-buttons" id="quickAddButtons">
-                        <!-- 快速選擇按鈕會由 JS 動態載入 -->
+                    <div class="quick-add-buttons">
+                        <button type="button" onclick="quickAdd('滷肉飯')" class="quick-add-btn">🍚 滷肉飯</button>
+                        <button type="button" onclick="quickAdd('雞肉飯')" class="quick-add-btn">🍗 雞肉飯</button>
+                        <button type="button" onclick="quickAdd('珍珠奶茶')" class="quick-add-btn">🥤 珍珠奶茶</button>
+                        <button type="button" onclick="quickAdd('鹽酥雞')" class="quick-add-btn">🍖 鹽酥雞</button>
                     </div>
                 </div>
             </div>
@@ -541,8 +551,8 @@
             
             <div class="footer">
                 <p>📍 營業時間: 10:00-21:00</p>
-                <p>📞 聯絡電話: 02-1234-5678 (請替換為您的店家電話)</p>
-                <p style="margin-top: 5px; font-size: 10px; opacity: 0.7;">系統版本: 2.2.1</p>
+                <p>📞 聯絡電話: 02-1234-5678</p>
+                <p style="margin-top: 5px; font-size: 10px; opacity: 0.7;">系統版本: 2.2.0</p>
                 <button onclick="toggleDebug()" style="margin-top: 5px; padding: 2px 8px; font-size: 9px; background: #6c757d; color: white; border: none; border-radius: 3px; cursor: pointer;">顯示除錯資訊</button>
             </div>
         </div>
@@ -552,40 +562,47 @@
     <div class="notification" id="notification"></div>
 
     <script>
-        // 系統配置
+        // 系統配置 - 使用 JSONP 代理解決 CORS 問題
         const CONFIG = {
-            LIFF_ID: '2008276630-bYNjwMx7', // <<<<<<<<<<<<<<<<< 請替換為您的 LIFF ID
-            // IMPORTANT: 將此替換為您部署的 Google Apps Script Web App URL
-            API_ENDPOINT: 'https://script.google.com/macros/s/AKfycbyv217w5ljmuy2h_dg_LOOt5cQ659UEAJwzRi-v-MlVK4VuJSl-mrpzGC0CbDv1obFK/exec' // <<<<<<<<<<<<<<<<< 請替換為您部署的 Web App URL
+            LIFF_ID: '2008276630-bYNjwMx7',
+            API_ENDPOINT: 'https://script.google.com/macros/s/AKfycbyv217w5ljmuy2h_dg_LOOt5cQ659UEAJwzRi-v-MlVK4VuJSl-mrpzGC0CbDv1obFK/exec'
+        };
+        
+        // 菜單價格
+        const menuPrices = {
+            '滷肉飯': 35,
+            '雞肉飯': 40,
+            '蚵仔煎': 65,
+            '大腸麵線': 50,
+            '珍珠奶茶': 45,
+            '鹽酥雞': 60,
+            '甜不辣': 40,
+            '肉圓': 45
+        };
+        
+        // 餐點圖示
+        const menuIcons = {
+            '滷肉飯': '🍚',
+            '雞肉飯': '🍗',
+            '蚵仔煎': '🍳',
+            '大腸麵線': '🍜',
+            '珍珠奶茶': '🥤',
+            '鹽酥雞': '🍖',
+            '甜不辣': '🍢',
+            '肉圓': '🥟'
         };
         
         let cart = [];
         let userProfile = null;
         let lineUserId = '';
         let isLineBound = false;
-        let availableMenuItems = []; // 儲存從後端獲取的菜單項目
-
+        
         // 除錯函數
         function debugLog(message) {
             console.log(message);
             const debugContent = document.getElementById('debugContent');
             if (debugContent) {
-                // 限制除錯訊息數量，避免過長
-                const maxDebugMessages = 20;
-                let currentMessages = debugContent.innerHTML;
-                const newMessage = `<div>${new Date().toLocaleTimeString('zh-TW')}: ${message}</div>`;
-
-                // 計算當前訊息數量
-                const numCurrentMessages = (currentMessages.match(/<div>/g) || []).length;
-                if (numCurrentMessages >= maxDebugMessages) {
-                    // 移除最舊的訊息
-                    const firstDivEnd = currentMessages.indexOf('</div>');
-                    if (firstDivEnd !== -1) {
-                        currentMessages = currentMessages.substring(firstDivEnd + '</div>'.length);
-                    }
-                }
-                debugContent.innerHTML = currentMessages + newMessage;
-                debugContent.scrollTop = debugContent.scrollHeight; // 自動捲動到底部
+                debugContent.innerHTML += `<div>${new Date().toLocaleTimeString()}: ${message}</div>`;
             }
         }
         
@@ -618,9 +635,9 @@
                     document.getElementById('userInfo').innerHTML = `✅ LINE 帳號已綁定<br>👋 歡迎，${userProfile.displayName}`;
                     document.getElementById('userInfo').style.display = 'block';
                     
-                    // 顯示 LINE User ID (僅供除錯，生產環境可隱藏)
-                    // document.getElementById('lineIdDisplay').style.display = 'block';
-                    // document.getElementById('lineUserId').textContent = lineUserId;
+                    // 顯示 LINE User ID
+                    document.getElementById('lineIdDisplay').style.display = 'block';
+                    document.getElementById('lineUserId').textContent = lineUserId;
                     
                     document.getElementById('liffStatus').innerHTML = '✅ LINE 功能已就緒';
                     
@@ -630,9 +647,7 @@
                 } else {
                     // 在 LINE 環境中但未登入，自動登入
                     document.getElementById('liffStatus').innerHTML = '🔐 正在進行 LINE 登入...';
-                    // 不直接呼叫 liff.login() 而是顯示提示，讓用戶自行點擊登入
-                    // liff.login();
-                    showNotification('請先登入 LINE 以綁定帳號', 'warning', 5000);
+                    liff.login();
                 }
                 
             } catch (error) {
@@ -646,88 +661,9 @@
                 showNotification('LINE 功能載入失敗，但仍可訂餐', 'warning', 5000);
             }
         }
-
-        // 從後端獲取菜單
-        async function fetchMenu() {
-            debugLog('從後端獲取菜單...');
-            try {
-                const response = await fetch(`${CONFIG.API_ENDPOINT}?action=getMenu`);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const result = await response.json();
-                debugLog(`獲取菜單成功: ${JSON.stringify(result)}`);
-
-                if (result.success && result.data) {
-                    availableMenuItems = result.data.filter(item => item.available); // 只顯示可供應的餐點
-                    renderMenuSelect();
-                    renderQuickAddButtons();
-                } else {
-                    showNotification('無法獲取菜單資料', 'error', 3000);
-                    debugLog(`後端返回菜單失敗: ${result.message}`);
-                }
-            } catch (error) {
-                console.error('獲取菜單失敗:', error);
-                debugLog(`獲取菜單失敗: ${error.message}`);
-                showNotification('無法連線至伺服器獲取菜單，請稍後再試。', 'error', 5000);
-                // 如果獲取菜單失敗，使用一個備用菜單（如果有的話），或清空菜單
-                availableMenuItems = []; // 清空菜單
-                renderMenuSelect();
-                renderQuickAddButtons();
-            }
-        }
-
-        // 渲染菜單選擇下拉式選單
-        function renderMenuSelect() {
-            const menuSelect = document.getElementById('menuSelect');
-            menuSelect.innerHTML = '<option value="">-- 請選擇餐點 --</option>';
-
-            const categories = {};
-            availableMenuItems.forEach(item => {
-                if (!categories[item.category]) {
-                    categories[item.category] = [];
-                }
-                categories[item.category].push(item);
-            });
-
-            for (const categoryName in categories) {
-                const optgroup = document.createElement('optgroup');
-                optgroup.label = categoryName;
-                categories[categoryName].forEach(item => {
-                    const option = document.createElement('option');
-                    option.value = item.name;
-                    option.textContent = `${item.emoji || '🍽️'} ${item.name} - $${item.price}`;
-                    optgroup.appendChild(option);
-                });
-                menuSelect.appendChild(optgroup);
-            }
-        }
-
-        // 渲染快速選擇按鈕
-        function renderQuickAddButtons() {
-            const quickAddButtonsDiv = document.getElementById('quickAddButtons');
-            quickAddButtonsDiv.innerHTML = ''; // 清空現有按鈕
-
-            // 選擇前4個或一些熱門餐點作為快速選擇
-            const quickAddLimit = 4; 
-            availableMenuItems.slice(0, quickAddLimit).forEach(item => {
-                const button = document.createElement('button');
-                button.type = 'button';
-                button.className = 'quick-add-btn';
-                button.textContent = `${item.emoji || '🍽️'} ${item.name}`;
-                button.onclick = () => quickAdd(item.name);
-                quickAddButtonsDiv.appendChild(button);
-            });
-        }
         
         // 快速添加餐點
         function quickAdd(itemName) {
-            const menuItem = availableMenuItems.find(item => item.name === itemName);
-            if (!menuItem) {
-                showNotification(`餐點 ${itemName} 不存在或已售罄`, 'error', 3000);
-                return;
-            }
-
             const existingItem = cart.find(item => item.name === itemName);
             
             if (existingItem) {
@@ -735,7 +671,7 @@
             } else {
                 cart.push({
                     name: itemName,
-                    price: menuItem.price, // 使用後端獲取的價格
+                    price: menuPrices[itemName],
                     quantity: 1
                 });
             }
@@ -745,27 +681,21 @@
             showNotification(`已添加 ${itemName}`, 'success', 2000);
         }
         
-        // 添加到購物車 (從下拉選單)
+        // 添加到購物車
         function addToCart() {
             const menuSelect = document.getElementById('menuSelect');
-            const selectedItemName = menuSelect.value;
+            const selectedItem = menuSelect.value;
             
-            if (!selectedItemName) return;
+            if (!selectedItem) return;
             
-            const menuItem = availableMenuItems.find(item => item.name === selectedItemName);
-            if (!menuItem) {
-                showNotification(`餐點 ${selectedItemName} 不存在或已售罄`, 'error', 3000);
-                return;
-            }
-
-            const existingItem = cart.find(item => item.name === selectedItemName);
+            const existingItem = cart.find(item => item.name === selectedItem);
             
             if (existingItem) {
                 existingItem.quantity++;
             } else {
                 cart.push({
-                    name: selectedItemName,
-                    price: menuItem.price, // 使用後端獲取的價格
+                    name: selectedItem,
+                    price: menuPrices[selectedItem],
                     quantity: 1
                 });
             }
@@ -773,7 +703,7 @@
             menuSelect.value = '';
             renderCart();
             updateOrderSummary();
-            showNotification(`已添加 ${selectedItemName}`, 'success', 2000);
+            showNotification(`已添加 ${selectedItem}`, 'success', 2000);
         }
         
         // 渲染購物車
@@ -785,13 +715,10 @@
                 return;
             }
             
-            cartItems.innerHTML = cart.map(item => {
-                const menuItem = availableMenuItems.find(m => m.name === item.name);
-                const emoji = menuItem ? menuItem.emoji : '🍽️'; // 獲取正確的圖示
-                return `
+            cartItems.innerHTML = cart.map(item => `
                 <div class="cart-item">
                     <div>
-                        <strong>${emoji} ${item.name}</strong>
+                        <strong>${menuIcons[item.name]} ${item.name}</strong>
                         <div style="font-size: 12px; color: var(--gray);">
                             $${item.price} x ${item.quantity} = $${item.price * item.quantity}
                         </div>
@@ -803,7 +730,7 @@
                         <button class="remove-btn" onclick="removeItem('${item.name}')">刪除</button>
                     </div>
                 </div>
-            `;}).join('');
+            `).join('');
         }
         
         // 調整數量
@@ -853,13 +780,6 @@
         function validateForm() {
             let isValid = true;
             
-            // 驗證姓名 (現在為可選，但可根據需求修改)
-            const customerName = document.getElementById('customerName').value.trim();
-            if (!customerName) {
-                // 如果姓名為空，可以在此處設置錯誤提示，或允許為空
-                // 例如：document.getElementById('nameGroup').classList.add('error'); isValid = false;
-            }
-
             // 驗證手機號碼
             const phone = document.getElementById('customerPhone').value.trim();
             const phoneRegex = /^09\d{8}$/;
@@ -873,22 +793,12 @@
             }
             
             // 驗證取餐時間
-            const pickupTimeValue = document.getElementById('pickupTime').value;
-            if (!pickupTimeValue) {
+            const pickupTime = document.getElementById('pickupTime').value;
+            if (!pickupTime) {
                 document.getElementById('timeGroup').classList.add('error');
                 isValid = false;
             } else {
                 document.getElementById('timeGroup').classList.remove('error');
-                // 檢查取餐時間是否為過去 (允許少量誤差，如 1 分鐘)
-                const pickupDate = new Date(pickupTimeValue);
-                const now = new Date();
-                if (pickupDate.getTime() < now.getTime() - 60 * 1000) { 
-                    document.getElementById('timeGroup').classList.add('error');
-                    document.getElementById('timeError').textContent = '取餐時間不能是過去時間';
-                    isValid = false;
-                } else {
-                    document.getElementById('timeError').textContent = '請選擇取餐時間'; // Reset error message
-                }
             }
             
             if (cart.length === 0) {
@@ -925,7 +835,33 @@
             }
         }
         
-        // 提交訂單 - 使用 POST 請求
+        // 使用 Google Apps Script 的 doGet 作為代理
+        function submitOrderViaGet(orderData) {
+            return new Promise((resolve, reject) => {
+                // 將訂單資料編碼為 URL 參數
+                const encodedData = encodeURIComponent(JSON.stringify(orderData));
+                const url = `${CONFIG.API_ENDPOINT}?action=createOrder&data=${encodedData}`;
+                
+                debugLog('使用 GET 代理發送訂單...');
+                debugLog(`請求 URL: ${url}`);
+                
+                fetch(url)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+                        return response.json();
+                    })
+                    .then(result => {
+                        resolve(result);
+                    })
+                    .catch(error => {
+                        reject(error);
+                    });
+            });
+        }
+        
+        // 提交訂單 - 使用 GET 代理解決 CORS
         async function submitOrder() {
             if (!validateForm()) {
                 return;
@@ -939,11 +875,11 @@
             const notes = document.getElementById('notes').value.trim();
             
             // 計算總金額
-            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const totalAmount = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
             const deliveryFee = deliveryAddress ? 30 : 0;
-            const finalTotal = subtotal + deliveryFee;
+            const finalTotal = totalAmount + deliveryFee;
             
-            // 創建訂單資料物件
+            // 創建訂單資料
             const orderData = {
                 customerName: customerName,
                 customerPhone: customerPhone,
@@ -957,28 +893,12 @@
             };
             
             debugLog('準備發送訂單資料...');
-            debugLog(`發送數據: ${JSON.stringify(orderData)}`);
+            debugLog(`訂單資料: ${JSON.stringify(orderData)}`);
             setLoading(true);
             
             try {
-                // 發送 POST 請求
-                const response = await fetch(CONFIG.API_ENDPOINT, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        action: 'createOrder', // 指示後端執行 createOrder 動作
-                        orderData: orderData
-                    })
-                });
-                
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`HTTP ${response.status}: ${errorText}`);
-                }
-                
-                const result = await response.json();
+                // 使用 GET 代理發送訂單
+                const result = await submitOrderViaGet(orderData);
                 debugLog(`伺服器回應: ${JSON.stringify(result)}`);
                 
                 if (result.success) {
@@ -988,7 +908,7 @@
                     if (isLineBound) {
                         successMessage += '\n📱 LINE 帳號已綁定';
                         
-                        // 如果在 LINE 內，嘗試發送 LIFF 訊息
+                        // 發送 LINE 訊息
                         if (liff.isInClient()) {
                             try {
                                 const itemsText = cart.map(item => 
@@ -997,12 +917,11 @@
                                 
                                 await liff.sendMessages([{
                                     type: 'text',
-                                    text: `感謝您的訂購！\n訂單編號: ${orderId}\n餐點:\n${itemsText}\n總金額: $${finalTotal}\n取餐時間: ${new Date(pickupTime).toLocaleString('zh-TW', { hour12: false })}\n我們會儘快為您準備餐點。`
+                                    text: `感謝您的訂購！\n訂單編號: ${orderId}\n餐點:\n${itemsText}\n總金額: $${finalTotal}\n取餐時間: ${new Date(pickupTime).toLocaleString('zh-TW')}\n我們會儘快為您準備餐點。`
                                 }]);
-                                successMessage += '\n💬 已發送訂單通知到您的 LINE';
+                                successMessage += '\n💬 已發送訂單通知';
                             } catch (sendError) {
-                                debugLog(`LIFF 訊息發送失敗: ${sendError}`);
-                                successMessage += '\n⚠️ LIFF 訊息發送失敗，請確保已同意訊息權限';
+                                debugLog(`LINE 訊息發送失敗: ${sendError}`);
                             }
                         }
                     }
@@ -1015,13 +934,13 @@
                 }
                 
             } catch (error) {
-                console.error('訂單提交失敗:', error);
+                console.error('錯誤:', error);
                 debugLog(`發送錯誤: ${error.message}`);
                 
-                let errorMessage = `❌ 訂單發送失敗\n${error.message}`;
+                let errorMessage = `❌ 發送失敗\n${error.message}`;
                 
                 if (error.message.includes('Failed to fetch')) {
-                    errorMessage += '\n\n請檢查：\n1. 網路連線\n2. 後端服務狀態\n3. API 端點網址是否正確';
+                    errorMessage += '\n\n請檢查：\n1. 網路連線\n2. 後端服務狀態\n3. 網址是否正確';
                 }
                 
                 showNotification(errorMessage, 'error', 8000);
@@ -1033,7 +952,7 @@
         // 設定預設取餐時間
         function setDefaultPickupTime() {
             const now = new Date();
-            now.setMinutes(now.getMinutes() + 30); // 預設 30 分鐘後取餐
+            now.setMinutes(now.getMinutes() + 30);
             
             const year = now.getFullYear();
             const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -1041,9 +960,8 @@
             const hours = String(now.getHours()).padStart(2, '0');
             const minutes = String(now.getMinutes()).padStart(2, '0');
             
-            const formattedTime = `${year}-${month}-${day}T${hours}:${minutes}`;
-            document.getElementById('pickupTime').value = formattedTime;
-            document.getElementById('pickupTime').min = formattedTime; // 設定最小時間為當前時間+30分鐘
+            document.getElementById('pickupTime').value = `${year}-${month}-${day}T${hours}:${minutes}`;
+            document.getElementById('pickupTime').min = `${year}-${month}-${day}T${hours}:${minutes}`;
         }
         
         // 重置訂單
@@ -1055,15 +973,12 @@
             document.getElementById('notes').value = '';
             document.getElementById('phoneGroup').classList.remove('error');
             document.getElementById('timeGroup').classList.remove('error');
-            document.getElementById('timeError').textContent = '請選擇取餐時間'; // Reset error message
             setDefaultPickupTime();
             updateOrderSummary();
             
-            // 保留 LINE 用戶名稱 (如果已登入)
+            // 保留 LINE 用戶名稱
             if (userProfile) {
                 document.getElementById('customerName').value = userProfile.displayName;
-            } else {
-                document.getElementById('customerName').value = '';
             }
         }
         
@@ -1076,29 +991,19 @@
                 const phoneRegex = /^09\d{8}$/;
                 if (phone && !phoneRegex.test(phone)) {
                     document.getElementById('phoneGroup').classList.add('error');
-                    document.getElementById('phoneError').textContent = '請輸入正確的手機號碼 (09開頭，10位數字)';
                 } else {
                     document.getElementById('phoneGroup').classList.remove('error');
-                    document.getElementById('phoneError').textContent = ''; // Clear error
                 }
             });
             
             document.getElementById('pickupTime').addEventListener('change', function() {
-                const pickupTimeValue = this.value;
-                if (pickupTimeValue) {
+                if (this.value) {
                     document.getElementById('timeGroup').classList.remove('error');
-                    document.getElementById('timeError').textContent = ''; // Clear error
-                    // 檢查時間是否為過去 (允許少量誤差，如 1 分鐘)
-                    const pickupDate = new Date(pickupTimeValue);
-                    const now = new Date();
-                    if (pickupDate.getTime() < now.getTime() - 60 * 1000) { 
+                    // 檢查時間是否為過去
+                    if (new Date(this.value) < new Date()) {
                         document.getElementById('timeGroup').classList.add('error');
-                        document.getElementById('timeError').textContent = '取餐時間不能是過去時間';
                         showNotification('取餐時間不能是過去時間', 'error', 3000);
                     }
-                } else {
-                    document.getElementById('timeGroup').classList.add('error');
-                    document.getElementById('timeError').textContent = '請選擇取餐時間';
                 }
             });
         }
@@ -1106,36 +1011,28 @@
         // 頁面載入初始化
         document.addEventListener('DOMContentLoaded', async function() {
             await initializeLiff();
-            await fetchMenu(); // 先獲取菜單
             setDefaultPickupTime();
             initializeEventListeners();
-            updateOrderSummary(); // 初次計算總金額，使提交按鈕狀態正確
             
             // 測試後端連線
             testBackendConnection();
         });
 
-        // 測試後端連線 (使用 GET 請求來進行健康檢查)
+        // 測試後端連線
         async function testBackendConnection() {
             try {
-                debugLog('測試後端連線 (healthCheck)...');
+                debugLog('測試後端連線...');
                 const response = await fetch(CONFIG.API_ENDPOINT + '?action=healthCheck');
                 if (response.ok) {
                     const result = await response.json();
-                    debugLog(`後端健康檢查結果: ${JSON.stringify(result)}`);
-                    if (result.success && result.data.status === 'healthy') {
-                        debugLog('後端連線正常且健康。');
-                    } else {
-                        debugLog('後端連線正常但服務狀態異常。');
-                        showNotification('後端服務運行異常，請聯繫管理員。', 'warning', 5000);
-                    }
+                    debugLog('後端連線正常');
                 } else {
-                    debugLog(`後端連線測試失敗: HTTP ${response.status}`);
-                    showNotification('後端服務連線異常，請檢查網路或服務狀態。', 'warning', 3000);
+                    debugLog('後端連線測試失敗');
+                    showNotification('後端服務連線異常', 'warning', 3000);
                 }
             } catch (error) {
                 debugLog(`後端連線測試異常: ${error.message}`);
-                showNotification('無法連線到後端服務，請檢查網路。', 'warning', 3000);
+                showNotification('無法連線到後端服務', 'warning', 3000);
             }
         }
     </script>
