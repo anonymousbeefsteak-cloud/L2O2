@@ -1,5 +1,5 @@
-{
-  "name": "Taiwan Snack Shop LINE Ordering",
-  "description": "A simple and fast LINE-based ordering system for a Taiwanese snack shop, allowing users to select items, place orders, and track their status.",
+
+  "name": "Taiwanese Snack Shop LINE Ordering System",
+  "description": "A web application for a Taiwanese snack shop that allows users to place orders through a LINE Front-end Framework (LIFF) interface. It features a menu, shopping cart, and order submission to a backend service, with special integration for LINE user profiles.",
   "requestFramePermissions": []
 }
