@@ -35,31 +35,6 @@
         .share-section {
             margin: 30px 0;
         }
-        .line-share-btn, .screenshot-btn, .keep-btn {
-            display: inline-block;
-            margin: 8px;
-            padding: 12px 20px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: bold;
-            transition: all 0.3s ease;
-        }
-        .line-share-btn {
-            background: #06c755;
-            color: white;
-        }
-        .screenshot-btn {
-            background: #8B5CF6;
-            color: white;
-        }
-        .keep-btn {
-            background: #00B900;
-            color: white;
-        }
-        .line-share-btn:hover, .screenshot-btn:hover, .keep-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
         .action-buttons {
             display: flex;
             flex-direction: column;
@@ -89,6 +64,14 @@
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
             margin: 20px 0;
         }
+        .user-info {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 12px;
+            word-break: break-all;
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-indigo-300 to-purple-400">
@@ -115,6 +98,18 @@
                     <!-- LIFF Status -->
                     <div id="liffStatus" class="p-3 rounded-lg text-sm text-center border bg-blue-100 border-blue-400 text-blue-800">
                         🔄 初始化 LINE 功能中...
+                    </div>
+
+                    <!-- User Info Display -->
+                    <div id="userInfo" class="user-info hidden">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <strong>👤 LINE 用戶:</strong> <span id="userDisplayName">-</span>
+                            </div>
+                            <div>
+                                <strong>🆔 User ID:</strong> <span id="userLineId">-</span>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Order Form -->
@@ -230,17 +225,17 @@
                             
                             <div class="action-buttons">
                                 <!-- 截圖按鈕 -->
-                                <button onclick="takeScreenshot()" class="action-button bg-purple-500 text-white">
+                                <button onclick="takeScreenshot()" class="action-button bg-purple-500 text-white hover:bg-purple-600">
                                     📸 截圖保存訂單
                                 </button>
                                 
                                 <!-- LINE 分享按鈕 -->
-                                <button onclick="shareToLine()" class="action-button bg-green-500 text-white">
+                                <button onclick="shareToLine()" class="action-button bg-green-500 text-white hover:bg-green-600">
                                     📱 分享到 LINE
                                 </button>
                                 
                                 <!-- LINE Keep 按鈕 -->
-                                <button onclick="saveToLineKeep()" class="action-button bg-blue-500 text-white">
+                                <button onclick="saveToLineKeep()" class="action-button bg-blue-500 text-white hover:bg-blue-600">
                                     💾 保存到 LINE Keep
                                 </button>
                             </div>
@@ -249,13 +244,17 @@
                                 <p class="text-sm text-gray-600 mb-2">或複製訂單資訊：</p>
                                 <div class="share-text-box">
                                     <textarea id="shareText" readonly rows="6" class="w-full p-3 border border-gray-300 rounded-lg text-sm"></textarea>
-                                    <button onclick="copyShareText()" class="copy-btn w-full py-3 bg-gray-500 text-white rounded-lg font-bold mt-2">📋 複製訂單資訊</button>
+                                    <button onclick="copyShareText()" class="w-full py-3 bg-gray-500 text-white rounded-lg font-bold mt-2 hover:bg-gray-600 transition-colors">
+                                        📋 複製訂單資訊
+                                    </button>
                                 </div>
                             </div>
                         </div>
                         
                         <div class="actions mt-6">
-                            <button onclick="newOrder()" class="new-order-btn w-full py-3 bg-green-600 text-white rounded-lg font-bold">📝 再訂一單</button>
+                            <button onclick="newOrder()" class="w-full py-3 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition-colors">
+                                📝 再訂一單
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -265,13 +264,13 @@
             <footer class="bg-gray-100 p-4 text-center text-xs text-gray-500 border-t border-gray-200">
                 <p>📍 營業時間: 10:00 - 21:00</p>
                 <p>📞 聯絡電話: 02-1234-5678</p>
-                <p class="mt-2 opacity-70">系統版本: 5.0.0 (截圖分享版)</p>
+                <p class="mt-2 opacity-70">系統版本: 5.1.0 (自動 LINE ID 載入版)</p>
             </footer>
         </div>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             // --- CONFIGURATION ---
             const LIFF_ID = '2008276630-bYNjwMx7';
             const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbyPd6ElhokdjT_MeglvelS8E_-pdi60P-MC4wCP81b6Rdafk2S_fcaFRoiJP5VblnkP/exec';
@@ -299,6 +298,9 @@
                 orderForm: getEl('orderForm'),
                 successPage: getEl('successPage'),
                 liffStatus: getEl('liffStatus'),
+                userInfo: getEl('userInfo'),
+                userDisplayName: getEl('userDisplayName'),
+                userLineId: getEl('userLineId'),
                 customerName: getEl('customerName'),
                 customerPhone: getEl('customerPhone'),
                 phoneError: getEl('phoneError'),
@@ -329,6 +331,53 @@
                 successNotes: getEl('successNotes'),
                 successOrderItems: getEl('successOrderItems'),
                 shareText: getEl('shareText')
+            };
+
+            // --- LIFF INITIALIZATION ---
+            const initializeLiff = async () => {
+                try {
+                    console.log('開始初始化 LIFF...');
+                    await liff.init({ liffId: LIFF_ID });
+                    
+                    if (liff.isLoggedIn()) {
+                        console.log('用戶已登入，獲取用戶資料...');
+                        userProfile = await liff.getProfile();
+                        lineUserId = userProfile.userId;
+                        
+                        // 更新用戶資訊顯示
+                        elements.userDisplayName.textContent = userProfile.displayName;
+                        elements.userLineId.textContent = lineUserId;
+                        elements.userInfo.classList.remove('hidden');
+                        
+                        // 自動填寫用戶姓名
+                        elements.customerName.value = userProfile.displayName;
+                        
+                        // 更新狀態顯示
+                        elements.liffStatus.textContent = `✅ LINE 用戶已載入`;
+                        elements.liffStatus.className = 'p-3 rounded-lg text-sm text-center border bg-green-100 border-green-400 text-green-800';
+                        
+                        console.log('LINE 用戶資料載入完成:', {
+                            displayName: userProfile.displayName,
+                            userId: lineUserId
+                        });
+                        
+                    } else {
+                        console.log('用戶未登入，嘗試登入...');
+                        if (liff.isInClient()) {
+                            // 在 LINE 環境中，直接登入
+                            liff.login();
+                        } else {
+                            // 非 LINE 環境，顯示提示
+                            elements.liffStatus.textContent = '請在 LINE App 中開啟以獲得完整功能';
+                            elements.liffStatus.className = 'p-3 rounded-lg text-sm text-center border bg-yellow-100 border-yellow-400 text-yellow-800';
+                        }
+                    }
+                    
+                } catch (error) {
+                    console.error('LIFF 初始化失敗:', error);
+                    elements.liffStatus.textContent = '⚠️ LINE 功能載入失敗，但您仍可訂餐';
+                    elements.liffStatus.className = 'p-3 rounded-lg text-sm text-center border bg-yellow-100 border-yellow-400 text-yellow-800';
+                }
             };
 
             // --- UI UPDATE FUNCTIONS ---
@@ -466,11 +515,11 @@ ${itemsText}
                 showNotification('正在生成截圖...', 'success', 2000);
                 
                 html2canvas(elements.screenshotArea, {
-                    scale: 2, // 提高解析度
+                    scale: 2,
                     useCORS: true,
-                    logging: false
+                    logging: false,
+                    backgroundColor: '#ffffff'
                 }).then(canvas => {
-                    // 將 canvas 轉換為圖片
                     canvas.toBlob(function(blob) {
                         const link = document.createElement('a');
                         link.download = `訂單_${elements.successOrderId.textContent}.png`;
@@ -669,31 +718,6 @@ ${itemsText}
                 elements.pickupTime.min = `${year}-${month}-${day}T${hours}:${minutes}`;
             };
 
-            const initializeLiff = async () => {
-                try {
-                    await liff.init({ liffId: LIFF_ID });
-                    if (liff.isLoggedIn()) {
-                        userProfile = await liff.getProfile();
-                        lineUserId = userProfile.userId;
-                        elements.customerName.value = userProfile.displayName;
-                        elements.liffStatus.textContent = `👋 歡迎，${userProfile.displayName}！`;
-                        elements.liffStatus.className = 'p-3 rounded-lg text-sm text-center border bg-green-100 border-green-400 text-green-800';
-                    } else {
-                         if (liff.isInClient()) {
-                             elements.liffStatus.textContent = '未登入 LINE，正在嘗試登入...';
-                             liff.login();
-                        } else {
-                             elements.liffStatus.textContent = '請在 LINE App 中開啟以獲得完整功能。';
-                             elements.liffStatus.className = 'p-3 rounded-lg text-sm text-center border bg-yellow-100 border-yellow-400 text-yellow-800';
-                        }
-                    }
-                } catch (error) {
-                    console.error('LIFF 初始化失敗', error);
-                    elements.liffStatus.textContent = '⚠️ LINE 功能載入失敗，但您仍可訂餐。';
-                    elements.liffStatus.className = 'p-3 rounded-lg text-sm text-center border bg-yellow-100 border-yellow-400 text-yellow-800';
-                }
-            };
-            
             const populateMenu = () => {
                 // Populate dropdown
                 MENU_ITEMS.forEach(item => {
@@ -731,7 +755,7 @@ ${itemsText}
             window.handleQuantityChange = handleQuantityChange;
 
             // Start the app
-            initializeLiff();
+            await initializeLiff();
             setDefaultPickupTime();
             populateMenu();
             renderCart();
