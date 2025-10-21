@@ -267,7 +267,7 @@
             <footer class="bg-gray-100 p-4 text-center text-xs text-gray-500 border-t border-gray-200">
                 <p>📍 營業時間: 10:00 - 21:00</p>
                 <p>📞 聯絡電話: 02-1234-5678</p>
-                <p class="mt-2 opacity-70">系統版本: 6.2.0 (LINE綁定修復版)</p>
+                <p class="mt-2 opacity-70">系統版本: 6.2.1 (Fetch API 修復版)</p>
             </footer>
         </div>
     </div>
@@ -611,8 +611,7 @@
                 const response = await fetch(CONFIG.API_ENDPOINT, {
                     method: 'POST',
                     headers: { 
-                        'Content-Type': 'text/plain;charset=utf-8',
-                        'X-API-Key': CONFIG.API_KEY
+                        'Content-Type': 'text/plain;charset=utf-8'
                     },
                     body: JSON.stringify(orderData),
                     mode: 'cors'
@@ -797,8 +796,7 @@
                 const response = await fetch(CONFIG.API_ENDPOINT, {
                     method: 'POST',
                     headers: { 
-                        'Content-Type': 'text/plain;charset=utf-8',
-                        'X-API-Key': CONFIG.API_KEY
+                        'Content-Type': 'text/plain;charset=utf-8'
                     },
                     body: JSON.stringify({
                         action: 'searchOrder',
