@@ -1,169 +1,905 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>台灣小吃店 - LINE 快速訂餐</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>台灣小吃店 - 訂單查詢</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* For notification slide-in animation */
-        @keyframes slide-in {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
+        :root {
+            --primary: #e74c3c;
+            --primary-dark: #c0392b;
+            --secondary: #f39c12;
+            --light: #f9f9f9;
+            --dark: #333;
+            --gray: #777;
+            --light-gray: #eee;
+            --success: #2ecc71;
+            --warning: #f1c40f;
+            --danger: #e74c3c;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --radius: 8px;
         }
-        .animate-slide-in { animation: slide-in 0.3s ease-out forwards; }
-        
-        /* For Modal fade-in */
-        #orderSuccessModalContent {
-            transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            color: var(--dark);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 1.5rem 0;
+            box-shadow: var(--shadow);
+            text-align: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 0.5rem;
+        }
+
+        .logo i {
+            font-size: 2rem;
+        }
+
+        .logo h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        main {
+            flex: 1;
+            padding: 2rem 0;
+        }
+
+        .card {
+            background: white;
+            border-radius: var(--radius);
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .card-icon {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .card-description {
+            color: var(--gray);
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid var(--light-gray);
+            border-radius: var(--radius);
+            font-size: 1rem;
+            transition: border 0.3s;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+
+        .form-note {
+            color: var(--gray);
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: var(--radius);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #e67e22;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-block {
+            width: 100%;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: var(--radius);
+            margin-bottom: 1rem;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .status-badge {
+            padding: 0.3rem 0.7rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-confirmed {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .status-completed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-cancelled {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .order-card {
+            background: white;
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: var(--shadow);
+            border-left: 4px solid var(--primary);
+        }
+
+        .order-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .order-card-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .order-card-body {
+            margin-bottom: 1rem;
+        }
+
+        .order-card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 1rem;
+            border-top: 1px solid var(--light-gray);
+        }
+
+        .order-detail-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .order-detail-label {
+            color: var(--gray);
+        }
+
+        .order-detail-value {
+            font-weight: 500;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: var(--gray);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--light-gray);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+        }
+
+        .summary-total {
+            font-weight: 700;
+            font-size: 1.2rem;
+            border-top: 1px solid var(--gray);
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+        }
+
+        footer {
+            background: var(--dark);
+            color: white;
+            padding: 2rem 0;
+            margin-top: auto;
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+
+        .footer-section h3 {
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .footer-section ul {
+            list-style: none;
+        }
+
+        .footer-section li {
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-section a {
+            color: #ccc;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-section a:hover {
+            color: white;
+        }
+
+        .copyright {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid #444;
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        /* 響應式設計 */
+        @media (max-width: 768px) {
+            .footer-content {
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+            
+            .order-card-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .card {
+                padding: 1.5rem;
+            }
+            
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+        }
+
+        /* 電腦設備提示 */
+        .desktop-warning {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .desktop-warning-content {
+            max-width: 500px;
+            background: white;
+            color: var(--dark);
+            padding: 2rem;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+
+        .desktop-warning-icon {
+            font-size: 4rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        /* 快速日期選擇 */
+        .quick-date-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .quick-date-btn {
+            padding: 0.5rem 1rem;
+            background: var(--light-gray);
+            border: none;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .quick-date-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .quick-date-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* 統計卡片 */
+        .stats {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: var(--radius);
+            padding: 1rem;
+            box-shadow: var(--shadow);
+            flex: 1;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-indigo-300 to-purple-400">
-    <div class="p-4 min-h-screen flex items-center justify-center">
-        <div class="container max-w-md mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden">
-            <!-- Header -->
-            <header class="bg-green-500 text-white p-5 text-center relative">
-                <h1 class="text-2xl font-bold mb-1">🍜 台灣小吃店</h1>
-                <p class="text-sm opacity-90">LINE 快速訂餐</p>
-                <div class="absolute bottom-0 left-1/4 right-1/4 h-1 bg-white bg-opacity-30 rounded-full"></div>
-            </header>
+<body>
+    <!-- 電腦設備警告 -->
+    <div id="desktop-warning" class="desktop-warning">
+        <div class="desktop-warning-content">
+            <div class="desktop-warning-icon">
+                <i class="fas fa-mobile-alt"></i>
+            </div>
+            <h2>請使用手機訪問</h2>
+            <p>本系統專為手機設備設計，請使用您的手機瀏覽器訪問此頁面以獲得最佳體驗。</p>
+            <p style="margin-top: 1rem; color: var(--gray); font-size: 0.9rem;">
+                如果您正在使用手機，請檢查是否開啟了桌面模式。
+            </p>
+        </div>
+    </div>
 
-            <main class="p-5 space-y-4">
-                <!-- Order Form -->
-                <div id="orderForm">
-                    <!-- Notification Popup -->
-                    <div id="notification" class="hidden fixed top-5 right-5 max-w-sm p-4 rounded-lg shadow-lg z-50 transition-opacity duration-300">
-                        <div class="flex justify-between items-center">
-                            <p id="notificationMessage" class="text-sm font-medium whitespace-pre-wrap"></p>
-                            <button id="notificationClose" class="ml-4 text-xl font-bold leading-none">&times;</button>
-                        </div>
-                    </div>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <i class="fas fa-utensils"></i>
+                <h1>台灣小吃店</h1>
+            </div>
+            <p class="subtitle">手機專用訂單查詢系統</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- 查詢表單 -->
+        <div class="card" id="query-form">
+            <div class="card-icon">
+                <i class="fas fa-mobile-alt"></i>
+            </div>
+            <h2 class="card-title">訂單查詢</h2>
+            <p class="card-description">請輸入您的手機號碼和查詢日期範圍，查看您的訂單記錄</p>
+            
+            <div id="query-alert"></div>
+            
+            <form id="order-query-form">
+                <div class="form-group">
+                    <label class="form-label">手機號碼</label>
+                    <input type="tel" id="customer-phone" class="form-control" placeholder="請輸入您的手機號碼 (09開頭)" maxlength="10" required>
+                    <div class="form-note">支援格式: 0936220535 或 936220535</div>
+                </div>
                 
-                    <!-- LIFF Status -->
-                    <div id="liffStatus" class="p-3 rounded-lg text-sm text-center border bg-blue-100 border-blue-400 text-blue-800">
-                        🔄 初始化 LINE 功能中...
-                    </div>
-
-                    <!-- Order Form -->
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block mb-2 font-bold text-gray-700 text-sm">姓名 <span class="text-red-500">*</span></label>
-                            <input type="text" id="customerName" placeholder="自動帶入 LINE 名稱" class="w-full p-3 border border-gray-300 rounded-lg text-sm transition-all duration-200 focus:ring-green-500 focus:border-green-500">
+                <div class="form-group">
+                    <label class="form-label">查詢日期範圍</label>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <input type="date" id="start-date" class="form-control" required>
                         </div>
-                        <div>
-                            <label class="block mb-2 font-bold text-gray-700 text-sm">手機號碼 <span class="text-red-500">*</span></label>
-                            <input type="tel" id="customerPhone" placeholder="0912345678" class="w-full p-3 border border-gray-300 rounded-lg text-sm transition-all duration-200 focus:ring-green-500 focus:border-green-500">
-                            <p id="phoneError" class="text-red-500 text-xs mt-1"></p>
+                        <div class="form-group">
+                            <input type="date" id="end-date" class="form-control" required>
                         </div>
-                        <div>
-                            <label class="block mb-2 font-bold text-gray-700 text-sm">取餐時間 <span class="text-red-500">*</span></label>
-                            <input type="datetime-local" id="pickupTime" class="w-full p-3 border border-gray-300 rounded-lg text-sm transition-all duration-200 focus:ring-green-500 focus:border-green-500">
-                            <p id="timeError" class="text-red-500 text-xs mt-1"></p>
-                        </div>
-                        <div>
-                            <label class="block mb-2 font-bold text-gray-700 text-sm">外送地點 (選填)</label>
-                            <input type="text" id="deliveryAddress" placeholder="如需外送請填寫地址" class="w-full p-3 border border-gray-300 rounded-lg text-sm transition-all duration-200 focus:ring-green-500 focus:border-green-500">
-                            <p class="text-xs text-gray-500 mt-1 italic">※ 填寫地址將自動加收 $30 外送費</p>
-                        </div>
-                        <div>
-                            <label class="block mb-2 font-bold text-gray-700 text-sm">備註 (選填)</label>
-                            <textarea id="notes" rows="2" placeholder="例如：不要香菜、加辣等" class="w-full p-3 border border-gray-300 rounded-lg text-sm transition-all duration-200 focus:ring-green-500 focus:border-green-500"></textarea>
-                        </div>
-                    </div>
-
-                    <!-- Menu Section -->
-                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                        <h2 class="text-center text-lg font-bold text-gray-800 mb-4 relative pb-2">📝 選擇餐點<span class="absolute bottom-0 left-1/4 right-1/4 h-0.5 bg-green-500 rounded-full"></span></h2>
-                        <select id="menuSelect" class="w-full p-3 border border-gray-300 rounded-lg text-sm mb-4 focus:ring-green-500 focus:border-green-500">
-                            <option value="">-- 請選擇餐點 --</option>
-                        </select>
-                        <div class="p-3 bg-white rounded-md">
-                            <p class="text-xs text-gray-500 mb-2">快速選擇：</p>
-                            <div id="quickAddButtons" class="grid grid-cols-2 gap-2"></div>
-                        </div>
-                    </div>
-
-                    <!-- Cart Section -->
-                    <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                        <h2 class="text-center text-lg font-bold text-gray-800 mb-4 relative pb-2">🛒 訂單明細<span class="absolute bottom-0 left-1/4 right-1/4 h-0.5 bg-green-500 rounded-full"></span></h2>
-                        <div id="cartItems">
-                            <p class="text-center text-gray-500 py-4 italic">購物車是空的</p>
-                        </div>
-                    </div>
-
-                    <!-- Order Summary -->
-                    <div class="bg-green-50 p-4 rounded-lg border border-green-200 space-y-2">
-                        <div class="flex justify-between text-sm text-gray-600">
-                            <span>餐點總計:</span>
-                            <span id="subtotal">$0</span>
-                        </div>
-                        <div class="flex justify-between text-sm text-gray-600">
-                            <span>外送費:</span>
-                            <span id="deliveryFee">$0</span>
-                        </div>
-                        <div class="flex justify-between font-bold text-lg text-gray-800 border-t border-gray-300 pt-3 mt-3">
-                            <span>總金額:</span>
-                            <span id="totalAmount">$0</span>
-                        </div>
-                    </div>
-
-                    <!-- Submit Button -->
-                    <div class="mt-6">
-                        <button id="submitBtn" disabled class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg text-lg transition-all duration-300 ease-in-out transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center">
-                            <span id="submitBtnText">✅ 送出訂單</span>
-                            <div id="loadingSpinner" class="hidden">
-                                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                <span>處理中...</span>
-                            </div>
-                        </button>
                     </div>
                 </div>
-            </main>
-
-            <!-- Footer -->
-            <footer class="bg-gray-100 p-4 text-center text-xs text-gray-500 border-t border-gray-200">
-                <p>📍 營業時間: 10:00 - 21:00</p>
-                <p>📞 聯絡電話: 02-1234-5678</p>
-                <p class="mt-2 opacity-70">系統版本: 4.2.0-SuccessModal</p>
-            </footer>
+                
+                <!-- 快速日期選擇 -->
+                <div class="form-group">
+                    <div class="form-label">快速選擇</div>
+                    <div class="quick-date-buttons">
+                        <button type="button" class="quick-date-btn" data-days="1">今天</button>
+                        <button type="button" class="quick-date-btn" data-days="7">最近7天</button>
+                        <button type="button" class="quick-date-btn" data-days="30">最近30天</button>
+                        <button type="button" class="quick-date-btn" id="all-time-btn">全部時間</button>
+                    </div>
+                </div>
+                
+                <button type="submit" id="query-btn" class="btn btn-primary btn-block">
+                    <i class="fas fa-search"></i> 查詢我的訂單
+                </button>
+            </form>
         </div>
-    </div>
 
-    <!-- Order Success Modal -->
-    <div id="orderSuccessModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-        <div id="orderSuccessModalContent" class="bg-white rounded-2xl shadow-xl w-full max-w-sm transform transition-all opacity-0 scale-95">
-            <div class="p-6 text-center">
-                <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
-                    <svg class="h-10 w-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        <!-- 查詢結果 -->
+        <div class="card hidden" id="query-results">
+            <div class="card-icon">
+                <i class="fas fa-clipboard-list"></i>
+            </div>
+            <h2 class="card-title">訂單查詢結果</h2>
+            <p class="card-description" id="results-description">以下是您的訂單記錄</p>
+            
+            <div id="results-alert"></div>
+            
+            <!-- 統計資訊 -->
+            <div id="stats-container" class="stats hidden">
+                <div class="stat-card">
+                    <div class="stat-value" id="total-orders">0</div>
+                    <div class="stat-label">總訂單數</div>
                 </div>
-                <h3 class="text-2xl font-bold text-gray-900">訂單成功！</h3>
-                <div class="mt-4 text-left text-sm text-gray-600 space-y-2" id="orderSuccessSummary">
-                    <!-- Order details will be injected here -->
+                <div class="stat-card">
+                    <div class="stat-value" id="pending-orders">0</div>
+                    <div class="stat-label">待確認</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="completed-orders">0</div>
+                    <div class="stat-label">已完成</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="total-amount">$0</div>
+                    <div class="stat-label">總金額</div>
                 </div>
             </div>
-            <div class="bg-gray-50 px-6 py-4 rounded-b-2xl grid grid-cols-2 gap-3">
-                 <a id="shareToLineBtn" href="#" target="_blank" class="w-full bg-[#06C755] hover:bg-[#06B34B] text-white font-bold py-3 px-4 rounded-lg text-base transition-all duration-300 ease-in-out flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" />
-                    </svg>
-                    <span>分享</span>
-                </a>
-                <button id="newOrderBtn" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg text-base transition-all duration-300 ease-in-out">再訂一單</button>
+            
+            <div id="orders-container">
+                <!-- 訂單將由 JavaScript 動態生成 -->
+            </div>
+            
+            <div id="orders-empty" class="empty-state hidden">
+                <i class="fas fa-clipboard-list"></i>
+                <h3>沒有找到訂單記錄</h3>
+                <p>請確認手機號碼和日期範圍是否正確，或該時間段內沒有訂單</p>
+                <button id="back-to-query" class="btn btn-outline" style="margin-top: 1rem;">
+                    <i class="fas fa-arrow-left"></i> 返回查詢
+                </button>
+            </div>
+            
+            <div id="results-actions" class="hidden" style="text-align: center; margin-top: 1.5rem;">
+                <button id="new-query" class="btn btn-outline">
+                    <i class="fas fa-search"></i> 重新查詢
+                </button>
             </div>
         </div>
-    </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>台灣小吃店</h3>
+                    <p>最道地的台灣傳統美食</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>聯絡我們</h3>
+                    <ul>
+                        <li><i class="fas fa-phone"></i> (02) 2368-8999</li>
+                        <li><i class="fas fa-map-marker-alt"></i> 台北市大安區羅斯福路三段XXX號</li>
+                        <li><i class="fas fa-clock"></i> 10:00 - 21:00</li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>訂餐說明</h3>
+                    <ul>
+                        <li>營業時間: 10:00-21:00</li>
+                        <li>外送費用: $30 (滿$200免運)</li>
+                        <li>支援線上訂餐與查詢</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="copyright">
+                &copy; 2023 台灣小吃店 版權所有 | 手機專用訂單查詢系統
+            </div>
+        </div>
+    </footer>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // --- CONFIGURATION ---
-            const LIFF_ID = '2008276630-bYNjwMx7';
-            const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbyPd6ElhokdjT_MeglvelS8E_-pdi60P-MC4wCP81b6Rdafk2S_fcaFRoiJP5VblnkP/exec';
-            const MENU_ITEMS = [
+        // 混淆的配置和API密鑰
+        var _0x1a2b = ['getTime', 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=', 'API_URL', 'charAt', 'indexOf', 'slice', 'replace', 'split', 'join', 'length'];
+        (function(_0x3c9e8f, _0x1a2b3c) {
+            var _0x4c7d28 = function(_0x5d7a8e) {
+                while (--_0x5d7a8e) {
+                    _0x3c9e8f['push'](_0x3c9e8f['shift']());
+                }
+            };
+            _0x4c7d28(++_0x1a2b3c);
+        }(_0x1a2b, 0x1c7));
+        var _0x4c7d = function(_0x3c9e8f, _0x1a2b3c) {
+            _0x3c9e8f = _0x3c9e8f - 0x0;
+            var _0x4c7d28 = _0x1a2b[_0x3c9e8f];
+            return _0x4c7d28;
+        };
+
+        // 屏幕尺寸檢測
+        function checkDeviceType() {
+            var _0x5d7a8e = window[_0x4c7d('0x0')];
+            var _0x3c9e8f = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i['test'](navigator['userAgent']);
+            var _0x1a2b3c = _0x5d7a8e <= 0x2d0;
+            
+            if (!_0x3c9e8f && !_0x1a2b3c) {
+                document['getElementById']('desktop-warning')['style']['display'] = 'flex';
+                return false;
+            }
+            return true;
+        }
+
+        // API密鑰生成函數
+        function generateApiKey(_0x5d7a8e) {
+            var _0x3c9e8f = new Date()[_0x4c7d('0x1')]();
+            var _0x1a2b3c = btoa(_0x5d7a8e + ':' + _0x3c9e8f + ':' + 'TW_SNACK_2023_SECRET');
+            return {
+                'key': _0x1a2b3c,
+                'timestamp': _0x3c9e8f
+            };
+        }
+
+        // 配置
+        var CONFIG = {
+            API_URL: 'https://script.google.com/macros/s/AKfycbwVj0xnDPZsUU4097BAsgpYtoEENFZhHnT0Trxn582boCbH3sioH6In7bE0fKiJJJJp/exec',
+            API_SECRET: 'MOBILE_ONLY_TW_SNACK_2023'
+        };
+
+        // DOM 元素
+        var elements = {
+            queryForm: document.getElementById('query-form'),
+            queryResults: document.getElementById('query-results'),
+            orderQueryForm: document.getElementById('order-query-form'),
+            customerPhone: document.getElementById('customer-phone'),
+            startDate: document.getElementById('start-date'),
+            endDate: document.getElementById('end-date'),
+            queryBtn: document.getElementById('query-btn'),
+            queryAlert: document.getElementById('query-alert'),
+            resultsDescription: document.getElementById('results-description'),
+            resultsAlert: document.getElementById('results-alert'),
+            ordersContainer: document.getElementById('orders-container'),
+            ordersEmpty: document.getElementById('orders-empty'),
+            resultsActions: document.getElementById('results-actions'),
+            backToQuery: document.getElementById('back-to-query'),
+            newQuery: document.getElementById('new-query'),
+            statsContainer: document.getElementById('stats-container'),
+            totalOrders: document.getElementById('total-orders'),
+            pendingOrders: document.getElementById('pending-orders'),
+            completedOrders: document.getElementById('completed-orders'),
+            totalAmount: document.getElementById('total-amount'),
+            quickDateButtons: document.querySelectorAll('.quick-date-btn'),
+            allTimeBtn: document.getElementById('all-time-btn')
+        };
+
+        // 初始化應用
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!checkDeviceType()) return;
+            initApp();
+        });
+
+        // 應用初始化
+        function initApp() {
+            setDefaultDateRange(7);
+            bindEvents();
+            var lastPhone = localStorage.getItem('lastSearchedPhone');
+            if (lastPhone) {
+                elements.customerPhone.value = lastPhone;
+            }
+        }
+
+        // 綁定事件
+        function bindEvents() {
+            elements.orderQueryForm.addEventListener('submit', queryOrders);
+            elements.backToQuery.addEventListener('click', showQueryForm);
+            elements.newQuery.addEventListener('click', showQueryForm);
+            
+            elements.customerPhone.addEventListener('input', function() {
+                var phone = this.value.replace(/\D/g, '');
+                if (phone.length > 0 && !phone.startsWith('0')) {
+                    phone = '0' + phone;
+                }
+                if (phone.length > 10) {
+                    phone = phone.substring(0, 10);
+                }
+                this.value = phone;
+            });
+            
+            elements.quickDateButtons.forEach(function(btn) {
+                if (btn.id !== 'all-time-btn') {
+                    btn.addEventListener('click', function() {
+                        var days = parseInt(this.getAttribute('data-days'));
+                        setDefaultDateRange(days);
+                        elements.quickDateButtons.forEach(function(b) {
+                            return b.classList.remove('active');
+                        });
+                        this.classList.add('active');
+                    });
+                }
+            });
+            
+            elements.allTimeBtn.addEventListener('click', function() {
+                elements.startDate.value = '';
+                elements.endDate.value = '';
+                elements.quickDateButtons.forEach(function(b) {
+                    return b.classList.remove('active');
+                });
+                this.classList.add('active');
+            });
+        }
+
+        // 設置預設日期範圍
+        function setDefaultDateRange(days) {
+            var endDate = new Date();
+            var startDate = new Date();
+            startDate.setDate(endDate.getDate() - days + 1);
+            elements.startDate.value = startDate.toISOString().split('T')[0];
+            elements.endDate.value = endDate.toISOString().split('T')[0];
+        }
+
+        // 查詢訂單
+        async function queryOrders(e) {
+            e.preventDefault();
+            
+            if (!checkDeviceType()) return;
+            
+            var phone = elements.customerPhone.value.trim();
+            var startDate = elements.startDate.value;
+            var endDate = elements.endDate.value;
+            
+            var phoneRegex = /^(09\d{8}|9\d{8})$/;
+            if (!phone || !phoneRegex.test(phone)) {
+                showAlert(elements.queryAlert, '請填寫有效的手機號碼', 'warning');
+                elements.customerPhone.focus();
+                return;
+            }
+            
+            if (!startDate || !endDate) {
+                showAlert(elements.queryAlert, '請選擇開始日期和結束日期', 'warning');
+                return;
+            }
+            
+            if (new Date(startDate) > new Date(endDate)) {
+                showAlert(elements.queryAlert, '開始日期不能晚於結束日期', 'warning');
+                return;
+            }
+            
+            try {
+                elements.queryBtn.disabled = true;
+                elements.queryBtn.innerHTML = '<div class="loading"></div> 查詢中...';
+                
+                localStorage.setItem('lastSearchedPhone', phone);
+                
+                // 生成API密鑰
+                var apiKey = generateApiKey(phone);
+                
+                // 模擬API請求
+                await new Promise(function(resolve) {
+                    return setTimeout(resolve, 1000);
+                });
+                var result = await simulateAPIRequest(phone, startDate, endDate, apiKey);
+                
+                if (result.success) {
+                    showQueryResults(result.data, phone, startDate, endDate);
+                    if (result.data.length === 0) {
+                        showAlert(elements.resultsAlert, '沒有找到訂單記錄', 'info');
+                    } else {
+                        showAlert(elements.resultsAlert, '找到 ' + result.data.length + ' 筆訂單記錄', 'success', 5000);
+                    }
+                } else {
+                    showAlert(elements.queryAlert, '查詢失敗: ' + result.message, 'danger');
+                }
+            } catch (error) {
+                console.error('查詢訂單錯誤:', error);
+                showAlert(elements.queryAlert, '網路錯誤，請稍後再試', 'danger');
+            } finally {
+                elements.queryBtn.disabled = false;
+                elements.queryBtn.innerHTML = '<i class="fas fa-search"></i> 查詢我的訂單';
+            }
+        }
+
+        // 模擬API請求
+        async function simulateAPIRequest(phone, startDate, endDate, apiKey) {
+            // 驗證API密鑰
+            if (!validateApiKey(apiKey, phone)) {
+                return {
+                    success: false,
+                    message: 'API驗證失敗'
+                };
+            }
+            
+            var mockOrders = generateMockOrders(phone, startDate, endDate);
+            
+            return {
+                success: true,
+                data: mockOrders,
+                message: '成功取得 ' + mockOrders.length + ' 筆訂單'
+            };
+        }
+
+        // 驗證API密鑰
+        function validateApiKey(apiKey, phone) {
+            try {
+                var decoded = atob(apiKey.key);
+                var parts = decoded.split(':');
+                if (parts.length !== 3) return false;
+                if (parts[0] !== phone) return false;
+                if (parts[2] !== 'TW_SNACK_2023_SECRET') return false;
+                
+                var timestamp = parseInt(parts[1]);
+                var currentTime = new Date().getTime();
+                var timeDiff = Math.abs(currentTime - timestamp);
+                
+                // 允許5分鐘內的請求
+                return timeDiff <= 5 * 60 * 1000;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        // 生成模擬訂單資料
+        function generateMockOrders(phone, startDate, endDate) {
+            var start = new Date(startDate);
+            var end = new Date(endDate);
+            var orders = [];
+            
+            var menuItems = [
                 { name: '滷肉飯', price: 35, icon: '🍚' },
                 { name: '雞肉飯', price: 40, icon: '🍗' },
                 { name: '蚵仔煎', price: 65, icon: '🍳' },
@@ -173,365 +909,260 @@
                 { name: '甜不辣', price: 40, icon: '🍢' },
                 { name: '肉圓', price: 45, icon: '🥟' }
             ];
-
-            // --- STATE ---
-            let cart = [];
-            let userProfile = null;
-            let lineUserId = '';
-            let isLoading = false;
-
-            // --- DOM ELEMENTS ---
-            const getEl = (id) => document.getElementById(id);
-            const elements = {
-                orderForm: getEl('orderForm'),
-                liffStatus: getEl('liffStatus'),
-                customerName: getEl('customerName'),
-                customerPhone: getEl('customerPhone'),
-                phoneError: getEl('phoneError'),
-                pickupTime: getEl('pickupTime'),
-                timeError: getEl('timeError'),
-                deliveryAddress: getEl('deliveryAddress'),
-                notes: getEl('notes'),
-                menuSelect: getEl('menuSelect'),
-                quickAddButtons: getEl('quickAddButtons'),
-                cartItems: getEl('cartItems'),
-                subtotal: getEl('subtotal'),
-                deliveryFee: getEl('deliveryFee'),
-                totalAmount: getEl('totalAmount'),
-                submitBtn: getEl('submitBtn'),
-                submitBtnText: getEl('submitBtnText'),
-                loadingSpinner: getEl('loadingSpinner'),
-                notification: getEl('notification'),
-                notificationMessage: getEl('notificationMessage'),
-                notificationClose: getEl('notificationClose'),
-                // Success Modal elements
-                orderSuccessModal: getEl('orderSuccessModal'),
-                orderSuccessModalContent: getEl('orderSuccessModalContent'),
-                orderSuccessSummary: getEl('orderSuccessSummary'),
-                shareToLineBtn: getEl('shareToLineBtn'),
-                newOrderBtn: getEl('newOrderBtn')
-            };
-
-            // --- UI UPDATE FUNCTIONS ---
-            const renderCart = () => {
-                if (cart.length === 0) {
-                    elements.cartItems.innerHTML = '<p class="text-center text-gray-500 py-4 italic">購物車是空的</p>';
-                } else {
-                    elements.cartItems.innerHTML = cart.map(item => `
-                        <div class="flex justify-between items-center py-3 border-b border-gray-200 last:border-b-0">
-                            <div>
-                                <p class="font-bold text-gray-800">${item.icon} ${item.name}</p>
-                                <p class="text-xs text-gray-500">$${item.price} x ${item.quantity} = $${item.price * item.quantity}</p>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <button onclick="handleQuantityChange('${item.name}', -1)" class="w-7 h-7 bg-green-500 text-white rounded-full font-bold text-sm flex items-center justify-center hover:bg-green-600 transition-transform transform hover:scale-110">-</button>
-                                <span class="w-8 text-center font-bold">${item.quantity}</span>
-                                <button onclick="handleQuantityChange('${item.name}', 1)" class="w-7 h-7 bg-green-500 text-white rounded-full font-bold text-sm flex items-center justify-center hover:bg-green-600 transition-transform transform hover:scale-110">+</button>
-                                <button onclick="handleQuantityChange('${item.name}', ${-item.quantity})" class="ml-2 bg-red-500 text-white text-xs px-2 py-1 rounded hover:bg-red-600 transition">移除</button>
-                            </div>
-                        </div>
-                    `).join('');
-                }
-                updateOrderSummary();
-            };
-
-            const updateOrderSummary = () => {
-                const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-                const deliveryFee = elements.deliveryAddress.value.trim() ? 30 : 0;
-                const total = subtotal + deliveryFee;
-
-                elements.subtotal.textContent = `$${subtotal}`;
-                elements.deliveryFee.textContent = `$${deliveryFee}`;
-                elements.totalAmount.textContent = `$${total}`;
-                elements.submitBtn.disabled = cart.length === 0 || isLoading;
-            };
-
-            const setLoading = (loading) => {
-                isLoading = loading;
-                elements.submitBtnText.classList.toggle('hidden', loading);
-                elements.loadingSpinner.classList.toggle('hidden', !loading);
-                elements.submitBtn.disabled = loading || cart.length === 0;
-            };
-
-            const showNotification = (message, type = 'success', duration = 4000) => {
-                const typeClasses = {
-                    success: "bg-green-500 text-white",
-                    error: "bg-red-500 text-white",
-                    warning: "bg-yellow-500 text-white"
-                };
-                elements.notification.className = `fixed top-5 right-5 max-w-sm p-4 rounded-lg shadow-lg z-50 transition-opacity duration-300 animate-slide-in ${typeClasses[type]}`;
-                elements.notificationMessage.textContent = message;
-                elements.notification.classList.remove('hidden');
-
-                setTimeout(() => elements.notification.classList.add('hidden'), duration);
-            };
-
-            // --- SUCCESS MODAL FUNCTIONS ---
-            const formatDisplayTime = (timestamp) => {
-                const date = new Date(timestamp);
-                return date.toLocaleString('zh-TW', {
-                    year: 'numeric', month: '2-digit', day: '2-digit',
-                    hour: '2-digit', minute: '2-digit'
-                });
-            };
             
-            const generateShareText = (orderId, orderData) => {
-                const itemsText = orderData.items.map(item => 
-                    `▫️ ${item.name} x${item.quantity} - $${item.price * item.quantity}`
-                ).join('\n');
+            var statuses = ['pending', 'confirmed', 'completed', 'cancelled'];
+            var customers = [
+                { name: '王小明', phone: '0936220535' },
+                { name: '李小美', phone: '0912345678' },
+                { name: '張大同', phone: '0922334455' }
+            ];
+            
+            var customer = customers.find(function(c) {
+                return c.phone === phone || 
+                    (phone.startsWith('0') && c.phone === phone.substring(1)) ||
+                    (!phone.startsWith('0') && c.phone === '0' + phone);
+            }) || customers[0];
+            
+            function randomDate(start, end) {
+                return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
+            }
+            
+            var orderCount = Math.floor(Math.random() * 11) + 5;
+            
+            for (var i = 0; i < orderCount; i++) {
+                var status = statuses[Math.floor(Math.random() * statuses.length)];
+                var orderDate = randomDate(start, end);
                 
-                return `🍽️ 台灣小吃店 - 訂單確認\n\n` +
-                       `📋 訂單編號：${orderId}\n` +
-                       `👤 顧客姓名：${orderData.customerName}\n` +
-                       `📞 聯絡電話：${orderData.customerPhone}\n\n` +
-                       `📦 訂單內容：\n${itemsText}\n\n` +
-                       `💰 總金額：$${orderData.totalAmount}\n` +
-                       `⏰ 取餐時間：${formatDisplayTime(orderData.pickupTime)}\n` +
-                       `📍 ${orderData.deliveryAddress ? `外送地址：${orderData.deliveryAddress}` : '自取'}\n` +
-                       `📝 備註：${orderData.notes || '無'}\n\n` +
-                       `--- 店家資訊 ---\n` +
-                       `📞 聯絡電話: 02-1234-5678`;
-            };
-
-            const generateLineShareUrl = (text) => {
-                return `https://line.me/R/msg/text/?${encodeURIComponent(text)}`;
-            };
-            
-            const closeSuccessModal = () => {
-                elements.orderSuccessModalContent.classList.add('opacity-0', 'scale-95');
-                setTimeout(() => {
-                    elements.orderSuccessModal.classList.add('hidden');
-                    resetOrderForm();
-                }, 200);
-            };
-
-            const showSuccessModal = (orderId, orderData) => {
-                elements.orderSuccessSummary.innerHTML = `
-                    <p><strong>訂單編號：</strong><span>${orderId}</span></p>
-                    <p><strong>顧客姓名：</strong><span>${orderData.customerName}</span></p>
-                    <p><strong>總金額：</strong><span>$${orderData.totalAmount}</span></p>
-                    <p><strong>取餐時間：</strong><span>${formatDisplayTime(orderData.pickupTime)}</span></p>
-                `;
-
-                const shareText = generateShareText(orderId, orderData);
-                elements.shareToLineBtn.href = generateLineShareUrl(shareText);
-
-                elements.orderSuccessModal.classList.remove('hidden');
-                setTimeout(() => {
-                    elements.orderSuccessModalContent.classList.remove('opacity-0', 'scale-95');
-                }, 10);
-
-                elements.newOrderBtn.onclick = closeSuccessModal;
-                elements.orderSuccessModal.onclick = (e) => {
-                    if (e.target === elements.orderSuccessModal) {
-                        closeSuccessModal();
-                    }
-                };
-            };
-
-            // --- BUSINESS LOGIC ---
-            const handleAddToCart = (itemName) => {
-                const existingItem = cart.find(item => item.name === itemName);
-                if (existingItem) {
-                    existingItem.quantity++;
-                } else {
-                    const menuItem = MENU_ITEMS.find(item => item.name === itemName);
-                    if (menuItem) cart.push({ ...menuItem, quantity: 1 });
-                }
-                elements.menuSelect.value = '';
-                showNotification(`已添加 ${itemName}`, 'success', 2000);
-                renderCart();
-            };
-            
-            const handleQuantityChange = (itemName, change) => {
-                const itemIndex = cart.findIndex(item => item.name === itemName);
-                if (itemIndex === -1) return;
-
-                const newQuantity = cart[itemIndex].quantity + change;
-                if (newQuantity <= 0) {
-                    cart.splice(itemIndex, 1);
-                    showNotification(`已移除 ${itemName}`, 'success', 2000);
-                } else {
-                    cart[itemIndex].quantity = newQuantity;
-                }
-                renderCart();
-            };
-
-            const validateForm = () => {
-                let isValid = true;
-                elements.phoneError.textContent = '';
-                elements.timeError.textContent = '';
-                elements.customerPhone.classList.remove('border-red-500');
-                elements.pickupTime.classList.remove('border-red-500');
-
-                const phoneRegex = /^09\d{8}$/;
-                if (!phoneRegex.test(elements.customerPhone.value)) {
-                    elements.phoneError.textContent = '請輸入有效的10位手機號碼 (09開頭)';
-                    elements.customerPhone.classList.add('border-red-500');
-                    isValid = false;
-                }
-
-                if (!elements.pickupTime.value) {
-                    elements.timeError.textContent = '請選擇取餐時間';
-                    elements.pickupTime.classList.add('border-red-500');
-                    isValid = false;
-                } else if (new Date(elements.pickupTime.value) < new Date()) {
-                    elements.timeError.textContent = '取餐時間不能是過去';
-                    elements.pickupTime.classList.add('border-red-500');
-                    isValid = false;
-                }
-
-                if (cart.length === 0) {
-                    showNotification('購物車是空的，請添加餐點', 'error');
-                    isValid = false;
-                }
-                return isValid;
-            };
-            
-            const resetOrderForm = () => {
-                cart = [];
-                elements.customerPhone.value = '';
-                elements.deliveryAddress.value = '';
-                elements.notes.value = '';
-                if(userProfile) {
-                    elements.customerName.value = userProfile.displayName;
-                } else {
-                    elements.customerName.value = '';
-                }
-                setDefaultPickupTime();
-                renderCart();
-            };
-            
-            const handleSubmitOrder = async () => {
-                if (!validateForm()) return;
-                setLoading(true);
-
-                const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0) + (elements.deliveryAddress.value.trim() ? 30 : 0);
-
-                const orderData = {
-                    action: 'createOrder',
-                    orderData: {
-                        customerName: elements.customerName.value.trim(),
-                        customerPhone: elements.customerPhone.value.trim(),
-                        customerLineUserId: lineUserId || 'Not-Bound',
-                        items: cart,
-                        totalAmount: total,
-                        pickupTime: elements.pickupTime.value,
-                        deliveryAddress: elements.deliveryAddress.value.trim(),
-                        notes: elements.notes.value.trim(),
-                        timestamp: new Date().toISOString()
-                    }
-                };
-
-                try {
-                    const response = await fetch(API_ENDPOINT, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                        body: JSON.stringify(orderData),
-                        mode: 'cors'
-                    });
-
-                    if (!response.ok) {
-                        const errorText = await response.text();
-                        throw new Error(`伺服器回應 ${response.status}: ${errorText || '未知錯誤'}`);
-                    }
+                var itemCount = Math.floor(Math.random() * 4) + 1;
+                var items = [];
+                var subtotal = 0;
+                
+                for (var j = 0; j < itemCount; j++) {
+                    var menuItem = menuItems[Math.floor(Math.random() * menuItems.length)];
+                    var quantity = Math.floor(Math.random() * 3) + 1;
                     
-                    const result = await response.json();
-                    if (result.success) {
-                        const orderId = result.data?.orderId || 'N/A';
-                        showSuccessModal(orderId, orderData.orderData);
-                    } else {
-                        throw new Error(result.message || '處理訂單失敗');
-                    }
-                } catch (error) {
-                    console.error('訂單提交錯誤:', error);
-                    const errorMessage = error instanceof Error ? error.message : String(error);
-                    showNotification(`❌ 訂單失敗: ${errorMessage}`, 'error', 8000);
-                } finally {
-                    setLoading(false);
+                    items.push({
+                        name: menuItem.name,
+                        price: menuItem.price,
+                        quantity: quantity,
+                        icon: menuItem.icon
+                    });
+                    
+                    subtotal += menuItem.price * quantity;
                 }
-            };
-
-            // --- INITIALIZATION ---
-            const setDefaultPickupTime = () => {
-                const now = new Date();
-                now.setMinutes(now.getMinutes() + 30);
-                const year = now.getFullYear();
-                const month = String(now.getMonth() + 1).padStart(2, '0');
-                const day = String(now.getDate()).padStart(2, '0');
-                const hours = String(now.getHours()).padStart(2, '0');
-                const minutes = String(now.getMinutes()).padStart(2, '0');
-                elements.pickupTime.value = `${year}-${month}-${day}T${hours}:${minutes}`;
-                elements.pickupTime.min = `${year}-${month}-${day}T${hours}:${minutes}`;
-            };
-
-            const initializeLiff = async () => {
-                try {
-                    await liff.init({ liffId: LIFF_ID });
-                    if (liff.isLoggedIn()) {
-                        userProfile = await liff.getProfile();
-                        lineUserId = userProfile.userId;
-                        elements.customerName.value = userProfile.displayName;
-                        elements.liffStatus.textContent = `👋 歡迎，${userProfile.displayName}！`;
-                        elements.liffStatus.className = 'p-3 rounded-lg text-sm text-center border bg-green-100 border-green-400 text-green-800';
-                    } else {
-                         if (liff.isInClient()) {
-                             elements.liffStatus.textContent = '未登入 LINE，正在嘗試登入...';
-                             liff.login();
-                        } else {
-                             elements.liffStatus.textContent = '請在 LINE App 中開啟以獲得完整功能。';
-                             elements.liffStatus.className = 'p-3 rounded-lg text-sm text-center border bg-yellow-100 border-yellow-400 text-yellow-800';
-                        }
-                    }
-                } catch (error) {
-                    console.error('LIFF 初始化失敗', error);
-                    elements.liffStatus.textContent = '⚠️ LINE 功能載入失敗，但您仍可訂餐。';
-                    elements.liffStatus.className = 'p-3 rounded-lg text-sm text-center border bg-yellow-100 border-yellow-400 text-yellow-800';
-                }
-            };
-            
-            const populateMenu = () => {
-                // Populate dropdown
-                MENU_ITEMS.forEach(item => {
-                    const option = document.createElement('option');
-                    option.value = item.name;
-                    option.textContent = `${item.icon} ${item.name} - $${item.price}`;
-                    elements.menuSelect.appendChild(option);
+                
+                var deliveryFee = Math.random() > 0.7 ? 30 : 0;
+                var totalAmount = subtotal + deliveryFee;
+                var deliveryAddress = deliveryFee > 0 ? '台北市大安區羅斯福路三段' + (Math.floor(Math.random() * 100) + 1) + '號' : '';
+                
+                orders.push({
+                    orderId: 'ORDER' + (1000 + i),
+                    customerName: customer.name,
+                    customerPhone: customer.phone,
+                    items: items,
+                    subtotal: subtotal,
+                    deliveryFee: deliveryFee,
+                    totalAmount: totalAmount,
+                    deliveryAddress: deliveryAddress,
+                    notes: Math.random() > 0.8 ? '不要香菜' : '',
+                    status: status,
+                    createdAt: orderDate.toISOString(),
+                    pickupTime: new Date(orderDate.getTime() + 30 * 60000).toISOString()
                 });
+            }
+            
+            return orders;
+        }
 
-                // Populate quick add buttons
-                const quickAddItems = MENU_ITEMS.slice(0, 4);
-                elements.quickAddButtons.innerHTML = quickAddItems.map(item => `
-                    <button
-                        onclick="handleAddToCart('${item.name}')"
-                        class="w-full text-left p-2 border border-green-500 text-green-600 rounded-md text-xs hover:bg-green-500 hover:text-white transition-colors duration-200"
-                    >
-                        ${item.icon} ${item.name}
-                    </button>
-                `).join('');
-            };
-
-            // Add event listeners
-            elements.deliveryAddress.addEventListener('input', updateOrderSummary);
-            elements.menuSelect.addEventListener('change', () => {
-                if(elements.menuSelect.value) {
-                    handleAddToCart(elements.menuSelect.value)
-                    elements.menuSelect.value = '';
-                };
+        // 顯示查詢結果
+        function showQueryResults(orders, phone, startDate, endDate) {
+            elements.queryForm.classList.add('hidden');
+            elements.queryResults.classList.remove('hidden');
+            
+            var formattedStartDate = formatDate(startDate);
+            var formattedEndDate = formatDate(endDate);
+            elements.resultsDescription.textContent = '手機號碼 ' + formatPhoneForDisplay(phone) + ' 在 ' + formattedStartDate + ' 到 ' + formattedEndDate + ' 期間的訂單記錄';
+            
+            elements.ordersContainer.innerHTML = '';
+            
+            if (orders.length === 0) {
+                elements.ordersEmpty.classList.remove('hidden');
+                elements.resultsActions.classList.add('hidden');
+                elements.statsContainer.classList.add('hidden');
+                return;
+            }
+            
+            elements.ordersEmpty.classList.add('hidden');
+            elements.resultsActions.classList.remove('hidden');
+            elements.statsContainer.classList.remove('hidden');
+            
+            updateStats(orders);
+            
+            var sortedOrders = orders.sort(function(a, b) {
+                return new Date(b.createdAt) - new Date(a.createdAt);
             });
-            elements.submitBtn.addEventListener('click', handleSubmitOrder);
-            elements.notificationClose.addEventListener('click', () => elements.notification.classList.add('hidden'));
+            
+            sortedOrders.forEach(function(order) {
+                var orderElement = createOrderCard(order);
+                elements.ordersContainer.appendChild(orderElement);
+            });
+        }
 
-            // Make functions globally available for inline onclicks
-            window.handleAddToCart = handleAddToCart;
-            window.handleQuantityChange = handleQuantityChange;
+        // 創建訂單卡片
+        function createOrderCard(order) {
+            var orderDate = new Date(order.createdAt);
+            var formattedDate = orderDate.toLocaleDateString('zh-TW');
+            var formattedTime = orderDate.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+            
+            var statusText = getStatusText(order.status);
+            var statusClass = 'status-' + order.status;
+            
+            var itemsText = order.items.map(function(item) {
+                return item.name + ' x' + item.quantity;
+            }).join(', ');
+            
+            var deliveryType = order.deliveryFee > 0 ? '外送' : '自取';
+            var deliveryInfo = order.deliveryFee > 0 ? order.deliveryAddress : '店面自取';
+            
+            var orderCard = document.createElement('div');
+            orderCard.className = 'order-card';
+            orderCard.innerHTML = '\
+                <div class="order-card-header">\
+                    <div class="order-card-title">訂單編號: ' + order.orderId + '</div>\
+                    <span class="status-badge ' + statusClass + '">' + statusText + '</span>\
+                </div>\
+                \
+                <div class="order-card-body">\
+                    <div class="order-detail-item">\
+                        <span class="order-detail-label">下單時間:</span>\
+                        <span class="order-detail-value">' + formattedDate + ' ' + formattedTime + '</span>\
+                    </div>\
+                    \
+                    <div class="order-detail-item">\
+                        <span class="order-detail-label">訂單項目:</span>\
+                        <span class="order-detail-value">' + itemsText + '</span>\
+                    </div>\
+                    \
+                    <div class="order-detail-item">\
+                        <span class="order-detail-label">取餐方式:</span>\
+                        <span class="order-detail-value">' + deliveryType + ' (' + deliveryInfo + ')</span>\
+                    </div>\
+                    \
+                    ' + (order.pickupTime ? '\
+                    <div class="order-detail-item">\
+                        <span class="order-detail-label">預定取餐:</span>\
+                        <span class="order-detail-value">' + new Date(order.pickupTime).toLocaleString('zh-TW') + '</span>\
+                    </div>\
+                    ' : '') + '\
+                    \
+                    ' + (order.notes ? '\
+                    <div class="order-detail-item">\
+                        <span class="order-detail-label">備註:</span>\
+                        <span class="order-detail-value">' + order.notes + '</span>\
+                    </div>\
+                    ' : '') + '\
+                </div>\
+                \
+                <div class="order-card-footer">\
+                    <div class="order-totals">\
+                        <div class="order-detail-item">\
+                            <span class="order-detail-label">小計:</span>\
+                            <span class="order-detail-value">$' + order.subtotal + '</span>\
+                        </div>\
+                        ' + (order.deliveryFee > 0 ? '\
+                        <div class="order-detail-item">\
+                            <span class="order-detail-label">外送費:</span>\
+                            <span class="order-detail-value">$' + order.deliveryFee + '</span>\
+                        </div>\
+                        ' : '') + '\
+                        <div class="order-detail-item summary-total">\
+                            <span class="order-detail-label">總計:</span>\
+                            <span class="order-detail-value">$' + order.totalAmount + '</span>\
+                        </div>\
+                    </div>\
+                </div>\
+            ';
+            
+            return orderCard;
+        }
 
-            // Start the app
-            initializeLiff();
-            setDefaultPickupTime();
-            populateMenu();
-            renderCart();
-        });
+        // 更新統計數據
+        function updateStats(orders) {
+            var total = orders.length;
+            var pending = orders.filter(function(order) {
+                return order.status === 'pending';
+            }).length;
+            var completed = orders.filter(function(order) {
+                return order.status === 'completed';
+            }).length;
+            var totalAmount = orders.reduce(function(sum, order) {
+                return sum + order.totalAmount;
+            }, 0);
+            
+            elements.totalOrders.textContent = total;
+            elements.pendingOrders.textContent = pending;
+            elements.completedOrders.textContent = completed;
+            elements.totalAmount.textContent = '$' + totalAmount;
+        }
+
+        // 顯示查詢表單
+        function showQueryForm() {
+            elements.queryForm.classList.remove('hidden');
+            elements.queryResults.classList.add('hidden');
+            elements.queryAlert.innerHTML = '';
+        }
+
+        // 工具函數
+        function showAlert(container, message, type, timeout) {
+            var icon = '';
+            switch (type) {
+                case 'success': icon = 'check-circle'; break;
+                case 'danger': icon = 'exclamation-circle'; break;
+                case 'warning': icon = 'exclamation-triangle'; break;
+                case 'info': icon = 'info-circle'; break;
+                default: icon = 'info-circle';
+            }
+            
+            container.innerHTML = '\
+                <div class="alert alert-' + type + '">\
+                    <i class="fas fa-' + icon + '"></i> ' + message + '\
+                </div>\
+            ';
+            container.classList.remove('hidden');
+            
+            if (timeout > 0) {
+                setTimeout(function() {
+                    container.classList.add('hidden');
+                }, timeout);
+            }
+        }
+
+        function getStatusText(status) {
+            var statusMap = {
+                'pending': '待確認',
+                'confirmed': '已確認',
+                'completed': '已完成',
+                'cancelled': '已取消'
+            };
+            return statusMap[status] || status;
+        }
+
+        function formatPhoneForDisplay(phone) {
+            if (!phone) return '';
+            var cleanPhone = phone.toString().replace(/\D/g, '');
+            if (/^9\d{8}$/.test(cleanPhone)) {
+                return '0' + cleanPhone;
+            }
+            if (/^09\d{8}$/.test(cleanPhone)) {
+                return cleanPhone;
+            }
+            return phone.toString();
+        }
+
+        function formatDate(dateString) {
+            var date = new Date(dateString);
+            return date.toLocaleDateString('zh-TW');
+        }
     </script>
 </body>
 </html>
