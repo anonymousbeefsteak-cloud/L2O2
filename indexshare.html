@@ -13,64 +13,38 @@
             to { transform: translateX(0); opacity: 1; }
         }
         .animate-slide-in { animation: slide-in 0.3s ease-out forwards; }
+
+        /* For Modal fade-in */
+        #orderSuccessModalContent, #qaModalContent, #orderHistoryModalContent {
+            transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+        }
+
+        /* Chat bubble styles */
+        .chat-bubble {
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 20px;
+            margin-bottom: 8px;
+            word-wrap: break-word;
+        }
+        .chat-bubble-user {
+            background-color: #dcf8c6;
+            align-self: flex-end;
+            border-bottom-right-radius: 5px;
+        }
+        .chat-bubble-model {
+            background-color: #f1f0f0;
+            align-self: flex-start;
+            border-bottom-left-radius: 5px;
+        }
+        .chat-bubble-model p { margin-bottom: 0.5rem; }
+        .chat-bubble-model ul { list-style-type: disc; padding-left: 20px; }
         
-        /* Success page styles */
-        .success-container {
-            text-align: center;
-            padding: 20px;
-        }
-        .success-icon {
-            font-size: 60px;
-            margin-bottom: 20px;
-        }
-        .order-summary {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 10px;
-            margin: 20px 0;
-            text-align: left;
-        }
-        .share-section {
-            margin: 30px 0;
-        }
-        .line-share-btn {
-            display: inline-block;
-            margin: 15px 0;
-            padding: 10px;
-            background: #06c755;
-            border-radius: 8px;
-            text-decoration: none;
-        }
-        .share-text-box {
-            margin: 15px 0;
-        }
-        .share-text-box textarea {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-family: inherit;
-            resize: vertical;
-        }
-        .copy-btn {
-            background: #007bff;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-        .new-order-btn {
-            background: #28a745;
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            margin-top: 20px;
-        }
+        /* Status badges */
+        .status-pending { background-color: #fef3c7; color: #92400e; }
+        .status-confirmed { background-color: #dbeafe; color: #1e40af; }
+        .status-completed { background-color: #d1fae5; color: #065f46; }
+        .status-cancelled { background-color: #fee2e2; color: #991b1b; }
     </style>
 </head>
 <body class="bg-gradient-to-br from-indigo-300 to-purple-400">
@@ -84,134 +58,109 @@
             </header>
 
             <main class="p-5 space-y-4">
-                <!-- Order Form (initially visible) -->
-                <div id="orderForm">
-                    <!-- Notification Popup -->
-                    <div id="notification" class="hidden fixed top-5 right-5 max-w-sm p-4 rounded-lg shadow-lg z-50 transition-opacity duration-300">
-                        <div class="flex justify-between items-center">
-                            <p id="notificationMessage" class="text-sm font-medium whitespace-pre-wrap"></p>
-                            <button id="notificationClose" class="ml-4 text-xl font-bold leading-none">&times;</button>
-                        </div>
+                <!-- Notification Popup -->
+                <div id="notification" class="hidden fixed top-5 right-5 max-w-sm p-4 rounded-lg shadow-lg z-50 transition-opacity duration-300">
+                    <div class="flex justify-between items-center">
+                        <p id="notificationMessage" class="text-sm font-medium whitespace-pre-wrap"></p>
+                        <button id="notificationClose" class="ml-4 text-xl font-bold leading-none">&times;</button>
                     </div>
-                
-                    <!-- LIFF Status -->
-                    <div id="liffStatus" class="p-3 rounded-lg text-sm text-center border bg-blue-100 border-blue-400 text-blue-800">
-                        🔄 初始化 LINE 功能中...
-                    </div>
+                </div>
+            
+                <!-- LIFF Status -->
+                <div id="liffStatus" class="p-3 rounded-lg text-sm text-center border bg-blue-100 border-blue-400 text-blue-800">
+                    🔄 初始化 LINE 功能中...
+                </div>
 
-                    <!-- Order Form -->
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block mb-2 font-bold text-gray-700 text-sm">姓名 <span class="text-red-500">*</span></label>
-                            <input type="text" id="customerName" placeholder="自動帶入 LINE 名稱" class="w-full p-3 border border-gray-300 rounded-lg text-sm transition-all duration-200 focus:ring-green-500 focus:border-green-500">
-                        </div>
-                        <div>
-                            <label class="block mb-2 font-bold text-gray-700 text-sm">手機號碼 <span class="text-red-500">*</span></label>
-                            <input type="tel" id="customerPhone" placeholder="0912345678" class="w-full p-3 border border-gray-300 rounded-lg text-sm transition-all duration-200 focus:ring-green-500 focus:border-green-500">
-                            <p id="phoneError" class="text-red-500 text-xs mt-1"></p>
-                        </div>
-                        <div>
-                            <label class="block mb-2 font-bold text-gray-700 text-sm">取餐時間 <span class="text-red-500">*</span></label>
-                            <input type="datetime-local" id="pickupTime" class="w-full p-3 border border-gray-300 rounded-lg text-sm transition-all duration-200 focus:ring-green-500 focus:border-green-500">
-                            <p id="timeError" class="text-red-500 text-xs mt-1"></p>
-                        </div>
-                        <div>
-                            <label class="block mb-2 font-bold text-gray-700 text-sm">外送地點 (選填)</label>
-                            <input type="text" id="deliveryAddress" placeholder="如需外送請填寫地址" class="w-full p-3 border border-gray-300 rounded-lg text-sm transition-all duration-200 focus:ring-green-500 focus:border-green-500">
-                            <p class="text-xs text-gray-500 mt-1 italic">※ 填寫地址將自動加收 $30 外送費</p>
-                        </div>
-                        <div>
-                            <label class="block mb-2 font-bold text-gray-700 text-sm">備註 (選填)</label>
-                            <textarea id="notes" rows="2" placeholder="例如：不要香菜、加辣等" class="w-full p-3 border border-gray-300 rounded-lg text-sm transition-all duration-200 focus:ring-green-500 focus:border-green-500"></textarea>
-                        </div>
+                <!-- Order Form -->
+                <div class="space-y-4">
+                    <div>
+                        <label class="block mb-2 font-bold text-gray-700 text-sm">姓名 <span class="text-red-500">*</span></label>
+                        <input type="text" id="customerName" placeholder="自動帶入 LINE 名稱" class="w-full p-3 border border-gray-300 rounded-lg text-sm transition-all duration-200 focus:ring-green-500 focus:border-green-500">
                     </div>
-
-                    <!-- Menu Section -->
-                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                        <h2 class="text-center text-lg font-bold text-gray-800 mb-4 relative pb-2">📝 選擇餐點<span class="absolute bottom-0 left-1/4 right-1/4 h-0.5 bg-green-500 rounded-full"></span></h2>
-                        <select id="menuSelect" class="w-full p-3 border border-gray-300 rounded-lg text-sm mb-4 focus:ring-green-500 focus:border-green-500">
-                            <option value="">-- 請選擇餐點 --</option>
-                        </select>
-                        <div class="p-3 bg-white rounded-md">
-                            <p class="text-xs text-gray-500 mb-2">快速選擇：</p>
-                            <div id="quickAddButtons" class="grid grid-cols-2 gap-2"></div>
-                        </div>
+                    <div>
+                        <label class="block mb-2 font-bold text-gray-700 text-sm">手機號碼 <span class="text-red-500">*</span></label>
+                        <input type="tel" id="customerPhone" placeholder="0912345678" class="w-full p-3 border border-gray-300 rounded-lg text-sm transition-all duration-200 focus:ring-green-500 focus:border-green-500">
+                        <p id="phoneError" class="text-red-500 text-xs mt-1"></p>
                     </div>
-
-                    <!-- Cart Section -->
-                    <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                        <h2 class="text-center text-lg font-bold text-gray-800 mb-4 relative pb-2">🛒 訂單明細<span class="absolute bottom-0 left-1/4 right-1/4 h-0.5 bg-green-500 rounded-full"></span></h2>
-                        <div id="cartItems">
-                            <p class="text-center text-gray-500 py-4 italic">購物車是空的</p>
-                        </div>
+                    <div>
+                        <label class="block mb-2 font-bold text-gray-700 text-sm">取餐時間 <span class="text-red-500">*</span></label>
+                        <input type="datetime-local" id="pickupTime" class="w-full p-3 border border-gray-300 rounded-lg text-sm transition-all duration-200 focus:ring-green-500 focus:border-green-500">
+                        <p id="timeError" class="text-red-500 text-xs mt-1"></p>
                     </div>
-
-                    <!-- Order Summary -->
-                    <div class="bg-green-50 p-4 rounded-lg border border-green-200 space-y-2">
-                        <div class="flex justify-between text-sm text-gray-600">
-                            <span>餐點總計:</span>
-                            <span id="subtotal">$0</span>
-                        </div>
-                        <div class="flex justify-between text-sm text-gray-600">
-                            <span>外送費:</span>
-                            <span id="deliveryFee">$0</span>
-                        </div>
-                        <div class="flex justify-between font-bold text-lg text-gray-800 border-t border-gray-300 pt-3 mt-3">
-                            <span>總金額:</span>
-                            <span id="totalAmount">$0</span>
-                        </div>
+                    <div>
+                        <label class="block mb-2 font-bold text-gray-700 text-sm">外送地點 (選填)</label>
+                        <input type="text" id="deliveryAddress" placeholder="如需外送請填寫地址" class="w-full p-3 border border-gray-300 rounded-lg text-sm transition-all duration-200 focus:ring-green-500 focus:border-green-500">
+                        <p class="text-xs text-gray-500 mt-1 italic">※ 填寫地址將自動加收 $30 外送費</p>
                     </div>
-
-                    <!-- Submit Button -->
-                    <div class="mt-6">
-                        <button id="submitBtn" disabled class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg text-lg transition-all duration-300 ease-in-out transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center">
-                            <span id="submitBtnText">✅ 送出訂單</span>
-                            <div id="loadingSpinner" class="hidden">
-                                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                <span>處理中...</span>
-                            </div>
-                        </button>
+                    <div>
+                        <label class="block mb-2 font-bold text-gray-700 text-sm">備註 (選填)</label>
+                        <textarea id="notes" rows="2" placeholder="例如：不要香菜、加辣等" class="w-full p-3 border border-gray-300 rounded-lg text-sm transition-all duration-200 focus:ring-green-500 focus:border-green-500"></textarea>
                     </div>
                 </div>
 
-                <!-- Success Page (initially hidden) -->
-                <div id="successPage" class="hidden">
-                    <div class="success-container">
-                        <div class="success-icon">✅</div>
-                        <h3 class="text-2xl font-bold text-green-600 mb-4">訂單提交成功！</h3>
-                        
-                        <div class="order-summary">
-                            <p><strong>訂單編號：</strong><span id="successOrderId">-</span></p>
-                            <p><strong>顧客姓名：</strong><span id="successCustomerName">-</span></p>
-                            <p><strong>總金額：</strong>$<span id="successTotalAmount">0</span></p>
-                            <p><strong>取餐時間：</strong><span id="successPickupTime">-</span></p>
-                        </div>
-                        
-                        <div class="share-section">
-                            <p class="text-lg font-bold mb-4">📱 分享訂單資訊</p>
-                            <p class="text-sm text-gray-600 mb-4">點擊下方按鈕將訂單資訊分享到 LINE：</p>
-                            <a id="lineShareBtn" href="#" target="_blank" class="line-share-btn">
-                                <img src="https://scdn.line-apps.com/n/line_add_friends/btn/zh-Hant.png" 
-                                     alt="分享到 LINE" 
-                                     style="height: 40px;">
-                            </a>
-                            
-                            <div class="alternative-share mt-6">
-                                <p class="text-sm text-gray-600 mb-2">或複製以下訂單資訊：</p>
-                                <div class="share-text-box">
-                                    <textarea id="shareText" readonly rows="6" class="w-full p-3 border border-gray-300 rounded-lg text-sm"></textarea>
-                                    <button onclick="copyShareText()" class="copy-btn">📋 複製訂單資訊</button>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="actions mt-6">
-                            <button onclick="newOrder()" class="new-order-btn">📝 再訂一單</button>
+                <!-- Menu Section -->
+                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <h2 class="text-center text-lg font-bold text-gray-800 mb-4 relative pb-2">📝 選擇餐點<span class="absolute bottom-0 left-1/4 right-1/4 h-0.5 bg-green-500 rounded-full"></span></h2>
+                    
+                    <!-- Search Input -->
+                    <div class="relative mb-4">
+                        <input type="text" id="menuSearch" placeholder="搜尋餐點，例如：滷肉飯" class="w-full p-3 pl-10 border border-gray-300 rounded-lg text-sm transition-all duration-200 focus:ring-green-500 focus:border-green-500">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                              <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                            </svg>
                         </div>
                     </div>
+
+                    <!-- Menu Items List -->
+                    <div id="menuItemsList" class="space-y-2 max-h-60 overflow-y-auto pr-2">
+                        <!-- Menu items will be dynamically injected here -->
+                    </div>
+                </div>
+
+                <!-- Cart Section -->
+                <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                    <h2 class="text-center text-lg font-bold text-gray-800 mb-4 relative pb-2">🛒 訂單明細<span class="absolute bottom-0 left-1/4 right-1/4 h-0.5 bg-green-500 rounded-full"></span></h2>
+                    <div id="cartItems">
+                        <p class="text-center text-gray-500 py-4 italic">購物車是空的</p>
+                    </div>
+                </div>
+
+                <!-- Order Summary -->
+                <div class="bg-green-50 p-4 rounded-lg border border-green-200 space-y-2">
+                    <div class="flex justify-between text-sm text-gray-600">
+                        <span>餐點總計:</span>
+                        <span id="subtotal">$0</span>
+                    </div>
+                    <div class="flex justify-between text-sm text-gray-600">
+                        <span>外送費:</span>
+                        <span id="deliveryFee">$0</span>
+                    </div>
+                    <div class="flex justify-between font-bold text-lg text-gray-800 border-t border-gray-300 pt-3 mt-3">
+                        <span>總金額:</span>
+                        <span id="totalAmount">$0</span>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="mt-6 space-y-3">
+                    <button id="submitBtn" disabled class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg text-lg transition-all duration-300 ease-in-out transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center">
+                        <span id="submitBtnText">✅ 送出訂單</span>
+                        <div id="loadingSpinner" class="hidden">
+                            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span>處理中...</span>
+                        </div>
+                    </button>
+                    
+                    <button id="checkOrderBtn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg text-lg transition-all duration-300 ease-in-out transform hover:scale-105 flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                        </svg>
+                        <span>查詢我的訂單</span>
+                    </button>
                 </div>
             </main>
 
@@ -219,8 +168,104 @@
             <footer class="bg-gray-100 p-4 text-center text-xs text-gray-500 border-t border-gray-200">
                 <p>📍 營業時間: 10:00 - 21:00</p>
                 <p>📞 聯絡電話: 02-1234-5678</p>
-                <p class="mt-2 opacity-70">系統版本: 4.0.0-Vanilla</p>
+                <p class="mt-2 opacity-70">系統版本: 4.4.0-訂單查詢</p>
             </footer>
+        </div>
+    </div>
+    
+    <!-- Q&A Floating Action Button -->
+    <button id="qaFab" class="fixed bottom-6 right-6 bg-green-500 hover:bg-green-600 text-white w-16 h-16 rounded-full shadow-lg flex items-center justify-center transform hover:scale-110 transition-transform duration-200 z-40">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.839 8.839 0 01-4.082-.973l-1.158.483a1 1 0 01-1.262-1.262l.483-1.158A8.839 8.839 0 012 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM4.75 9.25a.75.75 0 01.75-.75h9a.75.75 0 010 1.5h-9a.75.75 0 01-.75-.75zm.75 2.25a.75.75 0 000 1.5h5a.75.75 0 000-1.5h-5z" clip-rule="evenodd" />
+        </svg>
+    </button>
+
+    <!-- Q&A Modal -->
+    <div id="qaModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md h-[80vh] flex flex-col transform transition-all" id="qaModalContent">
+            <header class="bg-green-500 text-white p-4 flex justify-between items-center rounded-t-2xl">
+                <h3 class="text-lg font-bold">AI 小幫手</h3>
+                <button id="closeQaModalBtn" class="text-2xl font-bold">&times;</button>
+            </header>
+            <div id="chatHistory" class="flex-1 p-4 overflow-y-auto flex flex-col space-y-2 bg-gray-50">
+                <!-- Chat messages will be injected here -->
+                 <div class="chat-bubble chat-bubble-model">你好！請問有什麼可以幫您的嗎？<br>您可以問我關於菜單、價格或營業時間的問題。</div>
+            </div>
+            <div id="qaLoading" class="hidden p-4 items-center">
+                <div class="chat-bubble chat-bubble-model flex items-center gap-2">
+                    <svg class="animate-spin h-5 w-5 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>思考中...</span>
+                </div>
+            </div>
+            <footer class="p-3 border-t bg-white rounded-b-2xl">
+                <div class="flex items-center gap-2">
+                    <input type="text" id="qaInput" placeholder="輸入您的問題..." class="flex-1 p-3 border border-gray-300 rounded-lg text-sm focus:ring-green-500 focus:border-green-500">
+                    <button id="qaSendBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold p-3 rounded-lg transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                        </svg>
+                    </button>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Order Success Modal -->
+    <div id="orderSuccessModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm transform transition-all" id="orderSuccessModalContent">
+            <div class="p-6 text-center">
+                <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+                    <svg class="h-10 w-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-900" id="orderSuccessTitle">訂單成功！</h3>
+                <div class="mt-4 text-left text-sm text-gray-600 space-y-2" id="orderSuccessSummary">
+                    <!-- Order details will be injected here -->
+                </div>
+            </div>
+            <div class="bg-gray-50 px-6 py-4 rounded-b-2xl space-y-3">
+                 <button id="shareToLineBtn" class="w-full bg-[#06C755] hover:bg-[#06B34B] text-white font-bold py-3 px-4 rounded-lg text-base transition-all duration-300 ease-in-out flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" />
+                    </svg>
+                    <span>分享訂單到 LINE</span>
+                </button>
+                <button id="closeSuccessModalBtn" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-4 rounded-lg text-base transition-all duration-300 ease-in-out">關閉</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order History Modal -->
+    <div id="orderHistoryModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md h-[80vh] flex flex-col transform transition-all" id="orderHistoryModalContent">
+            <header class="bg-blue-500 text-white p-4 flex justify-between items-center rounded-t-2xl">
+                <h3 class="text-lg font-bold">📋 我的訂單記錄</h3>
+                <button id="closeOrderHistoryModalBtn" class="text-2xl font-bold">&times;</button>
+            </header>
+            <div class="p-4 border-b bg-blue-50">
+                <div class="flex items-center gap-2">
+                    <input type="tel" id="orderHistoryPhone" placeholder="輸入手機號碼查詢" class="flex-1 p-3 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500" maxlength="10">
+                    <button id="searchOrdersBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold p-3 rounded-lg transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div id="orderHistoryList" class="flex-1 p-4 overflow-y-auto bg-gray-50">
+                <p class="text-center text-gray-500 py-8">請輸入手機號碼查詢訂單記錄</p>
+            </div>
+            <div id="orderHistoryLoading" class="hidden p-4 items-center justify-center">
+                <div class="flex items-center gap-2 text-blue-600">
+                    <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>查詢中...</span>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -228,7 +273,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             // --- CONFIGURATION ---
             const LIFF_ID = '2008276630-bYNjwMx7';
-            const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbyPd6ElhokdjT_MeglvelS8E_-pdi60P-MC4wCP81b6Rdafk2S_fcaFRoiJP5VblnkP/exec';
+            const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbyYNvfZRW2h0J8Pkl8oDCxBfaWv1x7gCWr44ndzahQ_BTnGncpjSfSiAVlxl9P8Bg/exec';
             const MENU_ITEMS = [
                 { name: '滷肉飯', price: 35, icon: '🍚' },
                 { name: '雞肉飯', price: 40, icon: '🍗' },
@@ -245,13 +290,11 @@
             let userProfile = null;
             let lineUserId = '';
             let isLoading = false;
-            let currentOrderData = null;
+            let conversationHistory = [];
 
             // --- DOM ELEMENTS ---
             const getEl = (id) => document.getElementById(id);
             const elements = {
-                orderForm: getEl('orderForm'),
-                successPage: getEl('successPage'),
                 liffStatus: getEl('liffStatus'),
                 customerName: getEl('customerName'),
                 customerPhone: getEl('customerPhone'),
@@ -260,8 +303,8 @@
                 timeError: getEl('timeError'),
                 deliveryAddress: getEl('deliveryAddress'),
                 notes: getEl('notes'),
-                menuSelect: getEl('menuSelect'),
-                quickAddButtons: getEl('quickAddButtons'),
+                menuSearch: getEl('menuSearch'),
+                menuItemsList: getEl('menuItemsList'),
                 cartItems: getEl('cartItems'),
                 subtotal: getEl('subtotal'),
                 deliveryFee: getEl('deliveryFee'),
@@ -272,13 +315,29 @@
                 notification: getEl('notification'),
                 notificationMessage: getEl('notificationMessage'),
                 notificationClose: getEl('notificationClose'),
-                // Success page elements
-                successOrderId: getEl('successOrderId'),
-                successCustomerName: getEl('successCustomerName'),
-                successTotalAmount: getEl('successTotalAmount'),
-                successPickupTime: getEl('successPickupTime'),
-                lineShareBtn: getEl('lineShareBtn'),
-                shareText: getEl('shareText')
+                orderSuccessModal: getEl('orderSuccessModal'),
+                orderSuccessModalContent: getEl('orderSuccessModalContent'),
+                orderSuccessSummary: getEl('orderSuccessSummary'),
+                shareToLineBtn: getEl('shareToLineBtn'),
+                closeSuccessModalBtn: getEl('closeSuccessModalBtn'),
+                checkOrderBtn: getEl('checkOrderBtn'),
+                // Q&A Elements
+                qaFab: getEl('qaFab'),
+                qaModal: getEl('qaModal'),
+                qaModalContent: getEl('qaModalContent'),
+                closeQaModalBtn: getEl('closeQaModalBtn'),
+                chatHistory: getEl('chatHistory'),
+                qaLoading: getEl('qaLoading'),
+                qaInput: getEl('qaInput'),
+                qaSendBtn: getEl('qaSendBtn'),
+                // Order History Elements
+                orderHistoryModal: getEl('orderHistoryModal'),
+                orderHistoryModalContent: getEl('orderHistoryModalContent'),
+                closeOrderHistoryModalBtn: getEl('closeOrderHistoryModalBtn'),
+                orderHistoryPhone: getEl('orderHistoryPhone'),
+                searchOrdersBtn: getEl('searchOrdersBtn'),
+                orderHistoryList: getEl('orderHistoryList'),
+                orderHistoryLoading: getEl('orderHistoryLoading')
             };
 
             // --- UI UPDATE FUNCTIONS ---
@@ -293,15 +352,42 @@
                                 <p class="text-xs text-gray-500">$${item.price} x ${item.quantity} = $${item.price * item.quantity}</p>
                             </div>
                             <div class="flex items-center gap-2">
-                                <button onclick="handleQuantityChange('${item.name}', -1)" class="w-7 h-7 bg-green-500 text-white rounded-full font-bold text-sm flex items-center justify-center hover:bg-green-600 transition-transform transform hover:scale-110">-</button>
+                                <button onclick="window.handleQuantityChange('${item.name}', -1)" class="w-7 h-7 bg-green-500 text-white rounded-full font-bold text-sm flex items-center justify-center hover:bg-green-600 transition-transform transform hover:scale-110">-</button>
                                 <span class="w-8 text-center font-bold">${item.quantity}</span>
-                                <button onclick="handleQuantityChange('${item.name}', 1)" class="w-7 h-7 bg-green-500 text-white rounded-full font-bold text-sm flex items-center justify-center hover:bg-green-600 transition-transform transform hover:scale-110">+</button>
-                                <button onclick="handleQuantityChange('${item.name}', ${-item.quantity})" class="ml-2 bg-red-500 text-white text-xs px-2 py-1 rounded hover:bg-red-600 transition">移除</button>
+                                <button onclick="window.handleQuantityChange('${item.name}', 1)" class="w-7 h-7 bg-green-500 text-white rounded-full font-bold text-sm flex items-center justify-center hover:bg-green-600 transition-transform transform hover:scale-110">+</button>
+                                <button onclick="window.handleQuantityChange('${item.name}', ${-item.quantity})" class="ml-2 bg-red-500 text-white text-xs px-2 py-1 rounded hover:bg-red-600 transition">移除</button>
                             </div>
                         </div>
                     `).join('');
                 }
                 updateOrderSummary();
+            };
+            
+            const renderMenu = (searchTerm = '') => {
+                const lowerCaseSearchTerm = searchTerm.toLowerCase();
+                const filteredMenu = MENU_ITEMS.filter(item => 
+                    item.name.toLowerCase().includes(lowerCaseSearchTerm)
+                );
+
+                if (filteredMenu.length === 0) {
+                    elements.menuItemsList.innerHTML = '<p class="text-center text-gray-500 py-4 italic">找不到符合的餐點 😢</p>';
+                    return;
+                }
+
+                elements.menuItemsList.innerHTML = filteredMenu.map(item => `
+                    <div class="flex justify-between items-center p-3 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
+                        <div>
+                            <p class="font-bold text-gray-800">${item.icon} ${item.name}</p>
+                            <p class="text-xs text-gray-500">$${item.price}</p>
+                        </div>
+                        <button 
+                            onclick="window.handleAddToCart('${item.name}')" 
+                            class="bg-green-500 text-white font-bold px-4 py-2 rounded-lg text-sm hover:bg-green-600 transition-transform transform hover:scale-105"
+                        >
+                            加入
+                        </button>
+                    </div>
+                `).join('');
             };
 
             const updateOrderSummary = () => {
@@ -326,79 +412,20 @@
                 const typeClasses = {
                     success: "bg-green-500 text-white",
                     error: "bg-red-500 text-white",
-                    warning: "bg-yellow-500 text-white"
+                    warning: "bg-yellow-500 text-black"
                 };
                 elements.notification.className = `fixed top-5 right-5 max-w-sm p-4 rounded-lg shadow-lg z-50 transition-opacity duration-300 animate-slide-in ${typeClasses[type]}`;
                 elements.notificationMessage.textContent = message;
-                elements.notification.classList.remove('hidden');
+                elements.notification.classList.remove('hidden', 'opacity-0');
 
-                setTimeout(() => elements.notification.classList.add('hidden'), duration);
-            };
-
-            // --- SUCCESS PAGE FUNCTIONS ---
-            const showSuccessPage = (orderId, orderData) => {
-                currentOrderData = orderData;
-                
-                // 更新成功頁面資訊
-                elements.successOrderId.textContent = orderId;
-                elements.successCustomerName.textContent = orderData.customerName || '-';
-                elements.successTotalAmount.textContent = orderData.totalAmount || '0';
-                elements.successPickupTime.textContent = formatDisplayTime(orderData.pickupTime);
-                
-                // 生成分享文字和連結
-                const shareText = generateShareText(orderId, orderData);
-                const lineShareUrl = generateLineShareUrl(shareText);
-                
-                elements.shareText.value = shareText;
-                elements.lineShareBtn.href = lineShareUrl;
-                
-                // 切換頁面
-                elements.orderForm.classList.add('hidden');
-                elements.successPage.classList.remove('hidden');
-            };
-
-            const generateShareText = (orderId, orderData) => {
-                const itemsText = orderData.items.map(item => 
-                    `▫️ ${item.name} x${item.quantity} - $${item.price * item.quantity}`
-                ).join('\n');
-                
-                return `🍽️ 無名牛排 - 訂單確認
-
-📋 訂單編號：${orderId}
-👤 顧客姓名：${orderData.customerName}
-📞 聯絡電話：${orderData.customerPhone}
-
-📦 訂單內容：
-${itemsText}
-
-💰 總金額：$${orderData.totalAmount}
-⏰ 取餐時間：${formatDisplayTime(orderData.pickupTime)}
-📍 ${orderData.deliveryAddress ? `外送地址：${orderData.deliveryAddress}` : '自取'}
-📝 備註：${orderData.notes || '無'}
-
-📍 取餐地址：無名牛排
-🕒 營業時間：11:00-21:00
-📞 聯絡電話：02-1234-5678`;
-            };
-
-            const generateLineShareUrl = (text) => {
-                const encodedText = encodeURIComponent(text);
-                return `https://line.me/R/msg/text/?${encodedText}`;
-            };
-
-            const formatDisplayTime = (timestamp) => {
-                const date = new Date(timestamp);
-                return date.toLocaleString('zh-TW', {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
+                setTimeout(() => { 
+                    elements.notification.classList.add('opacity-0');
+                    setTimeout(() => elements.notification.classList.add('hidden'), 300);
+                }, duration);
             };
 
             // --- BUSINESS LOGIC ---
-            const handleAddToCart = (itemName) => {
+            window.handleAddToCart = (itemName) => {
                 const existingItem = cart.find(item => item.name === itemName);
                 if (existingItem) {
                     existingItem.quantity++;
@@ -406,12 +433,13 @@ ${itemsText}
                     const menuItem = MENU_ITEMS.find(item => item.name === itemName);
                     if (menuItem) cart.push({ ...menuItem, quantity: 1 });
                 }
-                elements.menuSelect.value = '';
+                elements.menuSearch.value = '';
+                renderMenu();
                 showNotification(`已添加 ${itemName}`, 'success', 2000);
                 renderCart();
             };
             
-            const handleQuantityChange = (itemName, change) => {
+            window.handleQuantityChange = (itemName, change) => {
                 const itemIndex = cart.findIndex(item => item.name === itemName);
                 if (itemIndex === -1) return;
 
@@ -470,11 +498,96 @@ ${itemsText}
                 renderCart();
             };
             
+            const showOrderSuccessModal = (orderId, total, pickupTime, cartData) => {
+                const pickupTimeFormatted = new Date(pickupTime).toLocaleString('zh-TW', { dateStyle: 'short', timeStyle: 'short'});
+                elements.orderSuccessSummary.innerHTML = `
+                    <div class="flex justify-between"><span class="font-semibold text-gray-500">訂單編號:</span> <span>${orderId}</span></div>
+                    <div class="flex justify-between"><span class="font-semibold text-gray-500">取餐時間:</span> <span>${pickupTimeFormatted}</span></div>
+                    <div class="border-t my-2"></div>
+                    ${cartData.map(item => `
+                        <div class="flex justify-between">
+                            <span>${item.icon} ${item.name} x ${item.quantity}</span>
+                            <span>$${item.price * item.quantity}</span>
+                        </div>
+                    `).join('')}
+                    <div class="border-t my-2"></div>
+                    <div class="flex justify-between font-bold text-lg"><span class="text-gray-800">總金額:</span> <span>$${total}</span></div>
+                `;
+
+                elements.orderSuccessModal.classList.remove('hidden');
+                elements.orderSuccessModalContent.classList.add('scale-95', 'opacity-0');
+                setTimeout(() => {
+                    elements.orderSuccessModalContent.classList.remove('scale-95', 'opacity-0');
+                }, 10);
+
+                const closeModal = () => {
+                    elements.orderSuccessModalContent.classList.add('scale-95', 'opacity-0');
+                    setTimeout(() => {
+                        elements.orderSuccessModal.classList.add('hidden');
+                        resetOrderForm();
+                    }, 200);
+                };
+
+                elements.shareToLineBtn.onclick = () => handleShareToLine(orderId, total, pickupTime, cartData);
+                elements.closeSuccessModalBtn.onclick = closeModal;
+                elements.orderSuccessModal.onclick = (e) => {
+                    if (e.target === elements.orderSuccessModal) closeModal();
+                };
+            };
+
+            const handleShareToLine = async (orderId, total, pickupTime, cartData) => {
+                if (!liff.isInClient() || !liff.isApiAvailable('shareTargetPicker')) {
+                    showNotification('此功能只能在 LINE App 中使用。', 'warning');
+                    return;
+                }
+
+                const pickupTimeFormatted = new Date(pickupTime).toLocaleString('zh-TW', { dateStyle: 'short', timeStyle: 'short' });
+                const itemsList = cartData.map(item => ({
+                    type: 'box', layout: 'baseline', spacing: 'sm', contents: [
+                        { type: 'text', text: `${item.name} x ${item.quantity}`, wrap: true, color: '#666666', size: 'sm', flex: 4 },
+                        { type: 'text', text: `$${item.price * item.quantity}`, wrap: true, color: '#666666', size: 'sm', flex: 2, align: 'end' }
+                    ]
+                }));
+
+                const flexMessage = {
+                    type: 'bubble',
+                    header: { type: 'box', layout: 'vertical', contents: [{ type: 'text', text: '🍜 訂單已成立', weight: 'bold', size: 'xl', color: '#FFFFFF' }], backgroundColor: '#06C755', paddingAll: '20px' },
+                    body: { type: 'box', layout: 'vertical', contents: [
+                        { type: 'text', text: '感謝您的訂購！', weight: 'bold', size: 'lg', margin: 'md' },
+                        { type: 'box', layout: 'vertical', margin: 'lg', spacing: 'sm', contents: [
+                            { type: 'box', layout: 'baseline', spacing: 'sm', contents: [{ type: 'text', text: '訂單編號', color: '#aaaaaa', size: 'sm', flex: 2 }, { type: 'text', text: orderId, wrap: true, color: '#666666', size: 'sm', flex: 5 }] },
+                            { type: 'box', layout: 'baseline', spacing: 'sm', contents: [{ type: 'text', text: '取餐時間', color: '#aaaaaa', size: 'sm', flex: 2 }, { type: 'text', text: pickupTimeFormatted, wrap: true, color: '#666666', size: 'sm', flex: 5 }] }
+                        ]},
+                        { type: 'separator', margin: 'xxl' },
+                        { type: 'box', layout: 'vertical', margin: 'xxl', spacing: 'sm', contents: itemsList },
+                        { type: 'separator', margin: 'xxl' },
+                        { type: 'box', layout: 'baseline', margin: 'md', contents: [
+                            { type: 'text', text: '總金額', size: 'lg', color: '#000000', flex: 0, weight: 'bold' },
+                            { type: 'text', text: `$${total}`, size: 'lg', color: '#000000', align: 'end', weight: 'bold' }
+                        ]}
+                    ]},
+                    footer: { type: 'box', layout: 'vertical', spacing: 'sm', contents: [{ type: 'text', text: '台灣小吃店', align: 'center', size: 'sm', color: '#888888' }] }
+                };
+                
+                try {
+                    const result = await liff.shareTargetPicker([{ type: 'flex', altText: `來自台灣小吃店的訂單 (編號: ${orderId})`, contents: flexMessage }]);
+                    if (result) {
+                        showNotification('訂單分享成功！', 'success');
+                    } else {
+                        showNotification('分享已取消。', 'warning');
+                    }
+                } catch (error) {
+                    console.error('LINE 分享失敗:', error);
+                    showNotification(`分享失敗: ${error.message}`, 'error');
+                }
+            };
+            
             const handleSubmitOrder = async () => {
                 if (!validateForm()) return;
                 setLoading(true);
-
-                const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0) + (elements.deliveryAddress.value.trim() ? 30 : 0);
+                
+                const orderCart = [...cart];
+                const total = orderCart.reduce((sum, item) => sum + item.price * item.quantity, 0) + (elements.deliveryAddress.value.trim() ? 30 : 0);
 
                 const orderData = {
                     action: 'createOrder',
@@ -482,7 +595,7 @@ ${itemsText}
                         customerName: elements.customerName.value.trim(),
                         customerPhone: elements.customerPhone.value.trim(),
                         customerLineUserId: lineUserId || 'Not-Bound',
-                        items: cart,
+                        items: orderCart,
                         totalAmount: total,
                         pickupTime: elements.pickupTime.value,
                         deliveryAddress: elements.deliveryAddress.value.trim(),
@@ -507,22 +620,7 @@ ${itemsText}
                     const result = await response.json();
                     if (result.success) {
                         const orderId = result.data?.orderId || 'N/A';
-                        
-                        // 顯示成功頁面
-                        showSuccessPage(orderId, orderData.orderData);
-                        
-                        // 如果是在 LINE 環境中，也發送確認訊息
-                        if (lineUserId && liff.isInClient()) {
-                            try {
-                                const itemsText = cart.map(item => `${item.name} x${item.quantity}`).join('\n');
-                                await liff.sendMessages([{
-                                    type: 'text',
-                                    text: `感謝您的訂購！\n訂單編號: ${orderId}\n餐點:\n${itemsText}\n總金額: $${total}\n取餐時間: ${formatDisplayTime(elements.pickupTime.value)}`
-                                }]);
-                            } catch (sendError) {
-                                console.error('發送 LINE 訊息失敗', sendError);
-                            }
-                        }
+                        showOrderSuccessModal(orderId, total, elements.pickupTime.value, orderCart);
                     } else {
                         throw new Error(result.message || '處理訂單失敗');
                     }
@@ -535,19 +633,233 @@ ${itemsText}
                 }
             };
 
-            // --- GLOBAL FUNCTIONS ---
-            window.copyShareText = () => {
-                elements.shareText.select();
-                document.execCommand('copy');
-                showNotification('訂單資訊已複製到剪貼簿！', 'success', 2000);
+            // --- ORDER HISTORY FUNCTIONS ---
+            const toggleOrderHistoryModal = (show) => {
+                if (show) {
+                    elements.orderHistoryModal.classList.remove('hidden');
+                    elements.orderHistoryModalContent.classList.add('scale-95', 'opacity-0');
+                    setTimeout(() => {
+                        elements.orderHistoryModalContent.classList.remove('scale-95', 'opacity-0');
+                        elements.orderHistoryPhone.focus();
+                    }, 10);
+                } else {
+                    elements.orderHistoryModalContent.classList.add('scale-95', 'opacity-0');
+                    setTimeout(() => {
+                        elements.orderHistoryModal.classList.add('hidden');
+                    }, 200);
+                }
             };
 
-            window.newOrder = () => {
-                elements.successPage.classList.add('hidden');
-                elements.orderForm.classList.remove('hidden');
-                resetOrderForm();
+            const searchOrderHistory = async () => {
+                const phone = elements.orderHistoryPhone.value.trim();
+                
+                if (!phone) {
+                    showNotification('請輸入手機號碼', 'warning');
+                    return;
+                }
+
+                if (!/^09\d{8}$/.test(phone)) {
+                    showNotification('請輸入有效的手機號碼 (09開頭10位數字)', 'warning');
+                    return;
+                }
+
+                elements.orderHistoryLoading.classList.remove('hidden');
+                elements.orderHistoryList.innerHTML = '';
+
+                try {
+                    const response = await fetch(API_ENDPOINT, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'getOrders',
+                            phone: phone
+                        })
+                    });
+
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        if (result.data && result.data.length > 0) {
+                            renderOrderHistory(result.data);
+                        } else {
+                            elements.orderHistoryList.innerHTML = `
+                                <div class="text-center py-8">
+                                    <div class="text-4xl mb-4">📭</div>
+                                    <p class="text-gray-500">沒有找到訂單記錄</p>
+                                    <p class="text-sm text-gray-400 mt-2">請確認手機號碼是否正確</p>
+                                </div>
+                            `;
+                        }
+                    } else {
+                        throw new Error(result.message || '查詢失敗');
+                    }
+                } catch (error) {
+                    console.error('查詢訂單錯誤:', error);
+                    elements.orderHistoryList.innerHTML = `
+                        <div class="text-center py-8">
+                            <div class="text-4xl mb-4">❌</div>
+                            <p class="text-gray-500">查詢失敗</p>
+                            <p class="text-sm text-gray-400 mt-2">${error.message}</p>
+                        </div>
+                    `;
+                } finally {
+                    elements.orderHistoryLoading.classList.add('hidden');
+                }
             };
 
+            const renderOrderHistory = (orders) => {
+                elements.orderHistoryList.innerHTML = orders.map(order => {
+                    const statusClass = `status-${order.status}`;
+                    const statusText = order.statusText || order.status;
+                    
+                    return `
+                        <div class="bg-white rounded-lg border border-gray-200 p-4 mb-4 shadow-sm">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <h4 class="font-bold text-gray-800">訂單 #${order.orderId}</h4>
+                                    <p class="text-xs text-gray-500">${order.formattedDate}</p>
+                                </div>
+                                <span class="px-2 py-1 rounded-full text-xs font-medium ${statusClass}">${statusText}</span>
+                            </div>
+                            
+                            <div class="space-y-2 mb-3">
+                                ${order.items.map(item => `
+                                    <div class="flex justify-between text-sm">
+                                        <span>${item.icon} ${item.name} x ${item.quantity}</span>
+                                        <span>$${item.price * item.quantity}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            
+                            <div class="border-t pt-2 space-y-1 text-sm">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">小計:</span>
+                                    <span>$${order.subtotal}</span>
+                                </div>
+                                ${order.deliveryFee > 0 ? `
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">外送費:</span>
+                                    <span>$${order.deliveryFee}</span>
+                                </div>
+                                ` : ''}
+                                <div class="flex justify-between font-bold border-t pt-1">
+                                    <span>總計:</span>
+                                    <span>$${order.totalAmount}</span>
+                                </div>
+                            </div>
+                            
+                            ${order.notes ? `
+                            <div class="mt-2 p-2 bg-yellow-50 rounded border border-yellow-200">
+                                <p class="text-xs text-yellow-800">備註: ${order.notes}</p>
+                            </div>
+                            ` : ''}
+                            
+                            <div class="mt-2 text-xs text-gray-500">
+                                <p>取餐時間: ${order.formattedPickupTime}</p>
+                                ${order.deliveryAddress ? `<p>外送地址: ${order.deliveryAddress}</p>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            };
+
+            // --- Q&A FEATURE ---
+            const toggleQAModal = (show) => {
+                if (show) {
+                    elements.qaModal.classList.remove('hidden');
+                    elements.qaModalContent.classList.add('scale-95', 'opacity-0');
+                    setTimeout(() => {
+                        elements.qaModalContent.classList.remove('scale-95', 'opacity-0');
+                        elements.qaInput.focus();
+                    }, 10);
+                } else {
+                    elements.qaModalContent.classList.add('scale-95', 'opacity-0');
+                    setTimeout(() => {
+                        elements.qaModal.classList.add('hidden');
+                    }, 200);
+                }
+            };
+            
+            const formatMarkdown = (text) => {
+                return text
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                    .replace(/^- (.*$)/gm, '<ul><li>$1</li></ul>')
+                    .replace(/<\/ul>\n<ul>/g, ''); // Join consecutive list items
+            };
+            
+            const renderConversation = () => {
+                elements.chatHistory.innerHTML = conversationHistory.map(msg => `
+                    <div class="chat-bubble ${msg.role === 'user' ? 'chat-bubble-user' : 'chat-bubble-model'}">
+                        ${formatMarkdown(msg.parts[0].text)}
+                    </div>
+                `).join('');
+                elements.chatHistory.scrollTop = elements.chatHistory.scrollHeight;
+            };
+
+            const generateSystemInstruction = () => {
+                const menuString = MENU_ITEMS.map(item => `- ${item.name}: $${item.price}`).join('\n');
+                return `You are a friendly and helpful assistant for a Taiwanese snack shop called "台灣小吃店".
+Your knowledge base consists ONLY of the following menu and shop information.
+Do not make up information. If you don't know the answer, say that you can only answer questions about the menu and store hours.
+Be concise and answer in Traditional Chinese (繁體中文).
+
+Shop Information:
+- Business Hours: 10:00 - 21:00
+- Contact Phone: 02-1234-5678
+
+Menu:
+${menuString}
+`;
+            };
+
+            const handleQASubmit = async () => {
+                const userInput = elements.qaInput.value.trim();
+                if (!userInput) return;
+
+                conversationHistory.push({ role: 'user', parts: [{ text: userInput }] });
+                renderConversation();
+                elements.qaInput.value = '';
+                elements.qaLoading.classList.remove('hidden');
+                elements.chatHistory.scrollTop = elements.chatHistory.scrollHeight;
+
+                // 簡單的規則回應（替代 Gemini API）
+                const responseText = generateSimpleResponse(userInput);
+                
+                setTimeout(() => {
+                    conversationHistory.push({ role: 'model', parts: [{ text: responseText }] });
+                    elements.qaLoading.classList.add('hidden');
+                    renderConversation();
+                }, 1000);
+            };
+
+            const generateSimpleResponse = (question) => {
+                const lowerQuestion = question.toLowerCase();
+                
+                if (lowerQuestion.includes('營業') || lowerQuestion.includes('時間')) {
+                    return '我們的營業時間是 **10:00 - 21:00**，全年無休！';
+                }
+                
+                if (lowerQuestion.includes('電話') || lowerQuestion.includes('聯絡')) {
+                    return '我們的聯絡電話是 **02-1234-5678**，歡迎來電！';
+                }
+                
+                if (lowerQuestion.includes('外送') || lowerQuestion.includes('運費')) {
+                    return '外送費用是 **$30**，滿 $200 可免外送費！';
+                }
+                
+                if (lowerQuestion.includes('推薦') || lowerQuestion.includes('好吃')) {
+                    return '我們的 **滷肉飯** ($35) 和 **鹽酥雞** ($60) 是招牌菜，很多客人都很喜歡！';
+                }
+                
+                if (lowerQuestion.includes('菜單') || lowerQuestion.includes('價錢')) {
+                    const menuList = MENU_ITEMS.map(item => `- ${item.icon} ${item.name}: $${item.price}`).join('\n');
+                    return `這是我們的菜單：\n${menuList}\n\n有什麼想了解的嗎？`;
+                }
+                
+                return '抱歉，我主要能回答關於菜單、營業時間和價格的問題。如果您有其他問題，歡迎直接來電 02-1234-5678 詢問！';
+            };
+            
             // --- INITIALIZATION ---
             const setDefaultPickupTime = () => {
                 const now = new Date();
@@ -571,7 +883,7 @@ ${itemsText}
                         elements.liffStatus.textContent = `👋 歡迎，${userProfile.displayName}！`;
                         elements.liffStatus.className = 'p-3 rounded-lg text-sm text-center border bg-green-100 border-green-400 text-green-800';
                     } else {
-                         if (liff.isInClient()) {
+                        if (liff.isInClient()) {
                              elements.liffStatus.textContent = '未登入 LINE，正在嘗試登入...';
                              liff.login();
                         } else {
@@ -586,46 +898,53 @@ ${itemsText}
                 }
             };
             
-            const populateMenu = () => {
-                // Populate dropdown
-                MENU_ITEMS.forEach(item => {
-                    const option = document.createElement('option');
-                    option.value = item.name;
-                    option.textContent = `${item.icon} ${item.name} - $${item.price}`;
-                    elements.menuSelect.appendChild(option);
-                });
-
-                // Populate quick add buttons
-                const quickAddItems = MENU_ITEMS.slice(0, 4);
-                elements.quickAddButtons.innerHTML = quickAddItems.map(item => `
-                    <button
-                        onclick="handleAddToCart('${item.name}')"
-                        class="w-full text-left p-2 border border-green-500 text-green-600 rounded-md text-xs hover:bg-green-500 hover:text-white transition-colors duration-200"
-                    >
-                        ${item.icon} ${item.name}
-                    </button>
-                `).join('');
+            const initializeMenu = () => {
+                renderMenu();
             };
 
             // Add event listeners
             elements.deliveryAddress.addEventListener('input', updateOrderSummary);
-            elements.menuSelect.addEventListener('change', () => {
-                if(elements.menuSelect.value) {
-                    handleAddToCart(elements.menuSelect.value)
-                    elements.menuSelect.value = '';
-                };
-            });
+            elements.menuSearch.addEventListener('input', (e) => renderMenu(e.target.value));
             elements.submitBtn.addEventListener('click', handleSubmitOrder);
             elements.notificationClose.addEventListener('click', () => elements.notification.classList.add('hidden'));
-
-            // Make functions globally available
-            window.handleAddToCart = handleAddToCart;
-            window.handleQuantityChange = handleQuantityChange;
+            
+            // Order History Listeners
+            elements.checkOrderBtn.addEventListener('click', () => {
+                if (elements.customerPhone.value) {
+                    elements.orderHistoryPhone.value = elements.customerPhone.value;
+                }
+                toggleOrderHistoryModal(true);
+            });
+            elements.closeOrderHistoryModalBtn.addEventListener('click', () => toggleOrderHistoryModal(false));
+            elements.orderHistoryModal.addEventListener('click', (e) => {
+                if(e.target === elements.orderHistoryModal) toggleOrderHistoryModal(false);
+            });
+            elements.searchOrdersBtn.addEventListener('click', searchOrderHistory);
+            elements.orderHistoryPhone.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    searchOrderHistory();
+                }
+            });
+            
+            // Q&A Listeners
+            elements.qaFab.addEventListener('click', () => toggleQAModal(true));
+            elements.closeQaModalBtn.addEventListener('click', () => toggleQAModal(false));
+            elements.qaModal.addEventListener('click', (e) => {
+                if(e.target === elements.qaModal) toggleQAModal(false);
+            });
+            elements.qaSendBtn.addEventListener('click', handleQASubmit);
+            elements.qaInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleQASubmit();
+                }
+            });
 
             // Start the app
             initializeLiff();
             setDefaultPickupTime();
-            populateMenu();
+            initializeMenu();
             renderCart();
         });
     </script>
