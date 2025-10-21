@@ -13,6 +13,64 @@
             to { transform: translateX(0); opacity: 1; }
         }
         .animate-slide-in { animation: slide-in 0.3s ease-out forwards; }
+        
+        /* Success page styles */
+        .success-container {
+            text-align: center;
+            padding: 20px;
+        }
+        .success-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+        }
+        .order-summary {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        .share-section {
+            margin: 30px 0;
+        }
+        .line-share-btn {
+            display: inline-block;
+            margin: 15px 0;
+            padding: 10px;
+            background: #06c755;
+            border-radius: 8px;
+            text-decoration: none;
+        }
+        .share-text-box {
+            margin: 15px 0;
+        }
+        .share-text-box textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-family: inherit;
+            resize: vertical;
+        }
+        .copy-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .new-order-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-indigo-300 to-purple-400">
@@ -26,94 +84,134 @@
             </header>
 
             <main class="p-5 space-y-4">
-                <!-- Notification Popup -->
-                <div id="notification" class="hidden fixed top-5 right-5 max-w-sm p-4 rounded-lg shadow-lg z-50 transition-opacity duration-300">
-                    <div class="flex justify-between items-center">
-                        <p id="notificationMessage" class="text-sm font-medium whitespace-pre-wrap"></p>
-                        <button id="notificationClose" class="ml-4 text-xl font-bold leading-none">&times;</button>
-                    </div>
-                </div>
-            
-                <!-- LIFF Status -->
-                <div id="liffStatus" class="p-3 rounded-lg text-sm text-center border bg-blue-100 border-blue-400 text-blue-800">
-                    🔄 初始化 LINE 功能中...
-                </div>
-
-                <!-- Order Form -->
-                <div class="space-y-4">
-                    <div>
-                        <label class="block mb-2 font-bold text-gray-700 text-sm">姓名 <span class="text-red-500">*</span></label>
-                        <input type="text" id="customerName" placeholder="自動帶入 LINE 名稱" class="w-full p-3 border border-gray-300 rounded-lg text-sm transition-all duration-200 focus:ring-green-500 focus:border-green-500">
-                    </div>
-                    <div>
-                        <label class="block mb-2 font-bold text-gray-700 text-sm">手機號碼 <span class="text-red-500">*</span></label>
-                        <input type="tel" id="customerPhone" placeholder="0912345678" class="w-full p-3 border border-gray-300 rounded-lg text-sm transition-all duration-200 focus:ring-green-500 focus:border-green-500">
-                        <p id="phoneError" class="text-red-500 text-xs mt-1"></p>
-                    </div>
-                    <div>
-                        <label class="block mb-2 font-bold text-gray-700 text-sm">取餐時間 <span class="text-red-500">*</span></label>
-                        <input type="datetime-local" id="pickupTime" class="w-full p-3 border border-gray-300 rounded-lg text-sm transition-all duration-200 focus:ring-green-500 focus:border-green-500">
-                        <p id="timeError" class="text-red-500 text-xs mt-1"></p>
-                    </div>
-                    <div>
-                        <label class="block mb-2 font-bold text-gray-700 text-sm">外送地點 (選填)</label>
-                        <input type="text" id="deliveryAddress" placeholder="如需外送請填寫地址" class="w-full p-3 border border-gray-300 rounded-lg text-sm transition-all duration-200 focus:ring-green-500 focus:border-green-500">
-                        <p class="text-xs text-gray-500 mt-1 italic">※ 填寫地址將自動加收 $30 外送費</p>
-                    </div>
-                    <div>
-                        <label class="block mb-2 font-bold text-gray-700 text-sm">備註 (選填)</label>
-                        <textarea id="notes" rows="2" placeholder="例如：不要香菜、加辣等" class="w-full p-3 border border-gray-300 rounded-lg text-sm transition-all duration-200 focus:ring-green-500 focus:border-green-500"></textarea>
-                    </div>
-                </div>
-
-                <!-- Menu Section -->
-                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                    <h2 class="text-center text-lg font-bold text-gray-800 mb-4 relative pb-2">📝 選擇餐點<span class="absolute bottom-0 left-1/4 right-1/4 h-0.5 bg-green-500 rounded-full"></span></h2>
-                    <select id="menuSelect" class="w-full p-3 border border-gray-300 rounded-lg text-sm mb-4 focus:ring-green-500 focus:border-green-500">
-                        <option value="">-- 請選擇餐點 --</option>
-                    </select>
-                    <div class="p-3 bg-white rounded-md">
-                        <p class="text-xs text-gray-500 mb-2">快速選擇：</p>
-                        <div id="quickAddButtons" class="grid grid-cols-2 gap-2"></div>
-                    </div>
-                </div>
-
-                <!-- Cart Section -->
-                <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                    <h2 class="text-center text-lg font-bold text-gray-800 mb-4 relative pb-2">🛒 訂單明細<span class="absolute bottom-0 left-1/4 right-1/4 h-0.5 bg-green-500 rounded-full"></span></h2>
-                    <div id="cartItems">
-                        <p class="text-center text-gray-500 py-4 italic">購物車是空的</p>
-                    </div>
-                </div>
-
-                <!-- Order Summary -->
-                <div class="bg-green-50 p-4 rounded-lg border border-green-200 space-y-2">
-                    <div class="flex justify-between text-sm text-gray-600">
-                        <span>餐點總計:</span>
-                        <span id="subtotal">$0</span>
-                    </div>
-                    <div class="flex justify-between text-sm text-gray-600">
-                        <span>外送費:</span>
-                        <span id="deliveryFee">$0</span>
-                    </div>
-                    <div class="flex justify-between font-bold text-lg text-gray-800 border-t border-gray-300 pt-3 mt-3">
-                        <span>總金額:</span>
-                        <span id="totalAmount">$0</span>
-                    </div>
-                </div>
-
-                <!-- Submit Button -->
-                <div class="mt-6">
-                    <button id="submitBtn" disabled class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg text-lg transition-all duration-300 ease-in-out transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center">
-                        <span id="submitBtnText">✅ 送出訂單</span>
-                        <div id="loadingSpinner" class="hidden">
-                            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            <span>處理中...</span>
+                <!-- Order Form (initially visible) -->
+                <div id="orderForm">
+                    <!-- Notification Popup -->
+                    <div id="notification" class="hidden fixed top-5 right-5 max-w-sm p-4 rounded-lg shadow-lg z-50 transition-opacity duration-300">
+                        <div class="flex justify-between items-center">
+                            <p id="notificationMessage" class="text-sm font-medium whitespace-pre-wrap"></p>
+                            <button id="notificationClose" class="ml-4 text-xl font-bold leading-none">&times;</button>
                         </div>
-                    </button>
+                    </div>
+                
+                    <!-- LIFF Status -->
+                    <div id="liffStatus" class="p-3 rounded-lg text-sm text-center border bg-blue-100 border-blue-400 text-blue-800">
+                        🔄 初始化 LINE 功能中...
+                    </div>
+
+                    <!-- Order Form -->
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block mb-2 font-bold text-gray-700 text-sm">姓名 <span class="text-red-500">*</span></label>
+                            <input type="text" id="customerName" placeholder="自動帶入 LINE 名稱" class="w-full p-3 border border-gray-300 rounded-lg text-sm transition-all duration-200 focus:ring-green-500 focus:border-green-500">
+                        </div>
+                        <div>
+                            <label class="block mb-2 font-bold text-gray-700 text-sm">手機號碼 <span class="text-red-500">*</span></label>
+                            <input type="tel" id="customerPhone" placeholder="0912345678" class="w-full p-3 border border-gray-300 rounded-lg text-sm transition-all duration-200 focus:ring-green-500 focus:border-green-500">
+                            <p id="phoneError" class="text-red-500 text-xs mt-1"></p>
+                        </div>
+                        <div>
+                            <label class="block mb-2 font-bold text-gray-700 text-sm">取餐時間 <span class="text-red-500">*</span></label>
+                            <input type="datetime-local" id="pickupTime" class="w-full p-3 border border-gray-300 rounded-lg text-sm transition-all duration-200 focus:ring-green-500 focus:border-green-500">
+                            <p id="timeError" class="text-red-500 text-xs mt-1"></p>
+                        </div>
+                        <div>
+                            <label class="block mb-2 font-bold text-gray-700 text-sm">外送地點 (選填)</label>
+                            <input type="text" id="deliveryAddress" placeholder="如需外送請填寫地址" class="w-full p-3 border border-gray-300 rounded-lg text-sm transition-all duration-200 focus:ring-green-500 focus:border-green-500">
+                            <p class="text-xs text-gray-500 mt-1 italic">※ 填寫地址將自動加收 $30 外送費</p>
+                        </div>
+                        <div>
+                            <label class="block mb-2 font-bold text-gray-700 text-sm">備註 (選填)</label>
+                            <textarea id="notes" rows="2" placeholder="例如：不要香菜、加辣等" class="w-full p-3 border border-gray-300 rounded-lg text-sm transition-all duration-200 focus:ring-green-500 focus:border-green-500"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Menu Section -->
+                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <h2 class="text-center text-lg font-bold text-gray-800 mb-4 relative pb-2">📝 選擇餐點<span class="absolute bottom-0 left-1/4 right-1/4 h-0.5 bg-green-500 rounded-full"></span></h2>
+                        <select id="menuSelect" class="w-full p-3 border border-gray-300 rounded-lg text-sm mb-4 focus:ring-green-500 focus:border-green-500">
+                            <option value="">-- 請選擇餐點 --</option>
+                        </select>
+                        <div class="p-3 bg-white rounded-md">
+                            <p class="text-xs text-gray-500 mb-2">快速選擇：</p>
+                            <div id="quickAddButtons" class="grid grid-cols-2 gap-2"></div>
+                        </div>
+                    </div>
+
+                    <!-- Cart Section -->
+                    <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                        <h2 class="text-center text-lg font-bold text-gray-800 mb-4 relative pb-2">🛒 訂單明細<span class="absolute bottom-0 left-1/4 right-1/4 h-0.5 bg-green-500 rounded-full"></span></h2>
+                        <div id="cartItems">
+                            <p class="text-center text-gray-500 py-4 italic">購物車是空的</p>
+                        </div>
+                    </div>
+
+                    <!-- Order Summary -->
+                    <div class="bg-green-50 p-4 rounded-lg border border-green-200 space-y-2">
+                        <div class="flex justify-between text-sm text-gray-600">
+                            <span>餐點總計:</span>
+                            <span id="subtotal">$0</span>
+                        </div>
+                        <div class="flex justify-between text-sm text-gray-600">
+                            <span>外送費:</span>
+                            <span id="deliveryFee">$0</span>
+                        </div>
+                        <div class="flex justify-between font-bold text-lg text-gray-800 border-t border-gray-300 pt-3 mt-3">
+                            <span>總金額:</span>
+                            <span id="totalAmount">$0</span>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="mt-6">
+                        <button id="submitBtn" disabled class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg text-lg transition-all duration-300 ease-in-out transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center">
+                            <span id="submitBtnText">✅ 送出訂單</span>
+                            <div id="loadingSpinner" class="hidden">
+                                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <span>處理中...</span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Success Page (initially hidden) -->
+                <div id="successPage" class="hidden">
+                    <div class="success-container">
+                        <div class="success-icon">✅</div>
+                        <h3 class="text-2xl font-bold text-green-600 mb-4">訂單提交成功！</h3>
+                        
+                        <div class="order-summary">
+                            <p><strong>訂單編號：</strong><span id="successOrderId">-</span></p>
+                            <p><strong>顧客姓名：</strong><span id="successCustomerName">-</span></p>
+                            <p><strong>總金額：</strong>$<span id="successTotalAmount">0</span></p>
+                            <p><strong>取餐時間：</strong><span id="successPickupTime">-</span></p>
+                        </div>
+                        
+                        <div class="share-section">
+                            <p class="text-lg font-bold mb-4">📱 分享訂單資訊</p>
+                            <p class="text-sm text-gray-600 mb-4">點擊下方按鈕將訂單資訊分享到 LINE：</p>
+                            <a id="lineShareBtn" href="#" target="_blank" class="line-share-btn">
+                                <img src="https://scdn.line-apps.com/n/line_add_friends/btn/zh-Hant.png" 
+                                     alt="分享到 LINE" 
+                                     style="height: 40px;">
+                            </a>
+                            
+                            <div class="alternative-share mt-6">
+                                <p class="text-sm text-gray-600 mb-2">或複製以下訂單資訊：</p>
+                                <div class="share-text-box">
+                                    <textarea id="shareText" readonly rows="6" class="w-full p-3 border border-gray-300 rounded-lg text-sm"></textarea>
+                                    <button onclick="copyShareText()" class="copy-btn">📋 複製訂單資訊</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="actions mt-6">
+                            <button onclick="newOrder()" class="new-order-btn">📝 再訂一單</button>
+                        </div>
+                    </div>
                 </div>
             </main>
 
@@ -147,10 +245,13 @@
             let userProfile = null;
             let lineUserId = '';
             let isLoading = false;
+            let currentOrderData = null;
 
             // --- DOM ELEMENTS ---
             const getEl = (id) => document.getElementById(id);
             const elements = {
+                orderForm: getEl('orderForm'),
+                successPage: getEl('successPage'),
                 liffStatus: getEl('liffStatus'),
                 customerName: getEl('customerName'),
                 customerPhone: getEl('customerPhone'),
@@ -171,6 +272,13 @@
                 notification: getEl('notification'),
                 notificationMessage: getEl('notificationMessage'),
                 notificationClose: getEl('notificationClose'),
+                // Success page elements
+                successOrderId: getEl('successOrderId'),
+                successCustomerName: getEl('successCustomerName'),
+                successTotalAmount: getEl('successTotalAmount'),
+                successPickupTime: getEl('successPickupTime'),
+                lineShareBtn: getEl('lineShareBtn'),
+                shareText: getEl('shareText')
             };
 
             // --- UI UPDATE FUNCTIONS ---
@@ -225,6 +333,68 @@
                 elements.notification.classList.remove('hidden');
 
                 setTimeout(() => elements.notification.classList.add('hidden'), duration);
+            };
+
+            // --- SUCCESS PAGE FUNCTIONS ---
+            const showSuccessPage = (orderId, orderData) => {
+                currentOrderData = orderData;
+                
+                // 更新成功頁面資訊
+                elements.successOrderId.textContent = orderId;
+                elements.successCustomerName.textContent = orderData.customerName || '-';
+                elements.successTotalAmount.textContent = orderData.totalAmount || '0';
+                elements.successPickupTime.textContent = formatDisplayTime(orderData.pickupTime);
+                
+                // 生成分享文字和連結
+                const shareText = generateShareText(orderId, orderData);
+                const lineShareUrl = generateLineShareUrl(shareText);
+                
+                elements.shareText.value = shareText;
+                elements.lineShareBtn.href = lineShareUrl;
+                
+                // 切換頁面
+                elements.orderForm.classList.add('hidden');
+                elements.successPage.classList.remove('hidden');
+            };
+
+            const generateShareText = (orderId, orderData) => {
+                const itemsText = orderData.items.map(item => 
+                    `▫️ ${item.name} x${item.quantity} - $${item.price * item.quantity}`
+                ).join('\n');
+                
+                return `🍽️ 無名牛排 - 訂單確認
+
+📋 訂單編號：${orderId}
+👤 顧客姓名：${orderData.customerName}
+📞 聯絡電話：${orderData.customerPhone}
+
+📦 訂單內容：
+${itemsText}
+
+💰 總金額：$${orderData.totalAmount}
+⏰ 取餐時間：${formatDisplayTime(orderData.pickupTime)}
+📍 ${orderData.deliveryAddress ? `外送地址：${orderData.deliveryAddress}` : '自取'}
+📝 備註：${orderData.notes || '無'}
+
+📍 取餐地址：無名牛排
+🕒 營業時間：11:00-21:00
+📞 聯絡電話：02-1234-5678`;
+            };
+
+            const generateLineShareUrl = (text) => {
+                const encodedText = encodeURIComponent(text);
+                return `https://line.me/R/msg/text/?${encodedText}`;
+            };
+
+            const formatDisplayTime = (timestamp) => {
+                const date = new Date(timestamp);
+                return date.toLocaleString('zh-TW', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
             };
 
             // --- BUSINESS LOGIC ---
@@ -322,7 +492,6 @@
                 };
 
                 try {
-                    // *** CORS FIX ***
                     const response = await fetch(API_ENDPOINT, {
                         method: 'POST',
                         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -338,23 +507,22 @@
                     const result = await response.json();
                     if (result.success) {
                         const orderId = result.data?.orderId || 'N/A';
-                        let successMessage = `✅ 訂單成功！\n訂單編號: ${orderId}\n總金額: $${total}`;
                         
+                        // 顯示成功頁面
+                        showSuccessPage(orderId, orderData.orderData);
+                        
+                        // 如果是在 LINE 環境中，也發送確認訊息
                         if (lineUserId && liff.isInClient()) {
                             try {
                                 const itemsText = cart.map(item => `${item.name} x${item.quantity}`).join('\n');
                                 await liff.sendMessages([{
                                     type: 'text',
-                                    text: `感謝您的訂購！\n編號: ${orderId}\n餐點:\n${itemsText}\n總金額: $${total}\n取餐時間: ${new Date(elements.pickupTime.value).toLocaleString('zh-TW')}`
+                                    text: `感謝您的訂購！\n訂單編號: ${orderId}\n餐點:\n${itemsText}\n總金額: $${total}\n取餐時間: ${formatDisplayTime(elements.pickupTime.value)}`
                                 }]);
-                                successMessage += '\n已透過 LINE 發送訂單確認。';
                             } catch (sendError) {
                                 console.error('發送 LINE 訊息失敗', sendError);
-                                successMessage += '\n無法發送 LINE 確認訊息。';
                             }
                         }
-                        showNotification(successMessage, 'success', 8000);
-                        resetOrderForm();
                     } else {
                         throw new Error(result.message || '處理訂單失敗');
                     }
@@ -365,6 +533,19 @@
                 } finally {
                     setLoading(false);
                 }
+            };
+
+            // --- GLOBAL FUNCTIONS ---
+            window.copyShareText = () => {
+                elements.shareText.select();
+                document.execCommand('copy');
+                showNotification('訂單資訊已複製到剪貼簿！', 'success', 2000);
+            };
+
+            window.newOrder = () => {
+                elements.successPage.classList.add('hidden');
+                elements.orderForm.classList.remove('hidden');
+                resetOrderForm();
             };
 
             // --- INITIALIZATION ---
