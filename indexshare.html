@@ -92,7 +92,7 @@
                         <div>
                             <label class="block mb-2 font-bold text-gray-700 text-sm">外送地點 (選填)</label>
                             <input type="text" id="deliveryAddress" placeholder="如需外送請填寫地址" class="w-full p-3 border border-gray-300 rounded-lg text-sm transition-all duration-200 focus:ring-green-500 focus:border-green-500">
-                            <p class="text-xs text-gray-500 mt-1 italic">※ 填寫地址將自動加收 $30 外送費</p>
+                            <p class="text-xs text-gray-500 mt-1 italic">※ 填寫地址將由後端計算 $30 外送費</p>
                         </div>
                         <div>
                             <label class="block mb-2 font-bold text-gray-700 text-sm">備註 (選填)</label>
@@ -121,7 +121,7 @@
                     <div class="bg-green-50 p-4 rounded-lg border border-green-200 space-y-2 mt-4">
                         <div class="flex justify-between text-sm text-gray-600"><span>餐點總計:</span><span id="subtotal">$0</span></div>
                         <div class="flex justify-between text-sm text-gray-600"><span>外送費:</span><span id="deliveryFee">$0</span></div>
-                        <div class="flex justify-between font-bold text-lg text-gray-800 border-t border-gray-300 pt-3 mt-3"><span>總金額:</span><span id="totalAmount">$0</span></div>
+                        <div class="flex justify-between font-bold text-lg text-gray-800 border-t border-gray-300 pt-3 mt-3"><span>預估總金額:</span><span id="totalAmount">$0</span></div>
                     </div>
                     
                     <div class="mt-6">
@@ -146,7 +146,7 @@
                     <div class="bg-gray-50 p-4 rounded-lg my-5 text-left border">
                         <p><strong>訂單編號：</strong><span id="successOrderId">-</span></p>
                         <p><strong>顧客姓名：</strong><span id="successCustomerName">-</span></p>
-                        <p><strong>總金額：</strong>$<span id="successTotalAmount">0</span></p>
+                        <p><strong>最終總金額：</strong>$<span id="successTotalAmount">0</span></p>
                         <p><strong>取餐時間：</strong><span id="successPickupTime">-</span></p>
                     </div>
 
@@ -173,7 +173,7 @@
             <footer class="bg-gray-100 p-4 text-center text-xs text-gray-500 border-t border-gray-200">
                 <p>📍 營業時間: 10:00 - 21:00</p>
                 <p>📞 聯絡電話: 02-1234-5678</p>
-                <p class="mt-2 opacity-70">系統版本: 6.0.0-Vanilla</p>
+                <p class="mt-2 opacity-70">系統版本: 7.0.0-Secure</p>
             </footer>
         </div>
     </div>
@@ -182,7 +182,8 @@
         document.addEventListener('DOMContentLoaded', () => {
             // --- CONFIGURATION ---
             const LIFF_ID = '2008276630-bYNjwMx7';
-            const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzhgVStWIZ0tzni07E_bcamfzTGC7or00-pptTmUkvVBc_1qqU_TtrihPTwYu0aIatY/exec';
+            // IMPORTANT: Replace this with the URL you get after deploying the Google Apps Script below.
+            const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbyPd6ElhokdjT_MeglvelS8E_-pdi60P-MC4wCP81b6Rdafk2S_fcaFRoiJP5VblnkP/exec';
             const MENU_ITEMS = [
                 { name: '滷肉飯', price: 35, icon: '🍚' },
                 { name: '雞肉飯', price: 40, icon: '🍗' },
@@ -193,13 +194,12 @@
                 { name: '甜不辣', price: 40, icon: '🍢' },
                 { name: '肉圓', price: 45, icon: '🥟' }
             ];
-            const DELIVERY_FEE = 30;
+            const DELIVERY_FEE = 30; // For display purposes only
 
             // --- STATE ---
             let cart = [];
             let lineUserId = '';
             let isLoading = false;
-            let currentOrderData = null;
 
             // --- DOM ELEMENTS ---
             const getEl = (id) => document.getElementById(id);
@@ -226,7 +226,6 @@
                 notification: getEl('notification'),
                 notificationMessage: getEl('notificationMessage'),
                 notificationClose: getEl('notificationClose'),
-                // Success page elements
                 successOrderId: getEl('successOrderId'),
                 successCustomerName: getEl('successCustomerName'),
                 successTotalAmount: getEl('successTotalAmount'),
@@ -288,7 +287,7 @@
                 const newQuantity = cart[itemIndex].quantity + change;
                 if (newQuantity <= 0) {
                     cart.splice(itemIndex, 1);
-                    showNotification(`已移除 ${itemName}`, 'success');
+                    showNotification(`已移除 ${itemName}`, 'warning');
                 } else {
                     cart[itemIndex].quantity = newQuantity;
                 }
@@ -314,14 +313,13 @@
 
             const generateShareText = (orderId, orderData) => {
                 const itemsText = orderData.items.map(item => `▫️ ${item.name} x${item.quantity} - $${item.price * item.quantity}`).join('\n');
-                return `🍽️ 台灣小吃店 - 訂單確認\n\n📋 訂單編號：${orderId}\n👤 顧客姓名：${orderData.customerName}\n📞 聯絡電話：${orderData.customerPhone}\n\n📦 訂單內容：\n${itemsText}\n\n💰 總金額：$${orderData.totalAmount}\n⏰ 取餐時間：${formatDisplayTime(orderData.pickupTime)}\n📍 ${orderData.deliveryAddress ? `外送地址：${orderData.deliveryAddress}` : '自取'}\n📝 備註：${orderData.notes || '無'}\n\n📍 取餐地址：台灣小吃店\n🕒 營業時間：10:00-21:00\n📞 聯絡電話：02-1234-5678`;
+                return `🍽️ 台灣小吃店 - 訂單確認\n\n📋 訂單編號：${orderId}\n👤 顧客姓名：${orderData.customerName}\n📞 聯絡電話：${orderData.customerPhone}\n\n📦 訂單內容：\n${itemsText}\n\n💰 最終總金額：$${orderData.totalAmount}\n⏰ 取餐時間：${formatDisplayTime(orderData.pickupTime)}\n📍 ${orderData.deliveryAddress ? `外送地址：${orderData.deliveryAddress}` : '自取'}\n📝 備註：${orderData.notes || '無'}\n\n📍 取餐地址：台灣小吃店\n🕒 營業時間：10:00-21:00\n📞 聯絡電話：02-1234-5678`;
             };
 
             const showSuccessPage = (orderId, orderData) => {
-                currentOrderData = orderData;
                 elements.successOrderId.textContent = orderId;
                 elements.successCustomerName.textContent = orderData.customerName;
-                elements.successTotalAmount.textContent = orderData.totalAmount;
+                elements.successTotalAmount.textContent = orderData.totalAmount; // This is now the server-verified total
                 elements.successPickupTime.textContent = formatDisplayTime(orderData.pickupTime);
                 
                 const shareTextContent = generateShareText(orderId, orderData);
@@ -373,23 +371,33 @@
                 if (!validateForm()) return;
                 setLoading(true);
 
-                const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-                const deliveryFee = elements.deliveryAddress.value.trim() ? DELIVERY_FEE : 0;
-                const totalAmount = subtotal + deliveryFee;
-
-                const orderData = {
+                // This object is for displaying success info and generating share text.
+                // The final `totalAmount` will be replaced by the server's response.
+                const orderDataForDisplay = {
                     customerName: elements.customerName.value.trim(),
                     customerPhone: elements.customerPhone.value.trim(),
                     customerLineUserId: lineUserId || 'Not-Bound',
-                    items: cart,
-                    totalAmount: totalAmount,
+                    items: cart, // Full cart with prices for display
                     pickupTime: elements.pickupTime.value,
                     deliveryAddress: elements.deliveryAddress.value.trim(),
                     notes: elements.notes.value.trim(),
                     timestamp: new Date().toISOString()
                 };
+                
+                // This sanitized object is what we SEND to the server.
+                // It does NOT contain prices or a total amount, preventing manipulation.
+                const orderDataForServer = {
+                    customerName: orderDataForDisplay.customerName,
+                    customerPhone: orderDataForDisplay.customerPhone,
+                    customerLineUserId: orderDataForDisplay.customerLineUserId,
+                    items: cart.map(item => ({ name: item.name, quantity: item.quantity })), // Only name and quantity
+                    pickupTime: orderDataForDisplay.pickupTime,
+                    deliveryAddress: orderDataForDisplay.deliveryAddress,
+                    notes: orderDataForDisplay.notes,
+                    timestamp: orderDataForDisplay.timestamp
+                };
 
-                const payload = { action: 'createOrder', orderData: orderData };
+                const payload = { action: 'createOrder', orderData: orderDataForServer };
 
                 try {
                     const response = await fetch(API_ENDPOINT, {
@@ -399,16 +407,21 @@
                         mode: 'cors'
                     });
 
-                    if (!response.ok) throw new Error(`伺服器錯誤: ${response.status}`);
+                    if (!response.ok) throw new Error(`伺服器錯誤: ${response.status} ${response.statusText}`);
                     
                     const result = await response.json();
                     if (result.success) {
                         const orderId = result.data?.orderId || 'N/A';
-                        showSuccessPage(orderId, orderData);
+                        
+                        // Use the authoritative total amount from the server's response
+                        orderDataForDisplay.totalAmount = result.data.totalAmount;
+
+                        showSuccessPage(orderId, orderDataForDisplay);
+
                         if (lineUserId && liff.isInClient()) {
                             const itemsText = cart.map(item => `${item.name} x${item.quantity}`).join('\n');
                             const formattedTime = formatDisplayTime(elements.pickupTime.value);
-                            await liff.sendMessages([{ type: 'text', text: `感謝訂購！\n單號: ${orderId}\n餐點:\n${itemsText}\n金額: $${totalAmount}\n時間: ${formattedTime}` }]);
+                            await liff.sendMessages([{ type: 'text', text: `感謝訂購！\n單號: ${orderId}\n餐點:\n${itemsText}\n金額: $${orderDataForDisplay.totalAmount}\n時間: ${formattedTime}` }]);
                         }
                     } else {
                         throw new Error(result.message || '訂單提交失敗');
@@ -523,5 +536,132 @@
             elements.notificationClose.addEventListener('click', () => elements.notification.classList.add('hidden'));
         });
     </script>
+<!--
+======================================================================================================
+== GOOGLE APPS SCRIPT - BACKEND CODE (Code.gs)
+==
+== SETUP INSTRUCTIONS:
+== 1. Open Google Sheets (https://sheets.new) and create a new, blank spreadsheet.
+== 2. Get the Spreadsheet ID from the URL.
+==    (e.g., in "https://docs.google.com/spreadsheets/d/1qA2b3c4D5e6F7g8H9i0J/edit",
+==     the ID is "1qA2b3c4D5e6F7g8H9i0J").
+== 3. Go to Extensions > Apps Script in the spreadsheet menu.
+== 4. A new script project will open. Erase any existing code in the `Code.gs` file.
+== 5. Copy and paste ALL of the code below this instruction block into the `Code.gs` file.
+== 6. Find the line `const SPREADSHEET_ID = 'YOUR_SPREADSHEET_ID_HERE';` and replace
+==    `YOUR_SPREADSHEET_ID_HERE` with the ID you copied in step 2.
+== 7. Click the "Deploy" button (top right), then "New deployment".
+== 8. In the "Select type" dialog, click the gear icon and select "Web app".
+== 9. In the configuration:
+==    - Description: "Food Order API" (or any name you like)
+==    - Execute as: "Me"
+==    - Who has access: "Anyone"  <-- This is required for the web app to be able to call it.
+== 10. Click "Deploy".
+== 11. In the popup, click "Authorize access" and follow the prompts to grant the script
+==     permissions for your Google account. (You may see a "Google hasn't verified this app"
+==     warning. Click "Advanced" and then "Go to [Your Project Name] (unsafe)" to proceed.
+==     This is normal for personal scripts.)
+== 12. After deployment, copy the "Web app URL" provided.
+== 13. Go back to THIS `index.html` file and paste the copied URL into the `API_ENDPOINT`
+==     constant at the top of the <script> tag.
+======================================================================================================
+
+function doPost(e) {
+  try {
+    // --- SERVER-SIDE CONFIGURATION (Source of Truth) ---
+    const MENU_ITEMS_SERVER = {
+      '滷肉飯': { price: 35 },
+      '雞肉飯': { price: 40 },
+      '蚵仔煎': { price: 65 },
+      '大腸麵線': { price: 50 },
+      '珍珠奶茶': { price: 45 },
+      '鹽酥雞': { price: 60 },
+      '甜不辣': { price: 40 },
+      '肉圓': { price: 45 }
+    };
+    const DELIVERY_FEE_SERVER = 30;
+    const SPREADSHEET_ID = 'YOUR_SPREADSHEET_ID_HERE'; // <-- IMPORTANT: Replace with your Google Sheet ID
+    const SHEET_NAME = 'Orders'; // The name of the sheet tab where orders will be logged
+
+    // --- Request Parsing & Basic Validation ---
+    const requestBody = JSON.parse(e.postData.contents);
+    if (requestBody.action !== 'createOrder' || !requestBody.orderData) {
+      throw new Error('無效的操作或遺失訂單資料。');
+    }
+    const orderData = requestBody.orderData;
+    
+    // --- Detailed Server-Side Validation ---
+    if (!orderData.customerName || typeof orderData.customerName !== 'string' || orderData.customerName.trim().length === 0) {
+      throw new Error('顧客姓名無效。');
+    }
+    if (!orderData.customerPhone || !/^09\d{8}$/.test(orderData.customerPhone)) {
+      throw new Error('手機號碼格式錯誤。');
+    }
+    const pickupDate = new Date(orderData.pickupTime);
+    if (!orderData.pickupTime || isNaN(pickupDate.getTime()) || pickupDate < new Date()) {
+      throw new Error('取餐時間無效。');
+    }
+    if (!Array.isArray(orderData.items) || orderData.items.length === 0) {
+        throw new Error('購物車不可為空。');
+    }
+
+    // --- Secure Price Calculation ---
+    let subtotal = 0;
+    const validatedItems = orderData.items.map(item => {
+      if (!item.name || !MENU_ITEMS_SERVER[item.name] || !Number.isInteger(item.quantity) || item.quantity <= 0) {
+        throw new Error(`購物車中有無效品項: ${item.name || '未知品項'}`);
+      }
+      const serverItem = MENU_ITEMS_SERVER[item.name];
+      subtotal += serverItem.price * item.quantity;
+      return {
+          name: item.name,
+          quantity: item.quantity,
+          price: serverItem.price // Add server price for logging
+      };
+    });
+
+    const deliveryFee = orderData.deliveryAddress && orderData.deliveryAddress.trim() ? DELIVERY_FEE_SERVER : 0;
+    const totalAmount = subtotal + deliveryFee;
+
+    // --- Data Storage in Google Sheets ---
+    const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+    let sheet = spreadsheet.getSheetByName(SHEET_NAME);
+    if (!sheet) {
+        sheet = spreadsheet.insertSheet(SHEET_NAME);
+        sheet.appendRow(['OrderID', 'Timestamp', 'CustomerName', 'Phone', 'Items', 'Subtotal', 'DeliveryFee', 'TotalAmount', 'PickupTime', 'DeliveryAddress', 'Notes', 'LineUserID']);
+    }
+    
+    const orderId = 'ORD-' + new Date().getTime().toString().slice(-6) + Math.floor(Math.random() * 100);
+    const timestamp = new Date().toISOString();
+    
+    sheet.appendRow([
+      orderId,
+      timestamp,
+      orderData.customerName.trim(),
+      orderData.customerPhone.trim(),
+      JSON.stringify(validatedItems),
+      subtotal,
+      deliveryFee,
+      totalAmount,
+      orderData.pickupTime,
+      orderData.deliveryAddress.trim(),
+      orderData.notes.trim(),
+      orderData.customerLineUserId || 'Not-Bound'
+    ]);
+
+    // --- Success Response ---
+    return ContentService
+      .createTextOutput(JSON.stringify({ success: true, data: { orderId: orderId, totalAmount: totalAmount } }))
+      .setMimeType(ContentService.MimeType.JSON);
+
+  } catch (error) {
+    // --- Error Handling ---
+    Logger.log('Error: ' + error.message + ' Stack: ' + error.stack);
+    return ContentService
+      .createTextOutput(JSON.stringify({ success: false, message: error.message }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+-->
 </body>
 </html>
