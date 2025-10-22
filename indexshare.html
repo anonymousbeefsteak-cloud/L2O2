@@ -143,7 +143,7 @@
         <div class="container max-w-md mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden">
             <!-- 安全防護通知 -->
             <div class="security-notice">
-                🔒 安全訂餐系統 - 僅限行動裝置使用
+                🔒 安全訂餐系統 - 專為行動裝置設計
             </div>
             
             <!-- Header -->
@@ -289,7 +289,7 @@
             <footer class="bg-gray-100 p-4 text-center text-xs text-gray-500 border-t border-gray-200">
                 <p>📍 營業時間: 10:00 - 21:00</p>
                 <p>📞 聯絡電話: 02-1234-5678</p>
-                <p class="mt-2 opacity-70">系統版本: 4.0.0-Secure</p>
+                <p class="mt-2 opacity-70">系統版本: 4.0.1-Fixed</p>
             </footer>
         </div>
     </div>
@@ -318,9 +318,9 @@
         
         // 安全檢查
         function securityCheck() {
-            // 如果不是行動裝置或不在LINE中，顯示警告
-            if (!isMobileDevice() || !isInLINE()) {
-                showNotification('⚠️ 此系統專為行動裝置和LINE環境設計，部分功能可能無法正常使用', 'warning', 5000);
+            // 如果不是行動裝置，顯示警告
+            if (!isMobileDevice()) {
+                showNotification('⚠️ 此系統專為行動裝置設計，部分功能可能無法正常使用', 'warning', 5000);
             }
         }
 
@@ -583,6 +583,8 @@ ${itemsText}
 
                 const orderData = {
                     action: 'createOrder',
+                    source: 'web', // 添加來源標識
+                    userAgent: navigator.userAgent, // 添加用戶代理
                     orderData: {
                         customerName: elements.customerName.value.trim(),
                         customerPhone: elements.customerPhone.value.trim(),
