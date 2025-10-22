@@ -9,7 +9,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
-        /* Prevents text selection and callouts */
         body {
             -webkit-touch-callout: none;
             -webkit-user-select: none;
@@ -20,7 +19,6 @@
             -webkit-tap-highlight-color: transparent;
         }
         
-        /* Allows text selection in form inputs */
         input, textarea, select {
             -webkit-user-select: text;
             -moz-user-select: text;
@@ -28,7 +26,6 @@
             user-select: text;
         }
 
-        /* Disables right-click context menu */
         .no-context-menu {
             -webkit-touch-callout: none;
             -webkit-user-select: none;
@@ -38,24 +35,29 @@
             user-select: none;
         }
 
-        /* Animation keyframes */
         @keyframes slide-in {
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
         }
         .animate-slide-in { animation: slide-in 0.3s ease-out forwards; }
+        
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in { animation: fade-in 0.5s ease-out; }
     </style>
 </head>
 <body class="bg-gradient-to-br from-indigo-300 to-purple-400 no-context-menu" oncontextmenu="return false;">
     <div class="p-4 min-h-screen flex items-center justify-center">
         <div class="container max-w-md mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden">
             <div class="bg-[#fff3cd] border border-[#ffeaa7] rounded-t-2xl p-2.5 text-xs text-center text-[#856404]">
-                🔒 安全訂餐系統 - 僅限行動裝置使用
+                🔒 安全訂餐系統 - 24小時接受預訂
             </div>
 
             <header class="bg-green-500 text-white p-5 text-center relative">
                 <h1 class="text-2xl font-bold mb-1">🍜 台灣小吃店</h1>
-                <p class="text-sm opacity-90">LINE 快速訂餐</p>
+                <p class="text-sm opacity-90">LINE 快速訂餐 - 24小時服務</p>
                 <div class="absolute bottom-0 left-1/4 right-1/4 h-1 bg-white bg-opacity-30 rounded-full"></div>
             </header>
 
@@ -69,7 +71,7 @@
                 </div>
 
                 <!-- Order Form Page -->
-                <div id="orderPage">
+                <div id="orderPage" class="animate-fade-in">
                     <div id="liffStatus" class="p-3 rounded-lg text-sm text-center border bg-blue-100 border-blue-400 text-blue-800">
                         🔄 初始化 LINE 功能中...
                     </div>
@@ -139,7 +141,7 @@
                 </div>
 
                 <!-- Success Page -->
-                <div id="successPage" class="hidden text-center p-5">
+                <div id="successPage" class="hidden text-center p-5 animate-fade-in">
                     <div class="text-6xl mb-5">✅</div>
                     <h3 class="text-2xl font-bold text-green-600 mb-4">訂單提交成功！</h3>
 
@@ -148,6 +150,7 @@
                         <p><strong>顧客姓名：</strong><span id="successCustomerName">-</span></p>
                         <p><strong>最終總金額：</strong>$<span id="successTotalAmount">0</span></p>
                         <p><strong>取餐時間：</strong><span id="successPickupTime">-</span></p>
+                        <p><strong>訂單內容：</strong><span id="successOrderItems">-</span></p>
                     </div>
 
                     <div class="my-8">
@@ -173,7 +176,7 @@
             <footer class="bg-gray-100 p-4 text-center text-xs text-gray-500 border-t border-gray-200">
                 <p>📍 營業時間: 10:00 - 21:00</p>
                 <p>📞 聯絡電話: 02-1234-5678</p>
-                <p class="mt-2 opacity-70">系統版本: 7.0.0-Secure</p>
+                <p class="mt-2 opacity-70">系統版本: 8.0.0-24H</p>
             </footer>
         </div>
     </div>
@@ -181,9 +184,9 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // --- CONFIGURATION ---
-            const LIFF_ID = '2008276630-bYNjwMx7';
-            // IMPORTANT: Replace this with the URL you get after deploying the Google Apps Script below.
-            const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbxcaY0ZN2JHRGRYJvEM9JkW3KaC3p9VEFHnDhdMIRhhctbjwCwQgoE24QFZ3Oy56oIm/exec';
+            const LIFF_ID = '2008316489-6nMjb0KX';
+            const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbyoMYnFUZcIIqvdULsy1J0DIMeakYFwhHaeAn99m6bPqxnlk87obPqIVhm3J73daQw/exec';
+            
             const MENU_ITEMS = [
                 { name: '滷肉飯', price: 35, icon: '🍚' },
                 { name: '雞肉飯', price: 40, icon: '🍗' },
@@ -194,7 +197,7 @@
                 { name: '甜不辣', price: 40, icon: '🍢' },
                 { name: '肉圓', price: 45, icon: '🥟' }
             ];
-            const DELIVERY_FEE = 30; // For display purposes only
+            const DELIVERY_FEE = 30;
 
             // --- STATE ---
             let cart = [];
@@ -230,6 +233,7 @@
                 successCustomerName: getEl('successCustomerName'),
                 successTotalAmount: getEl('successTotalAmount'),
                 successPickupTime: getEl('successPickupTime'),
+                successOrderItems: getEl('successOrderItems'),
                 lineShareBtn: getEl('lineShareBtn'),
                 shareText: getEl('shareText')
             };
@@ -311,16 +315,23 @@
                 return date.toLocaleString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
             };
 
+            // 修正：格式化訂單項目顯示
+            const formatOrderItems = (items) => {
+                return items.map(item => `${item.icon} ${item.name} x${item.quantity} ($${item.price * item.quantity})`).join(', ');
+            };
+
             const generateShareText = (orderId, orderData) => {
-                const itemsText = orderData.items.map(item => `▫️ ${item.name} x${item.quantity} - $${item.price * item.quantity}`).join('\n');
+                const itemsText = orderData.items.map(item => `▫️ ${item.icon} ${item.name} x${item.quantity} - $${item.price * item.quantity}`).join('\n');
                 return `🍽️ 台灣小吃店 - 訂單確認\n\n📋 訂單編號：${orderId}\n👤 顧客姓名：${orderData.customerName}\n📞 聯絡電話：${orderData.customerPhone}\n\n📦 訂單內容：\n${itemsText}\n\n💰 最終總金額：$${orderData.totalAmount}\n⏰ 取餐時間：${formatDisplayTime(orderData.pickupTime)}\n📍 ${orderData.deliveryAddress ? `外送地址：${orderData.deliveryAddress}` : '自取'}\n📝 備註：${orderData.notes || '無'}\n\n📍 取餐地址：台灣小吃店\n🕒 營業時間：10:00-21:00\n📞 聯絡電話：02-1234-5678`;
             };
 
             const showSuccessPage = (orderId, orderData) => {
                 elements.successOrderId.textContent = orderId;
                 elements.successCustomerName.textContent = orderData.customerName;
-                elements.successTotalAmount.textContent = orderData.totalAmount; // This is now the server-verified total
+                elements.successTotalAmount.textContent = orderData.totalAmount;
                 elements.successPickupTime.textContent = formatDisplayTime(orderData.pickupTime);
+                // 修正：顯示格式化的訂單項目
+                elements.successOrderItems.textContent = formatOrderItems(orderData.items);
                 
                 const shareTextContent = generateShareText(orderId, orderData);
                 elements.shareText.value = shareTextContent;
@@ -347,10 +358,6 @@
                     elements.timeError.textContent = '請選擇取餐時間';
                     elements.pickupTime.classList.add('border-red-500');
                     isValid = false;
-                } else if (new Date(elements.pickupTime.value) < new Date()) {
-                    elements.timeError.textContent = '取餐時間不能是過去';
-                    elements.pickupTime.classList.add('border-red-500');
-                    isValid = false;
                 }
 
                 if (cart.length === 0) {
@@ -371,26 +378,22 @@
                 if (!validateForm()) return;
                 setLoading(true);
 
-                // This object is for displaying success info and generating share text.
-                // The final `totalAmount` will be replaced by the server's response.
                 const orderDataForDisplay = {
                     customerName: elements.customerName.value.trim(),
                     customerPhone: elements.customerPhone.value.trim(),
                     customerLineUserId: lineUserId || 'Not-Bound',
-                    items: cart, // Full cart with prices for display
+                    items: cart,
                     pickupTime: elements.pickupTime.value,
                     deliveryAddress: elements.deliveryAddress.value.trim(),
                     notes: elements.notes.value.trim(),
                     timestamp: new Date().toISOString()
                 };
                 
-                // This sanitized object is what we SEND to the server.
-                // It does NOT contain prices or a total amount, preventing manipulation.
                 const orderDataForServer = {
                     customerName: orderDataForDisplay.customerName,
                     customerPhone: orderDataForDisplay.customerPhone,
                     customerLineUserId: orderDataForDisplay.customerLineUserId,
-                    items: cart.map(item => ({ name: item.name, quantity: item.quantity })), // Only name and quantity
+                    items: cart.map(item => ({ name: item.name, quantity: item.quantity })),
                     pickupTime: orderDataForDisplay.pickupTime,
                     deliveryAddress: orderDataForDisplay.deliveryAddress,
                     notes: orderDataForDisplay.notes,
@@ -412,16 +415,17 @@
                     const result = await response.json();
                     if (result.success) {
                         const orderId = result.data?.orderId || 'N/A';
-                        
-                        // Use the authoritative total amount from the server's response
                         orderDataForDisplay.totalAmount = result.data.totalAmount;
 
                         showSuccessPage(orderId, orderDataForDisplay);
 
                         if (lineUserId && liff.isInClient()) {
-                            const itemsText = cart.map(item => `${item.name} x${item.quantity}`).join('\n');
+                            const itemsText = cart.map(item => `${item.icon} ${item.name} x${item.quantity}`).join('\n');
                             const formattedTime = formatDisplayTime(elements.pickupTime.value);
-                            await liff.sendMessages([{ type: 'text', text: `感謝訂購！\n單號: ${orderId}\n餐點:\n${itemsText}\n金額: $${orderDataForDisplay.totalAmount}\n時間: ${formattedTime}` }]);
+                            await liff.sendMessages([{ 
+                                type: 'text', 
+                                text: `感謝訂購！\n\n📋 訂單編號：${orderId}\n👤 顧客姓名：${orderDataForDisplay.customerName}\n\n📦 訂單內容：\n${itemsText}\n\n💰 總金額：$${orderDataForDisplay.totalAmount}\n⏰ 取餐時間：${formattedTime}` 
+                            }]);
                         }
                     } else {
                         throw new Error(result.message || '訂單提交失敗');
@@ -484,6 +488,17 @@
                         elements.customerName.value = profile.displayName;
                         elements.liffStatus.textContent = `👋 歡迎，${profile.displayName}！`;
                         elements.liffStatus.className = `p-3 rounded-lg text-sm text-center border ${statusClasses.success}`;
+                        
+                        // 測試 API 連線
+                        try {
+                            const testResponse = await fetch(API_ENDPOINT + '?action=test');
+                            const testResult = await testResponse.json();
+                            if (testResult.success) {
+                                showNotification('✅ 系統連線正常', 'success', 2000);
+                            }
+                        } catch (apiError) {
+                            console.log('API 測試失敗，但繼續執行');
+                        }
                     } else {
                         if (liff.isInClient()) {
                             elements.liffStatus.textContent = '未登入 LINE，正在嘗試登入...';
@@ -501,6 +516,9 @@
             };
             
             const populateMenu = () => {
+                // 清空現有選項
+                elements.menuSelect.innerHTML = '<option value="">-- 請選擇餐點 --</option>';
+                
                 MENU_ITEMS.forEach(item => {
                     const option = document.createElement('option');
                     option.value = item.name;
@@ -534,134 +552,14 @@
             });
             elements.submitBtn.addEventListener('click', handleSubmit);
             elements.notificationClose.addEventListener('click', () => elements.notification.classList.add('hidden'));
+            
+            // 點擊空白處關閉通知
+            document.addEventListener('click', (e) => {
+                if (!elements.notification.contains(e.target)) {
+                    elements.notification.classList.add('hidden');
+                }
+            });
         });
     </script>
-<!--
-======================================================================================================
-== GOOGLE APPS SCRIPT - BACKEND CODE (Code.gs)
-==
-== SETUP INSTRUCTIONS:
-== 1. Open Google Sheets (https://sheets.new) and create a new, blank spreadsheet.
-== 2. Get the Spreadsheet ID from the URL.
-==    (e.g., in "https://docs.google.com/spreadsheets/d/1qA2b3c4D5e6F7g8H9i0J/edit",
-==     the ID is "1qA2b3c4D5e6F7g8H9i0J").
-== 3. Go to Extensions > Apps Script in the spreadsheet menu.
-== 4. A new script project will open. Erase any existing code in the `Code.gs` file.
-== 5. Copy and paste ALL of the code below this instruction block into the `Code.gs` file.
-== 6. Find the line `const SPREADSHEET_ID = 'YOUR_SPREADSHEET_ID_HERE';` and replace
-==    `YOUR_SPREADSHEET_ID_HERE` with the ID you copied in step 2.
-== 7. Click the "Deploy" button (top right), then "New deployment".
-== 8. In the "Select type" dialog, click the gear icon and select "Web app".
-== 9. In the configuration:
-==    - Description: "Food Order API" (or any name you like)
-==    - Execute as: "Me"
-==    - Who has access: "Anyone"  <-- This is required for the web app to be able to call it.
-== 10. Click "Deploy".
-== 11. In the popup, click "Authorize access" and follow the prompts to grant the script
-==     permissions for your Google account. (You may see a "Google hasn't verified this app"
-==     warning. Click "Advanced" and then "Go to [Your Project Name] (unsafe)" to proceed.
-==     This is normal for personal scripts.)
-== 12. After deployment, copy the "Web app URL" provided.
-== 13. Go back to THIS `index.html` file and paste the copied URL into the `API_ENDPOINT`
-==     constant at the top of the <script> tag.
-======================================================================================================
-
-function doPost(e) {
-  try {
-    // --- SERVER-SIDE CONFIGURATION (Source of Truth) ---
-    const MENU_ITEMS_SERVER = {
-      '滷肉飯': { price: 35 },
-      '雞肉飯': { price: 40 },
-      '蚵仔煎': { price: 65 },
-      '大腸麵線': { price: 50 },
-      '珍珠奶茶': { price: 45 },
-      '鹽酥雞': { price: 60 },
-      '甜不辣': { price: 40 },
-      '肉圓': { price: 45 }
-    };
-    const DELIVERY_FEE_SERVER = 30;
-    const SPREADSHEET_ID = 'YOUR_SPREADSHEET_ID_HERE'; // <-- IMPORTANT: Replace with your Google Sheet ID
-    const SHEET_NAME = 'Orders'; // The name of the sheet tab where orders will be logged
-
-    // --- Request Parsing & Basic Validation ---
-    const requestBody = JSON.parse(e.postData.contents);
-    if (requestBody.action !== 'createOrder' || !requestBody.orderData) {
-      throw new Error('無效的操作或遺失訂單資料。');
-    }
-    const orderData = requestBody.orderData;
-    
-    // --- Detailed Server-Side Validation ---
-    if (!orderData.customerName || typeof orderData.customerName !== 'string' || orderData.customerName.trim().length === 0) {
-      throw new Error('顧客姓名無效。');
-    }
-    if (!orderData.customerPhone || !/^09\d{8}$/.test(orderData.customerPhone)) {
-      throw new Error('手機號碼格式錯誤。');
-    }
-    const pickupDate = new Date(orderData.pickupTime);
-    if (!orderData.pickupTime || isNaN(pickupDate.getTime()) || pickupDate < new Date()) {
-      throw new Error('取餐時間無效。');
-    }
-    if (!Array.isArray(orderData.items) || orderData.items.length === 0) {
-        throw new Error('購物車不可為空。');
-    }
-
-    // --- Secure Price Calculation ---
-    let subtotal = 0;
-    const validatedItems = orderData.items.map(item => {
-      if (!item.name || !MENU_ITEMS_SERVER[item.name] || !Number.isInteger(item.quantity) || item.quantity <= 0) {
-        throw new Error(`購物車中有無效品項: ${item.name || '未知品項'}`);
-      }
-      const serverItem = MENU_ITEMS_SERVER[item.name];
-      subtotal += serverItem.price * item.quantity;
-      return {
-          name: item.name,
-          quantity: item.quantity,
-          price: serverItem.price // Add server price for logging
-      };
-    });
-
-    const deliveryFee = orderData.deliveryAddress && orderData.deliveryAddress.trim() ? DELIVERY_FEE_SERVER : 0;
-    const totalAmount = subtotal + deliveryFee;
-
-    // --- Data Storage in Google Sheets ---
-    const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
-    let sheet = spreadsheet.getSheetByName(SHEET_NAME);
-    if (!sheet) {
-        sheet = spreadsheet.insertSheet(SHEET_NAME);
-        sheet.appendRow(['OrderID', 'Timestamp', 'CustomerName', 'Phone', 'Items', 'Subtotal', 'DeliveryFee', 'TotalAmount', 'PickupTime', 'DeliveryAddress', 'Notes', 'LineUserID']);
-    }
-    
-    const orderId = 'ORD-' + new Date().getTime().toString().slice(-6) + Math.floor(Math.random() * 100);
-    const timestamp = new Date().toISOString();
-    
-    sheet.appendRow([
-      orderId,
-      timestamp,
-      orderData.customerName.trim(),
-      orderData.customerPhone.trim(),
-      JSON.stringify(validatedItems),
-      subtotal,
-      deliveryFee,
-      totalAmount,
-      orderData.pickupTime,
-      orderData.deliveryAddress.trim(),
-      orderData.notes.trim(),
-      orderData.customerLineUserId || 'Not-Bound'
-    ]);
-
-    // --- Success Response ---
-    return ContentService
-      .createTextOutput(JSON.stringify({ success: true, data: { orderId: orderId, totalAmount: totalAmount } }))
-      .setMimeType(ContentService.MimeType.JSON);
-
-  } catch (error) {
-    // --- Error Handling ---
-    Logger.log('Error: ' + error.message + ' Stack: ' + error.stack);
-    return ContentService
-      .createTextOutput(JSON.stringify({ success: false, message: error.message }))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-}
--->
 </body>
 </html>
