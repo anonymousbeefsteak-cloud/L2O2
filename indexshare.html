@@ -120,6 +120,22 @@
             -ms-user-select: none;
             user-select: none;
         }
+        
+        /* 載入動畫 */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-indigo-300 to-purple-400 no-context-menu" oncontextmenu="return false;">
@@ -247,7 +263,7 @@
                         <div class="share-section">
                             <p class="text-lg font-bold mb-4">📱 分享訂單資訊</p>
                             <p class="text-sm text-gray-600 mb-4">點擊下方按鈕將訂單資訊分享到 LINE：</p>
-                            <a id="lineShareBtn" href="#" target="_blank" class="line-share-btn">
+                            <a id="lineShareBtn" href="#" class="line-share-btn">
                                 <img src="https://scdn.line-apps.com/n/line_add_friends/btn/zh-Hant.png" 
                                      alt="分享到 LINE" 
                                      style="height: 40px;">
@@ -434,6 +450,12 @@
                 
                 elements.shareText.value = shareText;
                 elements.lineShareBtn.href = lineShareUrl;
+                
+                // 添加點擊事件處理器
+                elements.lineShareBtn.onclick = function(e) {
+                    e.preventDefault();
+                    window.open(lineShareUrl, '_blank');
+                };
                 
                 // 切換頁面
                 elements.orderForm.classList.add('hidden');
