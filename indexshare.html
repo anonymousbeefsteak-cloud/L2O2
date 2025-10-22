@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>台灣小吃店 - 安全訂餐系統</title>
+    <title>台灣小吃店 - 下拉式點餐系統</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* 保持原有的CSS樣式不變 */
         :root {
             --primary: #e74c3c;
             --primary-dark: #c0392b;
@@ -544,43 +543,50 @@
             color: var(--gray);
         }
 
-        /* 菜單項目 */
-        .menu-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 1.5rem;
+        /* 下拉式點餐樣式 */
+        .menu-category {
             margin-bottom: 2rem;
         }
 
-        .menu-item {
-            background: white;
-            border-radius: var(--radius);
-            padding: 1.5rem;
-            box-shadow: var(--shadow);
-            transition: transform 0.3s;
+        .category-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--primary);
+            color: var(--primary);
         }
 
-        .menu-item:hover {
-            transform: translateY(-5px);
+        .menu-item-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            border-bottom: 1px solid var(--light-gray);
+        }
+
+        .menu-item-row:last-child {
+            border-bottom: none;
         }
 
         .menu-item-icon {
-            font-size: 3rem;
+            font-size: 2rem;
+            width: 50px;
             text-align: center;
-            margin-bottom: 1rem;
+        }
+
+        .menu-item-info {
+            flex: 1;
         }
 
         .menu-item-name {
             font-weight: 600;
-            font-size: 1.2rem;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.25rem;
         }
 
         .menu-item-price {
             color: var(--primary);
             font-weight: 700;
-            font-size: 1.3rem;
-            margin-bottom: 1rem;
         }
 
         .menu-item-controls {
@@ -589,23 +595,31 @@
             gap: 0.5rem;
         }
 
-        .quantity-btn {
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            border: none;
-            background: var(--primary);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
+        .quantity-select {
+            width: 80px;
+            padding: 0.5rem;
+            border: 1px solid var(--light-gray);
+            border-radius: var(--radius);
+            text-align: center;
         }
 
-        .quantity-display {
-            width: 50px;
-            text-align: center;
-            font-weight: 600;
+        .add-to-cart-btn {
+            padding: 0.5rem 1rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .add-to-cart-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        .add-to-cart-btn:disabled {
+            background: var(--gray);
+            cursor: not-allowed;
         }
 
         /* 購物車 */
@@ -645,6 +659,16 @@
             border-radius: var(--radius);
             margin-top: 1rem;
         }
+
+        .cart-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .cart-actions .btn {
+            flex: 1;
+        }
     </style>
 </head>
 <body>
@@ -668,7 +692,7 @@
                 <i class="fas fa-utensils"></i>
                 <h1>台灣小吃店</h1>
             </div>
-            <p class="subtitle">安全訂餐系統</p>
+            <p class="subtitle">下拉式點餐系統</p>
             
             <nav>
                 <ul class="nav-tabs">
@@ -681,7 +705,7 @@
     </header>
 
     <main class="container">
-        <!-- 菜單頁面 -->
+        <!-- 點餐頁面 -->
         <section id="menu-section" class="section active">
             <div class="card">
                 <div class="card-icon">
@@ -692,8 +716,8 @@
                 
                 <div id="menu-alert"></div>
                 
-                <div id="menu-container" class="menu-grid">
-                    <!-- 菜單項目由 JavaScript 生成 -->
+                <div id="menu-container">
+                    <!-- 菜單分類由 JavaScript 生成 -->
                 </div>
             </div>
         </section>
@@ -748,9 +772,14 @@
                         <input type="text" id="delivery-address" class="form-control" placeholder="請輸入外送地址">
                     </div>
                     
-                    <button id="checkout-btn" class="btn btn-primary btn-block" style="margin-top: 1rem;">
-                        <i class="fas fa-credit-card"></i> 結帳下單
-                    </button>
+                    <div class="cart-actions">
+                        <button id="clear-cart" class="btn btn-outline">
+                            <i class="fas fa-trash"></i> 清空購物車
+                        </button>
+                        <button id="checkout-btn" class="btn btn-primary">
+                            <i class="fas fa-credit-card"></i> 結帳下單
+                        </button>
+                    </div>
                 </div>
             </div>
         </section>
@@ -917,15 +946,15 @@
             </div>
             
             <div class="copyright">
-                &copy; 2023 台灣小吃店 版權所有 | 安全訂餐系統
+                &copy; 2023 台灣小吃店 版權所有 | 下拉式點餐系統
             </div>
         </div>
     </footer>
 
     <script>
-        // 系統配置 - 移除所有安全相關配置
+        // 系統配置
         const CONFIG = {
-            API_URL: 'https://script.google.com/macros/s/AKfycbwVj0xnDPZsUU4097BAsgpYtoEENFZhHnT0Trxn582boCbH3sioH6In7bE0fKiJJJJp/exec',
+            API_URL: 'https://script.google.com/macros/s/AKfycbzNv7hhZXKowkLVVER8wVktMJ0enxQ9CnHuPvv2EJc07xBmJWGu0GlEbILRvx7vzR9T/exec',
             DELIVERY_FEE: 30,
             MIN_DELIVERY_AMOUNT: 200
         };
@@ -958,6 +987,7 @@
             deliveryAddressGroup: document.getElementById('delivery-address-group'),
             deliveryAddress: document.getElementById('delivery-address'),
             checkoutBtn: document.getElementById('checkout-btn'),
+            clearCart: document.getElementById('clear-cart'),
             
             // 訂單查詢相關
             ordersContainer: document.getElementById('orders-container'),
@@ -1012,7 +1042,7 @@
             return true;
         }
 
-        // 安全API請求函數 - 移除所有安全相關邏輯
+        // API請求函數
         async function sendAPIRequest(action, data = {}) {
             const requestData = {
                 action: action,
@@ -1059,10 +1089,11 @@
                 });
             });
 
-            // 結帳按鈕
+            // 結帳相關
             elements.checkoutBtn.addEventListener('click', showCheckoutModal);
             elements.cancelCheckout.addEventListener('click', hideCheckoutModal);
             elements.checkoutForm.addEventListener('submit', submitOrder);
+            elements.clearCart.addEventListener('click', clearCart);
 
             // 訂單查詢
             elements.searchOrdersBtn.addEventListener('click', searchOrders);
@@ -1129,35 +1160,565 @@
             }
         }
 
-        // 渲染菜單
+        // 渲染菜單（下拉式）
         function renderMenu() {
             elements.menuContainer.innerHTML = '';
             
-            state.menu.forEach(item => {
-                const cartItem = state.cart.find(cartItem => cartItem.name === item.name);
-                const quantity = cartItem ? cartItem.quantity : 0;
+            // 按分類組織菜單
+            const categorizedMenu = categorizeMenu(state.menu);
+            
+            Object.keys(categorizedMenu).forEach(category => {
+                const categorySection = document.createElement('div');
+                categorySection.className = 'menu-category';
                 
-                const menuItem = document.createElement('div');
-                menuItem.className = 'menu-item';
-                menuItem.innerHTML = `
-                    <div class="menu-item-icon">${item.icon || '🍽️'}</div>
-                    <div class="menu-item-name">${item.name}</div>
-                    <div class="menu-item-price">$${item.price}</div>
-                    <div class="menu-item-controls">
-                        <button class="quantity-btn minus" data-item="${item.name}">
-                            <i class="fas fa-minus"></i>
-                        </button>
-                        <span class="quantity-display">${quantity}</span>
-                        <button class="quantity-btn plus" data-item="${item.name}">
-                            <i class="fas fa-plus"></i>
-                        </button>
-                        <button class="btn btn-outline btn-sm add-to-cart" data-item="${item.name}" style="margin-left: auto;">
-                            <i class="fas fa-cart-plus"></i> 加入
+                const categoryTitle = document.createElement('div');
+                categoryTitle.className = 'category-title';
+                categoryTitle.textContent = category;
+                
+                const menuItemsContainer = document.createElement('div');
+                
+                categorizedMenu[category].forEach(item => {
+                    const menuItemRow = document.createElement('div');
+                    menuItemRow.className = 'menu-item-row';
+                    
+                    const cartItem = state.cart.find(cartItem => cartItem.name === item.name);
+                    const quantity = cartItem ? cartItem.quantity : 0;
+                    
+                    menuItemRow.innerHTML = `
+                        <div class="menu-item-icon">${item.icon || '🍽️'}</div>
+                        <div class="menu-item-info">
+                            <div class="menu-item-name">${item.name}</div>
+                            <div class="menu-item-price">$${item.price}</div>
+                        </div>
+                        <div class="menu-item-controls">
+                            <select class="quantity-select" data-item="${item.name}">
+                                <option value="0">0</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                            </select>
+                            <button class="add-to-cart-btn" data-item="${item.name}">
+                                <i class="fas fa-cart-plus"></i>
+                            </button>
+                        </div>
+                    `;
+                    
+                    // 設置選擇框的值
+                    const select = menuItemRow.querySelector('.quantity-select');
+                    select.value = quantity;
+                    
+                    // 綁定事件
+                    const addButton = menuItemRow.querySelector('.add-to-cart-btn');
+                    addButton.addEventListener('click', function() {
+                        const itemName = this.getAttribute('data-item');
+                        const quantity = parseInt(select.value);
+                        updateCartItem(itemName, quantity);
+                    });
+                    
+                    // 選擇框變化時更新按鈕狀態
+                    select.addEventListener('change', function() {
+                        const quantity = parseInt(this.value);
+                        addButton.disabled = quantity === 0;
+                    });
+                    
+                    // 初始化按鈕狀態
+                    addButton.disabled = quantity === 0;
+                    
+                    menuItemsContainer.appendChild(menuItemRow);
+                });
+                
+                categorySection.appendChild(categoryTitle);
+                categorySection.appendChild(menuItemsContainer);
+                elements.menuContainer.appendChild(categorySection);
+            });
+        }
+
+        // 按分類組織菜單
+        function categorizeMenu(menu) {
+            const categories = {
+                '主食類': [],
+                '湯品類': [],
+                '飲料類': [],
+                '點心類': []
+            };
+            
+            menu.forEach(item => {
+                // 簡單的分類邏輯，可以根據實際需求調整
+                if (item.name.includes('飯') || item.name.includes('麵')) {
+                    categories['主食類'].push(item);
+                } else if (item.name.includes('湯')) {
+                    categories['湯品類'].push(item);
+                } else if (item.name.includes('茶') || item.name.includes('飲料')) {
+                    categories['飲料類'].push(item);
+                } else {
+                    categories['點心類'].push(item);
+                }
+            });
+            
+            // 移除空的分類
+            Object.keys(categories).forEach(category => {
+                if (categories[category].length === 0) {
+                    delete categories[category];
+                }
+            });
+            
+            return categories;
+        }
+
+        // 更新購物車項目
+        function updateCartItem(itemName, quantity) {
+            const item = state.menu.find(menuItem => menuItem.name === itemName);
+            if (!item) return;
+            
+            const cartItemIndex = state.cart.findIndex(cartItem => cartItem.name === itemName);
+            
+            if (quantity === 0) {
+                // 移除項目
+                if (cartItemIndex !== -1) {
+                    state.cart.splice(cartItemIndex, 1);
+                }
+            } else {
+                if (cartItemIndex !== -1) {
+                    // 更新數量
+                    state.cart[cartItemIndex].quantity = quantity;
+                } else {
+                    // 新增項目
+                    state.cart.push({
+                        name: item.name,
+                        price: item.price,
+                        quantity: quantity,
+                        icon: item.icon
+                    });
+                }
+            }
+            
+            updateCartUI();
+            renderMenu(); // 重新渲染菜單以更新選擇框
+            showAlert(elements.menuAlert, `已更新 ${item.name} 數量`, 'success', 2000);
+        }
+
+        // 更新購物車UI
+        function updateCartUI() {
+            saveCartToStorage();
+            elements.cartItems.innerHTML = '';
+            
+            if (state.cart.length === 0) {
+                elements.cartEmpty.classList.remove('hidden');
+                elements.cartSummary.classList.add('hidden');
+                return;
+            }
+            
+            elements.cartEmpty.classList.add('hidden');
+            elements.cartSummary.classList.remove('hidden');
+            
+            let subtotal = 0;
+            
+            state.cart.forEach(item => {
+                const itemTotal = item.price * item.quantity;
+                subtotal += itemTotal;
+                
+                const cartItem = document.createElement('div');
+                cartItem.className = 'cart-item';
+                cartItem.innerHTML = `
+                    <div class="cart-item-info">
+                        <div class="cart-item-name">${item.icon || '🍽️'} ${item.name}</div>
+                        <div class="cart-item-price">單價: $${item.price} x ${item.quantity}</div>
+                    </div>
+                    <div class="cart-item-controls">
+                        <span class="cart-item-total">$${itemTotal}</span>
+                        <button class="btn btn-outline btn-sm remove-item" data-item="${item.name}">
+                            <i class="fas fa-trash"></i>
                         </button>
                     </div>
                 `;
                 
-                elements.menuContainer.appendChild(menuItem);
+                elements.cartItems.appendChild(cartItem);
             });
             
-            // 綁定菜單
+            // 綁定移除事件
+            document.querySelectorAll('.remove-item').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const itemName = this.getAttribute('data-item');
+                    updateCartItem(itemName, 0);
+                });
+            });
+            
+            // 計算金額
+            const isDelivery = document.getElementById('delivery').checked;
+            const deliveryFee = isDelivery ? CONFIG.DELIVERY_FEE : 0;
+            const total = subtotal + deliveryFee;
+            
+            // 更新顯示
+            elements.cartSubtotal.textContent = `$${subtotal}`;
+            elements.cartDeliveryFee.textContent = `$${deliveryFee}`;
+            elements.cartTotal.textContent = `$${total}`;
+            
+            // 更新模態框
+            elements.modalSubtotal.textContent = `$${subtotal}`;
+            elements.modalDeliveryFee.textContent = `$${deliveryFee}`;
+            elements.modalTotal.textContent = `$${total}`;
+        }
+
+        // 清空購物車
+        function clearCart() {
+            state.cart = [];
+            updateCartUI();
+            renderMenu();
+            showAlert(elements.cartAlert, '購物車已清空', 'success', 3000);
+        }
+
+        // 本地存儲
+        function saveCartToStorage() {
+            localStorage.setItem('twSnackCart', JSON.stringify(state.cart));
+        }
+
+        function loadCartFromStorage() {
+            const savedCart = localStorage.getItem('twSnackCart');
+            if (savedCart) {
+                try {
+                    state.cart = JSON.parse(savedCart);
+                } catch (e) {
+                    state.cart = [];
+                }
+            }
+        }
+
+        // 結帳功能
+        function showCheckoutModal() {
+            if (state.cart.length === 0) {
+                showAlert(elements.cartAlert, '購物車是空的，請先添加商品', 'warning');
+                return;
+            }
+            
+            const isDelivery = document.getElementById('delivery').checked;
+            if (isDelivery && !elements.deliveryAddress.value.trim()) {
+                showAlert(elements.cartAlert, '請填寫外送地址', 'warning');
+                return;
+            }
+            
+            // 設置預設取餐時間
+            setDefaultPickupTime();
+            elements.checkoutModal.classList.remove('hidden');
+        }
+
+        function hideCheckoutModal() {
+            elements.checkoutModal.classList.add('hidden');
+            elements.checkoutAlert.innerHTML = '';
+        }
+
+        async function submitOrder(e) {
+            e.preventDefault();
+            
+            if (!validateCheckoutForm()) return;
+            
+            const orderData = {
+                customerName: elements.customerName.value.trim(),
+                customerPhone: elements.checkoutPhone.value.trim(),
+                pickupTime: elements.pickupTime.value,
+                deliveryAddress: document.getElementById('delivery').checked ? elements.deliveryAddress.value.trim() : '',
+                notes: elements.orderNotes.value.trim(),
+                items: state.cart
+            };
+            
+            try {
+                elements.submitOrderBtn.disabled = true;
+                elements.submitOrderBtn.innerHTML = '<div class="loading"></div> 處理中...';
+                
+                const result = await sendAPIRequest('createOrder', { orderData });
+                
+                if (result.success) {
+                    showAlert(elements.cartAlert, `訂單創建成功！訂單編號: ${result.data.orderId}`, 'success');
+                    
+                    // 清空購物車
+                    state.cart = [];
+                    updateCartUI();
+                    renderMenu();
+                    
+                    hideCheckoutModal();
+                    elements.checkoutForm.reset();
+                    
+                    // 切換到訂單查詢
+                    setTimeout(() => {
+                        switchTab('orders');
+                        elements.customerPhone.value = orderData.customerPhone;
+                        searchOrders();
+                    }, 2000);
+                } else {
+                    showAlert(elements.checkoutAlert, `訂單創建失敗: ${result.message}`, 'danger');
+                }
+            } catch (error) {
+                showAlert(elements.checkoutAlert, '網路錯誤，請稍後再試', 'danger');
+            } finally {
+                elements.submitOrderBtn.disabled = false;
+                elements.submitOrderBtn.innerHTML = '<i class="fas fa-check"></i> 確認下單';
+            }
+        }
+
+        // 訂單查詢
+        async function searchOrders() {
+            const phone = elements.customerPhone.value.trim();
+            const startDate = elements.startDate.value;
+            const endDate = elements.endDate.value;
+            
+            if (!validateSearchInput(phone, startDate, endDate)) return;
+            
+            try {
+                elements.searchOrdersBtn.disabled = true;
+                elements.searchOrdersBtn.innerHTML = '<div class="loading"></div> 查詢中...';
+                
+                const result = await sendAPIRequest('getOrdersByDate', { phone, startDate, endDate });
+                
+                if (result.success) {
+                    state.orders = result.data;
+                    renderOrders();
+                    updateStats();
+                    
+                    if (state.orders.length === 0) {
+                        elements.ordersEmpty.classList.remove('hidden');
+                        elements.statsContainer.classList.add('hidden');
+                    } else {
+                        elements.ordersEmpty.classList.add('hidden');
+                        elements.statsContainer.classList.remove('hidden');
+                        showAlert(elements.ordersAlert, `找到 ${state.orders.length} 筆訂單記錄`, 'success', 5000);
+                    }
+                } else {
+                    showAlert(elements.ordersAlert, `查詢失敗: ${result.message}`, 'danger');
+                }
+            } catch (error) {
+                showAlert(elements.ordersAlert, '網路錯誤，請稍後再試', 'danger');
+            } finally {
+                elements.searchOrdersBtn.disabled = false;
+                elements.searchOrdersBtn.innerHTML = '<i class="fas fa-search"></i> 查詢訂單';
+            }
+        }
+
+        // 工具函數
+        function setDefaultDateRange(days) {
+            const endDate = new Date();
+            const startDate = new Date();
+            startDate.setDate(endDate.getDate() - days + 1);
+            elements.startDate.value = startDate.toISOString().split('T')[0];
+            elements.endDate.value = endDate.toISOString().split('T')[0];
+        }
+
+        function setDefaultPickupTime() {
+            const now = new Date();
+            now.setMinutes(now.getMinutes() + 30);
+            const formatted = now.toISOString().slice(0, 16);
+            elements.pickupTime.value = formatted;
+        }
+
+        function formatPhoneInput() {
+            let phone = this.value.replace(/\D/g, '');
+            if (phone.length > 0 && !phone.startsWith('0')) {
+                phone = '0' + phone;
+            }
+            if (phone.length > 10) {
+                phone = phone.substring(0, 10);
+            }
+            this.value = phone;
+        }
+
+        function validateCheckoutForm() {
+            if (!elements.customerName.value.trim()) {
+                showAlert(elements.checkoutAlert, '請填寫姓名', 'warning');
+                return false;
+            }
+            
+            const phone = elements.checkoutPhone.value.trim();
+            if (!phone || !/^(09\d{8}|9\d{8})$/.test(phone)) {
+                showAlert(elements.checkoutAlert, '請填寫有效的手機號碼', 'warning');
+                return false;
+            }
+            
+            if (!elements.pickupTime.value) {
+                showAlert(elements.checkoutAlert, '請選擇取餐時間', 'warning');
+                return false;
+            }
+            
+            const pickupTime = new Date(elements.pickupTime.value);
+            if (pickupTime < new Date()) {
+                showAlert(elements.checkoutAlert, '取餐時間不能是過去時間', 'warning');
+                return false;
+            }
+            
+            return true;
+        }
+
+        function validateSearchInput(phone, startDate, endDate) {
+            if (!phone || !/^(09\d{8}|9\d{8})$/.test(phone)) {
+                showAlert(elements.ordersAlert, '請填寫有效的手機號碼', 'warning');
+                return false;
+            }
+            
+            if (!startDate || !endDate) {
+                showAlert(elements.ordersAlert, '請選擇開始日期和結束日期', 'warning');
+                return false;
+            }
+            
+            if (new Date(startDate) > new Date(endDate)) {
+                showAlert(elements.ordersAlert, '開始日期不能晚於結束日期', 'warning');
+                return false;
+            }
+            
+            return true;
+        }
+
+        function renderOrders() {
+            elements.ordersContainer.innerHTML = '';
+            
+            if (state.orders.length === 0) return;
+            
+            const sortedOrders = state.orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            
+            sortedOrders.forEach(order => {
+                const orderElement = createOrderCard(order);
+                elements.ordersContainer.appendChild(orderElement);
+            });
+        }
+
+        function createOrderCard(order) {
+            const orderDate = new Date(order.createdAt);
+            const formattedDate = orderDate.toLocaleDateString('zh-TW');
+            const formattedTime = orderDate.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+            
+            const statusText = getStatusText(order.status);
+            const statusClass = `status-${order.status}`;
+            
+            const itemsText = order.items.map(item => 
+                `${item.name} x${item.quantity}`
+            ).join(', ');
+            
+            const deliveryType = order.deliveryFee > 0 ? '外送' : '自取';
+            const deliveryInfo = order.deliveryFee > 0 ? order.deliveryAddress : '店面自取';
+            
+            const orderCard = document.createElement('div');
+            orderCard.className = 'order-card';
+            orderCard.innerHTML = `
+                <div class="order-card-header">
+                    <div class="order-card-title">訂單編號: ${order.orderId}</div>
+                    <span class="status-badge ${statusClass}">${statusText}</span>
+                </div>
+                
+                <div class="order-card-body">
+                    <div class="order-detail-item">
+                        <span class="order-detail-label">下單時間:</span>
+                        <span class="order-detail-value">${formattedDate} ${formattedTime}</span>
+                    </div>
+                    
+                    <div class="order-detail-item">
+                        <span class="order-detail-label">訂單項目:</span>
+                        <span class="order-detail-value">${itemsText}</span>
+                    </div>
+                    
+                    <div class="order-detail-item">
+                        <span class="order-detail-label">取餐方式:</span>
+                        <span class="order-detail-value">${deliveryType} (${deliveryInfo})</span>
+                    </div>
+                    
+                    ${order.pickupTime ? `
+                    <div class="order-detail-item">
+                        <span class="order-detail-label">預定取餐:</span>
+                        <span class="order-detail-value">${new Date(order.pickupTime).toLocaleString('zh-TW')}</span>
+                    </div>
+                    ` : ''}
+                    
+                    ${order.notes ? `
+                    <div class="order-detail-item">
+                        <span class="order-detail-label">備註:</span>
+                        <span class="order-detail-value">${order.notes}</span>
+                    </div>
+                    ` : ''}
+                </div>
+                
+                <div class="order-card-footer">
+                    <div class="order-totals">
+                        <div class="order-detail-item">
+                            <span class="order-detail-label">小計:</span>
+                            <span class="order-detail-value">$${order.subtotal}</span>
+                        </div>
+                        ${order.deliveryFee > 0 ? `
+                        <div class="order-detail-item">
+                            <span class="order-detail-label">外送費:</span>
+                            <span class="order-detail-value">$${order.deliveryFee}</span>
+                        </div>
+                        ` : ''}
+                        <div class="order-detail-item summary-total">
+                            <span class="order-detail-label">總計:</span>
+                            <span class="order-detail-value">$${order.totalAmount}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            return orderCard;
+        }
+
+        function updateStats() {
+            const total = state.orders.length;
+            const pending = state.orders.filter(order => order.status === 'pending').length;
+            const completed = state.orders.filter(order => order.status === 'completed').length;
+            const totalAmount = state.orders.reduce((sum, order) => sum + order.totalAmount, 0);
+            
+            elements.totalOrders.textContent = total;
+            elements.pendingOrders.textContent = pending;
+            elements.completedOrders.textContent = completed;
+            elements.totalAmount.textContent = `$${totalAmount}`;
+        }
+
+        function showAlert(container, message, type, timeout = 0) {
+            const icon = getAlertIcon(type);
+            container.innerHTML = `
+                <div class="alert alert-${type}">
+                    <i class="fas fa-${icon}"></i> ${message}
+                </div>
+            `;
+            
+            if (timeout > 0) {
+                setTimeout(() => {
+                    container.innerHTML = '';
+                }, timeout);
+            }
+        }
+
+        function getAlertIcon(type) {
+            switch (type) {
+                case 'success': return 'check-circle';
+                case 'danger': return 'exclamation-circle';
+                case 'warning': return 'exclamation-triangle';
+                case 'info': return 'info-circle';
+                default: return 'info-circle';
+            }
+        }
+
+        function getStatusText(status) {
+            const statusMap = {
+                'pending': '待確認',
+                'confirmed': '已確認',
+                'completed': '已完成',
+                'cancelled': '已取消'
+            };
+            return statusMap[status] || status;
+        }
+
+        function getDefaultMenu() {
+            return [
+                { name: '滷肉飯', price: 35, icon: '🍚' },
+                { name: '雞肉飯', price: 40, icon: '🍗' },
+                { name: '蚵仔煎', price: 65, icon: '🍳' },
+                { name: '大腸麵線', price: 50, icon: '🍜' },
+                { name: '珍珠奶茶', price: 45, icon: '🥤' },
+                { name: '鹽酥雞', price: 60, icon: '🍖' },
+                { name: '甜不辣', price: 40, icon: '🍢' },
+                { name: '肉圓', price: 45, icon: '🥟' },
+                { name: '牛肉麵', price: 120, icon: '🍜' },
+                { name: '燙青菜', price: 30, icon: '🥬' },
+                { name: '貢丸湯', price: 35, icon: '🍲' },
+                { name: '冬瓜茶', price: 25, icon: '🥤' }
+            ];
+        }
+    </script>
+</body>
+</html>
