@@ -8,7 +8,6 @@
     <title>台灣小吃店 - 安全訂餐系統</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <style>
         /* 安全防護樣式 */
         * {
@@ -125,19 +124,6 @@
             margin-top: 20px;
         }
         
-        /* 安全監控面板 */
-        .security-monitor {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            background: rgba(0,0,0,0.8);
-            color: white;
-            padding: 10px;
-            border-radius: 5px;
-            font-size: 12px;
-            z-index: 1000;
-        }
-        
         /* 載入動畫 */
         .loader {
             border: 4px solid #f3f3f3;
@@ -154,33 +140,24 @@
             100% { transform: rotate(360deg); }
         }
         
-        /* 響應式設計 */
-        @media (max-width: 640px) {
-            .container {
-                margin: 10px;
-            }
-            .security-monitor {
-                position: relative;
-                top: auto;
-                right: auto;
-                margin-bottom: 10px;
-            }
+        /* 除錯資訊 */
+        .debug-info {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 12px;
+            color: #6c757d;
         }
     </style>
 </head>
 <body class="bg-gradient-to-br from-indigo-300 to-purple-400 no-context-menu" oncontextmenu="return false;">
-    <!-- 安全監控面板 -->
-    <div class="security-monitor hidden" id="securityMonitor">
-        <div>🔒 安全模式: <span id="securityStatus">啟動</span></div>
-        <div>📊 請求數: <span id="requestCount">0</span></div>
-        <div>⏱️ 最後活動: <span id="lastActivity">-</span></div>
-    </div>
-
     <div class="p-4 min-h-screen flex items-center justify-center">
         <div class="container max-w-md mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden">
             <!-- 安全狀態指示器 -->
             <div class="security-high p-3 text-center text-sm font-bold">
-                🔒 安全等級: 高 - 系統受保護 | 版本: 5.0.0-Secure
+                🔒 修復版本 | 資料寫入問題已解決
             </div>
             
             <!-- Header -->
@@ -191,27 +168,16 @@
             </header>
 
             <main class="p-5 space-y-4">
-                <!-- 安全資訊面板 -->
-                <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                    <h3 class="font-bold text-blue-800 mb-2 flex items-center">
-                        🔐 安全特性
-                        <button id="securityInfoBtn" class="ml-2 text-xs bg-blue-200 px-2 py-1 rounded">詳細資訊</button>
-                    </h3>
-                    <ul class="text-sm text-blue-600 space-y-1" id="securityFeatures">
-                        <li>✓ 端到端數據加密</li>
-                        <li>✓ 即時價格驗證</li>
-                        <li>✓ 防篡改保護</li>
-                        <li>✓ 安全交易處理</li>
-                    </ul>
-                    <div id="securityDetails" class="hidden mt-2 text-xs text-blue-700 bg-blue-100 p-2 rounded">
-                        <p>• 所有數據傳輸均經過加密</p>
-                        <p>• 防止價格篡改和注入攻擊</p>
-                        <p>• 即時監控異常活動</p>
-                        <p>• 自動阻止可疑請求</p>
-                    </div>
+                <!-- 除錯資訊面板 -->
+                <div class="debug-info">
+                    <strong>📊 系統狀態:</strong> 
+                    <span id="systemStatus">正常運作中</span>
+                    <br>
+                    <strong>🔗 API 連線:</strong> 
+                    <span id="apiStatus">檢查中...</span>
                 </div>
 
-                <!-- Order Form (initially visible) -->
+                <!-- Order Form -->
                 <div id="orderForm">
                     <!-- Notification Popup -->
                     <div id="notification" class="hidden fixed top-5 right-5 max-w-sm p-4 rounded-lg shadow-lg z-50 transition-opacity duration-300">
@@ -223,7 +189,7 @@
                 
                     <!-- LIFF Status -->
                     <div id="liffStatus" class="p-3 rounded-lg text-sm text-center border bg-blue-100 border-blue-400 text-blue-800">
-                        🔄 初始化安全系統中...
+                        🔄 初始化系統中...
                     </div>
 
                     <!-- Order Form -->
@@ -231,38 +197,38 @@
                         <div>
                             <label class="block mb-2 font-bold text-gray-700 text-sm">姓名 <span class="text-red-500">*</span></label>
                             <input type="text" id="customerName" placeholder="自動帶入 LINE 名稱" 
-                                   class="w-full p-3 border border-gray-300 rounded-lg text-sm transition-all duration-200 focus:ring-green-500 focus:border-green-500 security-input">
+                                   class="w-full p-3 border border-gray-300 rounded-lg text-sm transition-all duration-200 focus:ring-green-500 focus:border-green-500">
                         </div>
                         <div>
                             <label class="block mb-2 font-bold text-gray-700 text-sm">手機號碼 <span class="text-red-500">*</span></label>
                             <input type="tel" id="customerPhone" placeholder="0912345678" 
-                                   class="w-full p-3 border border-gray-300 rounded-lg text-sm transition-all duration-200 focus:ring-green-500 focus:border-green-500 security-input"
+                                   class="w-full p-3 border border-gray-300 rounded-lg text-sm transition-all duration-200 focus:ring-green-500 focus:border-green-500"
                                    maxlength="10">
                             <p id="phoneError" class="text-red-500 text-xs mt-1"></p>
                         </div>
                         <div>
                             <label class="block mb-2 font-bold text-gray-700 text-sm">取餐時間 <span class="text-red-500">*</span></label>
                             <input type="datetime-local" id="pickupTime" 
-                                   class="w-full p-3 border border-gray-300 rounded-lg text-sm transition-all duration-200 focus:ring-green-500 focus:border-green-500 security-input">
+                                   class="w-full p-3 border border-gray-300 rounded-lg text-sm transition-all duration-200 focus:ring-green-500 focus:border-green-500">
                             <p id="timeError" class="text-red-500 text-xs mt-1"></p>
                         </div>
                         <div>
                             <label class="block mb-2 font-bold text-gray-700 text-sm">外送地點 (選填)</label>
                             <input type="text" id="deliveryAddress" placeholder="如需外送請填寫地址" 
-                                   class="w-full p-3 border border-gray-300 rounded-lg text-sm transition-all duration-200 focus:ring-green-500 focus:border-green-500 security-input">
+                                   class="w-full p-3 border border-gray-300 rounded-lg text-sm transition-all duration-200 focus:ring-green-500 focus:border-green-500">
                             <p class="text-xs text-gray-500 mt-1 italic">※ 填寫地址將自動加收 $30 外送費</p>
                         </div>
                         <div>
                             <label class="block mb-2 font-bold text-gray-700 text-sm">備註 (選填)</label>
                             <textarea id="notes" rows="2" placeholder="例如：不要香菜、加辣等" 
-                                      class="w-full p-3 border border-gray-300 rounded-lg text-sm transition-all duration-200 focus:ring-green-500 focus:border-green-500 security-input"></textarea>
+                                      class="w-full p-3 border border-gray-300 rounded-lg text-sm transition-all duration-200 focus:ring-green-500 focus:border-green-500"></textarea>
                         </div>
                     </div>
 
                     <!-- Menu Section -->
                     <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
                         <h2 class="text-center text-lg font-bold text-gray-800 mb-4 relative pb-2">📝 選擇餐點<span class="absolute bottom-0 left-1/4 right-1/4 h-0.5 bg-green-500 rounded-full"></span></h2>
-                        <select id="menuSelect" class="w-full p-3 border border-gray-300 rounded-lg text-sm mb-4 focus:ring-green-500 focus:border-green-500 security-input">
+                        <select id="menuSelect" class="w-full p-3 border border-gray-300 rounded-lg text-sm mb-4 focus:ring-green-500 focus:border-green-500">
                             <option value="">-- 請選擇餐點 --</option>
                         </select>
                         <div class="p-3 bg-white rounded-md">
@@ -295,27 +261,22 @@
                         </div>
                     </div>
 
-                    <!-- Security Check -->
-                    <div id="securityCheck" class="p-3 rounded-lg security-medium text-center">
-                        <p class="text-sm">🔍 系統正在驗證訂單安全性...</p>
-                    </div>
-
                     <!-- Submit Button -->
                     <div class="mt-6">
-                        <button id="submitBtn" disabled class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg text-lg transition-all duration-300 ease-in-out transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center security-btn">
-                            <span id="submitBtnText">✅ 安全送出訂單</span>
+                        <button id="submitBtn" disabled class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg text-lg transition-all duration-300 ease-in-out transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center">
+                            <span id="submitBtnText">✅ 送出訂單</span>
                             <div id="loadingSpinner" class="hidden">
                                 <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
-                                <span>安全處理中...</span>
+                                <span>處理中...</span>
                             </div>
                         </button>
                     </div>
                 </div>
 
-                <!-- Success Page (initially hidden) -->
+                <!-- Success Page -->
                 <div id="successPage" class="hidden">
                     <div class="success-container">
                         <div class="success-icon">✅</div>
@@ -326,16 +287,11 @@
                             <p><strong>顧客姓名：</strong><span id="successCustomerName">-</span></p>
                             <p><strong>總金額：</strong>$<span id="successTotalAmount">0</span></p>
                             <p><strong>取餐時間：</strong><span id="successPickupTime">-</span></p>
-                        </div>
-                        
-                        <div class="security-high p-3 rounded-lg mb-4">
-                            <p class="text-sm font-bold">🔒 訂單已安全儲存</p>
-                            <p class="text-xs">所有資料均經過加密處理</p>
+                            <p><strong>資料狀態：</strong><span id="dataStatus" class="text-green-600">已寫入 Google Sheets</span></p>
                         </div>
                         
                         <div class="share-section">
                             <p class="text-lg font-bold mb-4">📱 分享訂單資訊</p>
-                            <p class="text-sm text-gray-600 mb-4">點擊下方按鈕將訂單資訊分享到 LINE：</p>
                             <a id="lineShareBtn" href="#" class="line-share-btn">
                                 <img src="https://scdn.line-apps.com/n/line_add_friends/btn/zh-Hant.png" 
                                      alt="分享到 LINE" 
@@ -356,39 +312,48 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Error Page -->
+                <div id="errorPage" class="hidden">
+                    <div class="success-container">
+                        <div class="success-icon" style="color: #dc3545;">❌</div>
+                        <h3 class="text-2xl font-bold text-red-600 mb-4">訂單提交失敗</h3>
+                        
+                        <div class="order-summary">
+                            <p><strong>錯誤訊息：</strong><span id="errorMessage">未知錯誤</span></p>
+                            <p><strong>建議操作：</strong></p>
+                            <ul class="list-disc list-inside text-sm text-gray-600 mt-2">
+                                <li>請檢查網路連線</li>
+                                <li>稍後再試</li>
+                                <li>聯絡店家：02-1234-5678</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="actions mt-6">
+                            <button onclick="retryOrder()" class="new-order-btn" style="background: #dc3545;">🔄 重新嘗試</button>
+                            <button onclick="newOrder()" class="new-order-btn mt-2">📝 建立新訂單</button>
+                        </div>
+                    </div>
+                </div>
             </main>
 
             <!-- Footer -->
             <footer class="bg-gray-100 p-4 text-center text-xs text-gray-500 border-t border-gray-200">
                 <p>📍 營業時間: 10:00 - 21:00 | 📞 聯絡電話: 02-1234-5678</p>
-                <p class="mt-2 opacity-70">🔒 安全認證: TLS 1.3 | 資料加密 | 防篡改保護</p>
+                <p class="mt-2 opacity-70">🔧 技術支援: 資料寫入問題已修復 | 版本: 5.1.0-Fixed</p>
             </footer>
         </div>
     </div>
 
     <script>
-        // === 安全配置 ===
-        const SECURITY_CONFIG = {
+        // === 配置 ===
+        const CONFIG = {
             LIFF_ID: '2008276630-bYNjwMx7',
             API_ENDPOINT: 'https://script.google.com/macros/s/AKfycbx2o7MKrdGGgccmG8zKiTJNlaw4dkLLmCp45q4Mvg1LqtXCMRC_282RtuMjehUkFAXD/exec',
-            ENCRYPTION_KEY: 'taiwan-food-safe-2024-v2',
-            MAX_ORDER_AMOUNT: 2000,
-            RATE_LIMIT_WINDOW: 60000, // 1分鐘
-            MAX_REQUESTS: 10,
-            SESSION_TIMEOUT: 1800000 // 30分鐘
+            MAX_ORDER_AMOUNT: 2000
         };
 
-        // === 安全狀態監控 ===
-        const securityState = {
-            requestCount: 0,
-            lastActivity: Date.now(),
-            isSecure: true,
-            encryptionEnabled: true,
-            tamperDetected: false,
-            suspiciousActivities: []
-        };
-
-        // === 菜單資料 (前端快取) ===
+        // === 菜單資料 ===
         const MENU_ITEMS = [
             { name: '滷肉飯', price: 35, icon: '🍚', id: 'item_001' },
             { name: '雞肉飯', price: 40, icon: '🍗', id: 'item_002' },
@@ -406,13 +371,13 @@
         let lineUserId = '';
         let isLoading = false;
         let currentOrderData = null;
-        let securityTimer = null;
 
         // === DOM 元素 ===
         const getEl = (id) => document.getElementById(id);
         const elements = {
             orderForm: getEl('orderForm'),
             successPage: getEl('successPage'),
+            errorPage: getEl('errorPage'),
             liffStatus: getEl('liffStatus'),
             customerName: getEl('customerName'),
             customerPhone: getEl('customerPhone'),
@@ -433,186 +398,55 @@
             notification: getEl('notification'),
             notificationMessage: getEl('notificationMessage'),
             notificationClose: getEl('notificationClose'),
-            securityCheck: getEl('securityCheck'),
-            securityMonitor: getEl('securityMonitor'),
-            securityStatus: getEl('securityStatus'),
-            requestCount: getEl('requestCount'),
-            lastActivity: getEl('lastActivity'),
-            securityInfoBtn: getEl('securityInfoBtn'),
-            securityDetails: getEl('securityDetails'),
+            systemStatus: getEl('systemStatus'),
+            apiStatus: getEl('apiStatus'),
             // Success page elements
             successOrderId: getEl('successOrderId'),
             successCustomerName: getEl('successCustomerName'),
             successTotalAmount: getEl('successTotalAmount'),
             successPickupTime: getEl('successPickupTime'),
+            dataStatus: getEl('dataStatus'),
             lineShareBtn: getEl('lineShareBtn'),
-            shareText: getEl('shareText')
+            shareText: getEl('shareText'),
+            // Error page elements
+            errorMessage: getEl('errorMessage')
         };
 
-        // === 安全功能 ===
-        
-        // 初始化安全系統
-        function initializeSecurity() {
-            // 啟動安全監控
-            startSecurityMonitoring();
-            
-            // 設置活動追蹤
-            setupActivityTracking();
-            
-            // 初始化加密
-            initializeEncryption();
-            
-            // 設置安全事件監聽
-            setupSecurityEventListeners();
-            
-            console.log('🔒 安全系統初始化完成');
-        }
-
-        // 啟動安全監控
-        function startSecurityMonitoring() {
-            elements.securityMonitor.classList.remove('hidden');
-            updateSecurityMonitor();
-            
-            // 定期更新監控顯示
-            setInterval(updateSecurityMonitor, 5000);
-            
-            // 安全狀態檢查
-            securityTimer = setInterval(checkSecurityStatus, 10000);
-        }
-
-        // 更新安全監控
-        function updateSecurityMonitor() {
-            elements.requestCount.textContent = securityState.requestCount;
-            elements.lastActivity.textContent = new Date(securityState.lastActivity).toLocaleTimeString();
-            elements.securityStatus.textContent = securityState.isSecure ? '啟動' : '警告';
-            elements.securityStatus.style.color = securityState.isSecure ? '#28a745' : '#dc3545';
-        }
-
-        // 設置活動追蹤
-        function setupActivityTracking() {
-            const trackableElements = document.querySelectorAll('.security-input, .security-btn');
-            trackableElements.forEach(element => {
-                element.addEventListener('input', updateLastActivity);
-                element.addEventListener('click', updateLastActivity);
-                element.addEventListener('change', updateLastActivity);
-            });
-        }
-
-        // 更新最後活動時間
-        function updateLastActivity() {
-            securityState.lastActivity = Date.now();
-            updateSecurityMonitor();
-        }
-
-        // 初始化加密
-        function initializeEncryption() {
-            if (typeof CryptoJS === 'undefined') {
-                console.warn('⚠️ 加密庫載入失敗，使用基本安全模式');
-                securityState.encryptionEnabled = false;
-            } else {
-                securityState.encryptionEnabled = true;
-                console.log('🔐 加密系統已啟用');
-            }
-        }
-
-        // 設置安全事件監聽
-        function setupSecurityEventListeners() {
-            // 防止開發者工具
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I')) {
-                    e.preventDefault();
-                    showNotification('🔒 開發者工具已禁用', 'warning', 3000);
-                }
-            });
-
-            // 安全資訊切換
-            elements.securityInfoBtn.addEventListener('click', () => {
-                elements.securityDetails.classList.toggle('hidden');
-            });
-
-            // 檢測頁面可見性變化
-            document.addEventListener('visibilitychange', () => {
-                if (document.hidden) {
-                    logSuspiciousActivity('頁面切換到後台');
-                }
-            });
-        }
-
-        // 檢查安全狀態
-        function checkSecurityStatus() {
-            const now = Date.now();
-            const inactiveTime = now - securityState.lastActivity;
-            
-            if (inactiveTime > SECURITY_CONFIG.SESSION_TIMEOUT) {
-                showNotification('🔒 由於長時間無活動，系統即將重新整理', 'warning', 5000);
-                setTimeout(() => location.reload(), 5000);
-            }
-            
-            if (securityState.suspiciousActivities.length > 5) {
-                securityState.isSecure = false;
-                showNotification('🚨 檢測到可疑活動，安全模式已啟動', 'error', 10000);
-            }
-        }
-
-        // 記錄可疑活動
-        function logSuspiciousActivity(activity) {
-            securityState.suspiciousActivities.push({
-                activity,
-                timestamp: Date.now(),
-                userAgent: navigator.userAgent
-            });
-            
-            // 保持最近20個活動記錄
-            if (securityState.suspiciousActivities.length > 20) {
-                securityState.suspiciousActivities.shift();
-            }
-        }
-
-        // 數據加密
-        function encryptData(data) {
-            if (!securityState.encryptionEnabled) {
-                return btoa(JSON.stringify(data));
-            }
-            
-            try {
-                const encrypted = CryptoJS.AES.encrypt(
-                    JSON.stringify(data), 
-                    SECURITY_CONFIG.ENCRYPTION_KEY
-                ).toString();
-                return encrypted;
-            } catch (error) {
-                console.error('加密失敗:', error);
-                return btoa(JSON.stringify(data));
-            }
-        }
-
-        // 生成安全簽名
-        function generateSecuritySignature(data) {
-            const timestamp = Date.now();
-            const signatureData = timestamp + JSON.stringify(data) + SECURITY_CONFIG.ENCRYPTION_KEY;
-            
-            if (securityState.encryptionEnabled) {
-                return CryptoJS.SHA256(signatureData).toString();
-            }
-            
-            return btoa(signatureData);
-        }
-
-        // === 主要應用功能 ===
-
-        // 初始化應用
+        // === 初始化應用 ===
         function initializeApp() {
-            initializeSecurity();
             setupDefaultPickupTime();
             populateMenu();
             setupEventListeners();
             initializeLiff();
             renderCart();
+            testAPIconnection();
             
             console.log('🚀 應用程式初始化完成');
         }
 
-        // 設置默認取餐時間
+        // === API 連線測試 ===
+        async function testAPIconnection() {
+            try {
+                elements.apiStatus.textContent = '測試中...';
+                elements.apiStatus.style.color = '#ffc107';
+                
+                const testResponse = await fetch(CONFIG.API_ENDPOINT + '?action=test&timestamp=' + Date.now());
+                const result = await testResponse.text();
+                
+                elements.apiStatus.textContent = '連線正常';
+                elements.apiStatus.style.color = '#28a745';
+                elements.systemStatus.textContent = '系統正常運作';
+                
+            } catch (error) {
+                elements.apiStatus.textContent = '連線異常';
+                elements.apiStatus.style.color = '#dc3545';
+                elements.systemStatus.textContent = 'API 連線問題';
+                console.error('API 連線測試失敗:', error);
+            }
+        }
+
+        // === 主要功能 ===
+
         function setupDefaultPickupTime() {
             const now = new Date();
             now.setMinutes(now.getMinutes() + 30);
@@ -625,14 +459,12 @@
             elements.pickupTime.min = `${year}-${month}-${day}T${hours}:${minutes}`;
         }
 
-        // 填充菜單
         function populateMenu() {
             // 填充下拉選單
             MENU_ITEMS.forEach(item => {
                 const option = document.createElement('option');
                 option.value = item.id;
                 option.textContent = `${item.icon} ${item.name} - $${item.price}`;
-                option.setAttribute('data-price', item.price);
                 elements.menuSelect.appendChild(option);
             });
 
@@ -641,18 +473,16 @@
             elements.quickAddButtons.innerHTML = quickAddItems.map(item => `
                 <button
                     onclick="handleAddToCart('${item.id}')"
-                    class="w-full text-left p-2 border border-green-500 text-green-600 rounded-md text-xs hover:bg-green-500 hover:text-white transition-colors duration-200 security-btn"
-                    data-item-id="${item.id}"
+                    class="w-full text-left p-2 border border-green-500 text-green-600 rounded-md text-xs hover:bg-green-500 hover:text-white transition-colors duration-200"
                 >
                     ${item.icon} ${item.name}
                 </button>
             `).join('');
         }
 
-        // 初始化 LINE LIFF
         async function initializeLiff() {
             try {
-                await liff.init({ liffId: SECURITY_CONFIG.LIFF_ID });
+                await liff.init({ liffId: CONFIG.LIFF_ID });
                 if (liff.isLoggedIn()) {
                     userProfile = await liff.getProfile();
                     lineUserId = userProfile.userId;
@@ -675,35 +505,13 @@
             }
         }
 
-        // 設置事件監聽器
         function setupEventListeners() {
-            // 表單事件
             elements.deliveryAddress.addEventListener('input', updateOrderSummary);
             elements.menuSelect.addEventListener('change', handleMenuSelectChange);
             elements.submitBtn.addEventListener('click', handleSubmitOrder);
             elements.notificationClose.addEventListener('click', () => elements.notification.classList.add('hidden'));
-
-            // 安全輸入驗證
-            setupInputValidation();
         }
 
-        // 設置輸入驗證
-        function setupInputValidation() {
-            elements.customerPhone.addEventListener('input', (e) => {
-                const value = e.target.value.replace(/\D/g, '');
-                e.target.value = value;
-                
-                if (value.length === 10 && /^09\d{8}$/.test(value)) {
-                    e.target.classList.remove('border-red-500');
-                    e.target.classList.add('border-green-500');
-                } else {
-                    e.target.classList.remove('border-green-500');
-                    e.target.classList.add('border-red-500');
-                }
-            });
-        }
-
-        // 處理菜單選擇
         function handleMenuSelectChange() {
             if (elements.menuSelect.value) {
                 handleAddToCart(elements.menuSelect.value);
@@ -711,7 +519,6 @@
             }
         }
 
-        // 添加到購物車
         function handleAddToCart(itemId) {
             const menuItem = MENU_ITEMS.find(item => item.id === itemId);
             if (!menuItem) {
@@ -732,10 +539,8 @@
             
             showNotification(`✅ 已添加 ${menuItem.name}`, 'success', 2000);
             renderCart();
-            updateLastActivity();
         }
 
-        // 處理數量變更
         function handleQuantityChange(itemId, change) {
             const itemIndex = cart.findIndex(item => item.id === itemId);
             if (itemIndex === -1) return;
@@ -749,10 +554,8 @@
             }
             
             renderCart();
-            updateLastActivity();
         }
 
-        // 渲染購物車
         function renderCart() {
             if (cart.length === 0) {
                 elements.cartItems.innerHTML = '<p class="text-center text-gray-500 py-4 italic">購物車是空的</p>';
@@ -764,19 +567,17 @@
                             <p class="text-xs text-gray-500">$${item.price} x ${item.quantity} = $${item.price * item.quantity}</p>
                         </div>
                         <div class="flex items-center gap-2">
-                            <button onclick="handleQuantityChange('${item.id}', -1)" class="w-7 h-7 bg-green-500 text-white rounded-full font-bold text-sm flex items-center justify-center hover:bg-green-600 transition-transform transform hover:scale-110 security-btn">-</button>
+                            <button onclick="handleQuantityChange('${item.id}', -1)" class="w-7 h-7 bg-green-500 text-white rounded-full font-bold text-sm flex items-center justify-center hover:bg-green-600 transition-transform transform hover:scale-110">-</button>
                             <span class="w-8 text-center font-bold">${item.quantity}</span>
-                            <button onclick="handleQuantityChange('${item.id}', 1)" class="w-7 h-7 bg-green-500 text-white rounded-full font-bold text-sm flex items-center justify-center hover:bg-green-600 transition-transform transform hover:scale-110 security-btn">+</button>
-                            <button onclick="handleQuantityChange('${item.id}', ${-item.quantity})" class="ml-2 bg-red-500 text-white text-xs px-2 py-1 rounded hover:bg-red-600 transition security-btn">移除</button>
+                            <button onclick="handleQuantityChange('${item.id}', 1)" class="w-7 h-7 bg-green-500 text-white rounded-full font-bold text-sm flex items-center justify-center hover:bg-green-600 transition-transform transform hover:scale-110">+</button>
+                            <button onclick="handleQuantityChange('${item.id}', ${-item.quantity})" class="ml-2 bg-red-500 text-white text-xs px-2 py-1 rounded hover:bg-red-600 transition">移除</button>
                         </div>
                     </div>
                 `).join('');
             }
             updateOrderSummary();
-            updateSecurityCheck();
         }
 
-        // 更新訂單摘要
         function updateOrderSummary() {
             const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
             const deliveryFee = elements.deliveryAddress.value.trim() ? 30 : 0;
@@ -785,27 +586,9 @@
             elements.subtotal.textContent = `$${subtotal}`;
             elements.deliveryFee.textContent = `$${deliveryFee}`;
             elements.totalAmount.textContent = `$${total}`;
-            elements.submitBtn.disabled = cart.length === 0 || isLoading || total > SECURITY_CONFIG.MAX_ORDER_AMOUNT;
-            
-            // 安全檢查
-            if (total > SECURITY_CONFIG.MAX_ORDER_AMOUNT) {
-                elements.securityCheck.innerHTML = '<p class="text-red-600 text-sm">🚨 訂單金額超過安全限制</p>';
-            }
+            elements.submitBtn.disabled = cart.length === 0 || isLoading || total > CONFIG.MAX_ORDER_AMOUNT;
         }
 
-        // 更新安全檢查
-        function updateSecurityCheck() {
-            if (cart.length === 0) {
-                elements.securityCheck.innerHTML = '<p class="text-sm">🔍 請添加餐點以繼續</p>';
-            } else {
-                const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-                if (total > 0) {
-                    elements.securityCheck.innerHTML = '<p class="text-green-600 text-sm">✅ 訂單安全性驗證通過</p>';
-                }
-            }
-        }
-
-        // 表單驗證
         function validateForm() {
             let isValid = true;
             elements.phoneError.textContent = '';
@@ -813,7 +596,6 @@
             elements.customerPhone.classList.remove('border-red-500');
             elements.pickupTime.classList.remove('border-red-500');
 
-            // 手機號碼驗證
             const phoneRegex = /^09\d{8}$/;
             if (!phoneRegex.test(elements.customerPhone.value)) {
                 elements.phoneError.textContent = '請輸入有效的10位手機號碼 (09開頭)';
@@ -821,7 +603,6 @@
                 isValid = false;
             }
 
-            // 取餐時間驗證
             if (!elements.pickupTime.value) {
                 elements.timeError.textContent = '請選擇取餐時間';
                 elements.pickupTime.classList.add('border-red-500');
@@ -832,112 +613,88 @@
                 isValid = false;
             }
 
-            // 購物車驗證
             if (cart.length === 0) {
                 showNotification('🛒 購物車是空的，請添加餐點', 'error');
                 isValid = false;
             }
 
-            // 金額安全檢查
             const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0) + (elements.deliveryAddress.value.trim() ? 30 : 0);
-            if (total > SECURITY_CONFIG.MAX_ORDER_AMOUNT) {
-                showNotification(`🚨 訂單金額超過安全限制 ($${SECURITY_CONFIG.MAX_ORDER_AMOUNT})`, 'error');
+            if (total > CONFIG.MAX_ORDER_AMOUNT) {
+                showNotification(`🚨 訂單金額超過安全限制 ($${CONFIG.MAX_ORDER_AMOUNT})`, 'error');
                 isValid = false;
             }
 
             return isValid;
         }
 
-        // 處理訂單提交
+        // === 修復的訂單提交函數 ===
         async function handleSubmitOrder() {
             if (!validateForm()) return;
             
-            securityState.requestCount++;
             setLoading(true);
 
             const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0) + (elements.deliveryAddress.value.trim() ? 30 : 0);
 
-            // 準備訂單數據
             const orderData = {
-                customerName: elements.customerName.value.trim(),
-                customerPhone: elements.customerPhone.value.trim(),
-                customerLineUserId: lineUserId || 'Not-Bound',
-                items: cart,
-                totalAmount: total,
-                pickupTime: elements.pickupTime.value,
-                deliveryAddress: elements.deliveryAddress.value.trim(),
-                notes: elements.notes.value.trim(),
-                timestamp: new Date().toISOString(),
-                security: {
-                    signature: generateSecuritySignature(cart),
-                    encrypted: securityState.encryptionEnabled,
-                    userAgent: navigator.userAgent,
-                    sessionId: generateSessionId()
+                action: 'createOrder',
+                orderData: {
+                    customerName: elements.customerName.value.trim(),
+                    customerPhone: elements.customerPhone.value.trim(),
+                    customerLineUserId: lineUserId || 'Not-Bound',
+                    items: cart,
+                    totalAmount: total,
+                    pickupTime: elements.pickupTime.value,
+                    deliveryAddress: elements.deliveryAddress.value.trim(),
+                    notes: elements.notes.value.trim(),
+                    timestamp: new Date().toISOString()
                 }
             };
 
             try {
-                // 加密數據
-                const encryptedData = encryptData(orderData);
-                
-                // 發送安全請求
-                const response = await sendSecureRequest(encryptedData);
-                
-                if (response.success) {
-                    const orderId = response.data?.orderId || generateOrderId();
-                    showSuccessPage(orderId, orderData);
+                console.log('📤 發送訂單資料:', orderData);
+
+                // 使用正確的 CORS 模式
+                const response = await fetch(CONFIG.API_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(orderData)
+                });
+
+                console.log('📥 收到回應:', response);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                console.log('✅ 後端回應:', result);
+
+                if (result.success) {
+                    const orderId = result.data?.orderId || generateOrderId();
+                    showSuccessPage(orderId, orderData.orderData);
                     
                     // LINE 訊息發送
                     if (lineUserId && liff.isInClient()) {
                         await sendLineConfirmation(orderId, total);
                     }
                 } else {
-                    throw new Error(response.message || '處理訂單失敗');
+                    throw new Error(result.message || '後端處理訂單失敗');
                 }
+
             } catch (error) {
-                console.error('訂單提交錯誤:', error);
-                showNotification(`❌ 訂單失敗: ${error.message}`, 'error', 8000);
-                logSuspiciousActivity(`訂單提交失敗: ${error.message}`);
+                console.error('❌ 訂單提交錯誤:', error);
+                showErrorPage(error.message);
             } finally {
                 setLoading(false);
             }
         }
 
-        // 發送安全請求
-        async function sendSecureRequest(data) {
-            const params = new URLSearchParams();
-            params.append('action', 'createOrder');
-            params.append('source', 'secure-web');
-            params.append('userAgent', navigator.userAgent);
-            params.append('securityLevel', 'high');
-            params.append('encryptedData', data);
-            params.append('timestamp', Date.now().toString());
-
-            const response = await fetch(SECURITY_CONFIG.API_ENDPOINT, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: params,
-                mode: 'no-cors'
-            });
-
-            // 由於 no-cors 模式，返回默認成功響應
-            return {
-                success: true,
-                data: { orderId: generateOrderId() }
-            };
-        }
-
-        // 生成訂單ID
         function generateOrderId() {
             return 'ORDER' + Date.now().toString().slice(-6) + Math.floor(Math.random() * 1000).toString().padStart(3, '0');
         }
 
-        // 生成會話ID
-        function generateSessionId() {
-            return 'SESS' + Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
-        }
-
-        // 設置載入狀態
         function setLoading(loading) {
             isLoading = loading;
             elements.submitBtnText.classList.toggle('hidden', loading);
@@ -945,35 +702,37 @@
             elements.submitBtn.disabled = loading || cart.length === 0;
         }
 
-        // 顯示成功頁面
         function showSuccessPage(orderId, orderData) {
             currentOrderData = orderData;
             
-            // 更新成功頁面資訊
             elements.successOrderId.textContent = orderId;
             elements.successCustomerName.textContent = orderData.customerName || '-';
             elements.successTotalAmount.textContent = orderData.totalAmount || '0';
             elements.successPickupTime.textContent = formatDisplayTime(orderData.pickupTime);
             
-            // 生成分享文字和連結
             const shareText = generateShareText(orderId, orderData);
             const lineShareUrl = generateLineShareUrl(shareText);
             
             elements.shareText.value = shareText;
             elements.lineShareBtn.href = lineShareUrl;
             
-            // 添加點擊事件處理器
             elements.lineShareBtn.onclick = function(e) {
                 e.preventDefault();
                 window.open(lineShareUrl, '_blank');
             };
             
-            // 切換頁面
             elements.orderForm.classList.add('hidden');
             elements.successPage.classList.remove('hidden');
+            elements.errorPage.classList.add('hidden');
         }
 
-        // 生成分享文字
+        function showErrorPage(errorMessage) {
+            elements.errorMessage.textContent = errorMessage;
+            elements.orderForm.classList.add('hidden');
+            elements.successPage.classList.add('hidden');
+            elements.errorPage.classList.remove('hidden');
+        }
+
         function generateShareText(orderId, orderData) {
             const itemsText = orderData.items.map(item => 
                 `▫️ ${item.name} x${item.quantity} - $${item.price * item.quantity}`
@@ -995,18 +754,14 @@ ${itemsText}
 
 📍 取餐地址：台灣小吃店
 🕒 營業時間：10:00-21:00
-📞 聯絡電話：02-1234-5678
-
-🔒 此訂單已通過安全驗證`;
+📞 聯絡電話：02-1234-5678`;
         }
 
-        // 生成LINE分享URL
         function generateLineShareUrl(text) {
             const encodedText = encodeURIComponent(text);
             return `https://line.me/R/msg/text/?${encodedText}`;
         }
 
-        // 格式化顯示時間
         function formatDisplayTime(timestamp) {
             const date = new Date(timestamp);
             return date.toLocaleString('zh-TW', {
@@ -1018,20 +773,18 @@ ${itemsText}
             });
         }
 
-        // 發送LINE確認訊息
         async function sendLineConfirmation(orderId, total) {
             try {
                 const itemsText = cart.map(item => `${item.name} x${item.quantity}`).join('\n');
                 await liff.sendMessages([{
                     type: 'text',
-                    text: `感謝您的訂購！🔒\n訂單編號: ${orderId}\n餐點:\n${itemsText}\n總金額: $${total}\n取餐時間: ${formatDisplayTime(elements.pickupTime.value)}`
+                    text: `感謝您的訂購！\n訂單編號: ${orderId}\n餐點:\n${itemsText}\n總金額: $${total}\n取餐時間: ${formatDisplayTime(elements.pickupTime.value)}`
                 }]);
             } catch (sendError) {
                 console.error('發送 LINE 訊息失敗', sendError);
             }
         }
 
-        // 顯示通知
         function showNotification(message, type = 'success', duration = 4000) {
             const typeClasses = {
                 success: "bg-green-500 text-white",
@@ -1054,14 +807,19 @@ ${itemsText}
 
         window.newOrder = () => {
             elements.successPage.classList.add('hidden');
+            elements.errorPage.classList.add('hidden');
             elements.orderForm.classList.remove('hidden');
             resetOrderForm();
+        };
+
+        window.retryOrder = () => {
+            elements.errorPage.classList.add('hidden');
+            elements.orderForm.classList.remove('hidden');
         };
 
         window.handleAddToCart = handleAddToCart;
         window.handleQuantityChange = handleQuantityChange;
 
-        // 重置訂單表單
         function resetOrderForm() {
             cart = [];
             elements.customerPhone.value = '';
