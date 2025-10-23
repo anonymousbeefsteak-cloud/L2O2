@@ -96,11 +96,24 @@
             border-color: #f56565 !important;
             box-shadow: 0 0 0 3px rgba(245, 101, 101, 0.1);
         }
+        
+        /* 手機優化 */
+        @media (max-width: 480px) {
+            .container {
+                padding: 0.5rem;
+            }
+            .p-5 {
+                padding: 1rem;
+            }
+            .text-2xl {
+                font-size: 1.5rem;
+            }
+        }
     </style>
 </head>
-<body oncontextmenu="return false;" oncopy="return false" oncut="return false" onpaste="return false" ondragstart="return false" onselectstart="return false">
+<body>
     <!-- 浮水印 -->
-    <div class="watermark" id="dynamicWatermark">台灣小吃店訂餐系統 v8.1</div>
+    <div class="watermark" id="dynamicWatermark">台灣小吃店訂餐系統 v8.2</div>
     
     <div class="p-4 min-h-screen flex items-center justify-center">
         <div class="container max-w-md mx-auto bg-white rounded-2xl card-shadow overflow-hidden relative">
@@ -240,41 +253,66 @@
             <footer class="bg-gray-100 p-4 text-center text-xs text-gray-500 border-t border-gray-200">
                 <p>📍 營業時間: 10:00 - 21:00</p>
                 <p>📞 聯絡電話: 02-1234-5678</p>
-                <p class="mt-2 opacity-70">系統版本: 8.1.0-24H | 安全防護: 已啟用</p>
+                <p class="mt-2 opacity-70">系統版本: 8.2.0-24H | 安全防護: 已啟用</p>
             </footer>
         </div>
     </div>
 
     <script>
-        // 多重加密系統 - 改進版本
+        // 多重加密系統 - 手機優化版本
         const SecuritySystem = {
             // Base64 編碼（偽裝）
             base64Encode: function(str) {
-                return btoa(unescape(encodeURIComponent(str)));
+                try {
+                    return btoa(unescape(encodeURIComponent(str)));
+                } catch (e) {
+                    console.error('Base64編碼錯誤:', e);
+                    return str;
+                }
             },
             
             // Base64 解碼（偽裝）
             base64Decode: function(str) {
-                return decodeURIComponent(escape(atob(str)));
+                try {
+                    return decodeURIComponent(escape(atob(str)));
+                } catch (e) {
+                    console.error('Base64解碼錯誤:', e);
+                    return str;
+                }
             },
             
             // 字符移位加密
             shiftEncrypt: function(str, shift = 3) {
-                return str.split('').map(char => {
-                    return String.fromCharCode(char.charCodeAt(0) + shift);
-                }).join('');
+                try {
+                    return str.split('').map(char => {
+                        return String.fromCharCode(char.charCodeAt(0) + shift);
+                    }).join('');
+                } catch (e) {
+                    console.error('字符移位加密錯誤:', e);
+                    return str;
+                }
             },
             
             // 字符移位解密
             shiftDecrypt: function(str, shift = 3) {
-                return str.split('').map(char => {
-                    return String.fromCharCode(char.charCodeAt(0) - shift);
-                }).join('');
+                try {
+                    return str.split('').map(char => {
+                        return String.fromCharCode(char.charCodeAt(0) - shift);
+                    }).join('');
+                } catch (e) {
+                    console.error('字符移位解密錯誤:', e);
+                    return str;
+                }
             },
             
             // 反轉字符串
             reverseString: function(str) {
-                return str.split('').reverse().join('');
+                try {
+                    return str.split('').reverse().join('');
+                } catch (e) {
+                    console.error('字符串反轉錯誤:', e);
+                    return str;
+                }
             },
             
             // 複雜解密流程
@@ -299,7 +337,7 @@
                 }
             },
             
-            // 新增：輸入清理功能
+            // 輸入清理功能
             sanitizeInput: function(input) {
                 if (typeof input !== 'string') return '';
                 
@@ -314,29 +352,34 @@
                     .replace(/`/g, '&#96;');
             },
             
-            // 新增：手機號碼驗證
+            // 手機號碼驗證
             validatePhone: function(phone) {
                 return /^09\d{8}$/.test(phone);
             },
             
-            // 新增：時間驗證
+            // 時間驗證
             validateTime: function(timeString) {
                 if (!timeString) return false;
                 
-                const selectedTime = new Date(timeString);
-                const now = new Date();
-                const minTime = new Date(now.getTime() + 30 * 60000); // 30分鐘後
-                const maxTime = new Date(now.getTime() + 7 * 24 * 60 * 60000); // 7天後
-                
-                return selectedTime >= minTime && selectedTime <= maxTime;
+                try {
+                    const selectedTime = new Date(timeString);
+                    const now = new Date();
+                    const minTime = new Date(now.getTime() + 30 * 60000); // 30分鐘後
+                    const maxTime = new Date(now.getTime() + 7 * 24 * 60 * 60000); // 7天後
+                    
+                    return selectedTime >= minTime && selectedTime <= maxTime;
+                } catch (e) {
+                    console.error('時間驗證錯誤:', e);
+                    return false;
+                }
             }
         };
 
         document.addEventListener('DOMContentLoaded', function() {
-            // 高度混淆的API端點數據（多層加密）- 改進版本
+            // 高度混淆的API端點數據（多層加密）- 手機優化版本
             const ENCRYPTED_API_DATA = "WVdSak9ERmlaR1kwTkRZMU1EQXdNQT09Onh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eA==";
             
-            // 動態解密函數 - 改進版本
+            // 動態解密函數 - 手機優化版本
             function getApiEndpoint() {
                 try {
                     // 第一階段解密
@@ -371,7 +414,7 @@
                 }
             }
             
-            // 備用API端點生成（進一步隱藏真實地址）- 改進版本
+            // 備用API端點生成（進一步隱藏真實地址）- 手機優化版本
             function generateFallbackEndpoint() {
                 const dynamicParts = [
                     'https:/',
@@ -394,9 +437,6 @@
                     '0876xQ',
                     '/exec'
                 ];
-                
-                // 添加隨機延遲以防止自動化攻擊
-                setTimeout(() => {}, Math.random() * 100);
                 
                 return dynamicParts.join('').replace('https:/', 'https://');
             }
@@ -459,7 +499,7 @@
                 shareText: getEl('shareText')
             };
 
-            // 安全功能 - 改進版本
+            // 安全功能 - 手機優化版本
             const protectContent = function() {
                 // 防止右鍵選單
                 document.addEventListener('contextmenu', function(e) {
@@ -472,7 +512,6 @@
                 document.addEventListener('selectstart', function(e) {
                     if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
                         e.preventDefault();
-                        showNotification('此內容受保護，禁止選擇文字', 'warning', 2000);
                         return false;
                     }
                 });
@@ -485,23 +524,11 @@
                 
                 // 防止複製
                 document.addEventListener('copy', function(e) {
-                    e.preventDefault();
-                    showNotification('此內容受保護，禁止複製', 'warning', 2000);
-                    return false;
-                });
-                
-                // 新增：防止開發者工具
-                document.onkeydown = function(e) {
-                    if (e.keyCode === 123 || // F12
-                        (e.ctrlKey && e.shiftKey && e.keyCode === 73) || // Ctrl+Shift+I
-                        (e.ctrlKey && e.shiftKey && e.keyCode === 74) || // Ctrl+Shift+J
-                        (e.ctrlKey && e.keyCode === 85) // Ctrl+U
-                    ) {
+                    if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
                         e.preventDefault();
-                        showNotification('此操作已被禁止', 'warning', 3000);
                         return false;
                     }
-                };
+                });
             };
 
             // 應用功能
@@ -607,8 +634,13 @@
             };
             
             const formatDisplayTime = function(timestamp) {
-                const date = new Date(timestamp);
-                return date.toLocaleString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+                try {
+                    const date = new Date(timestamp);
+                    return date.toLocaleString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+                } catch (e) {
+                    console.error('時間格式化錯誤:', e);
+                    return timestamp;
+                }
             };
 
             const formatOrderItems = function(items) {
@@ -755,7 +787,7 @@
                 }
             };
             
-            // 新增：安全令牌生成
+            // 安全令牌生成
             const generateSecurityToken = function() {
                 const timestamp = Date.now();
                 const randomValue = Math.random().toString(36).substring(2);
@@ -763,15 +795,19 @@
             };
             
             const setDefaultPickupTime = function() {
-                const now = new Date();
-                now.setMinutes(now.getMinutes() + 30);
-                const year = now.getFullYear();
-                const month = String(now.getMonth() + 1).padStart(2, '0');
-                const day = String(now.getDate()).padStart(2, '0');
-                const hours = String(now.getHours()).padStart(2, '0');
-                const minutes = String(now.getMinutes()).padStart(2, '0');
-                const defaultTime = year + '-' + month + '-' + day + 'T' + hours + ':' + minutes;
-                elements.pickupTime.value = defaultTime;
+                try {
+                    const now = new Date();
+                    now.setMinutes(now.getMinutes() + 30);
+                    const year = now.getFullYear();
+                    const month = String(now.getMonth() + 1).padStart(2, '0');
+                    const day = String(now.getDate()).padStart(2, '0');
+                    const hours = String(now.getHours()).padStart(2, '0');
+                    const minutes = String(now.getMinutes()).padStart(2, '0');
+                    const defaultTime = year + '-' + month + '-' + day + 'T' + hours + ':' + minutes;
+                    elements.pickupTime.value = defaultTime;
+                } catch (e) {
+                    console.error('設置默認時間錯誤:', e);
+                }
             };
 
             const resetForm = function() {
@@ -853,29 +889,38 @@
                 }).join('');
             };
 
-            // 新增：安全檢查功能
+            // 安全檢查功能 - 手機優化版本
             const performSecurityCheck = function() {
-                // 檢查是否在LINE環境中
-                if (typeof liff !== 'undefined' && liff.isInClient()) {
-                    securityCheckPassed = true;
-                } else {
-                    // 非LINE環境下的額外檢查
-                    try {
-                        // 檢查常見的自動化工具特徵
-                        if (navigator.webdriver || 
-                            navigator.languages.length === 0 ||
-                            !window.chrome ||
-                            navigator.plugins.length === 0) {
-                            securityCheckPassed = false;
-                            elements.securityAlert.classList.remove('hidden');
-                            showNotification('檢測到異常環境，部分功能可能受限', 'warning', 5000);
-                        } else {
+                try {
+                    // 在手機環境中放寬安全檢查
+                    if (typeof liff !== 'undefined' && liff.isInClient()) {
+                        // LINE環境中，安全檢查通過
+                        securityCheckPassed = true;
+                    } else {
+                        // 非LINE環境，進行基本檢查但不過於嚴格
+                        // 手機瀏覽器通常有webdriver屬性，這不是異常
+                        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                        
+                        if (isMobile) {
+                            // 手機環境中放寬檢查
                             securityCheckPassed = true;
+                        } else {
+                            // 桌面環境進行正常檢查
+                            if (navigator.webdriver || 
+                                (navigator.languages && navigator.languages.length === 0) ||
+                                (navigator.plugins && navigator.plugins.length === 0)) {
+                                securityCheckPassed = false;
+                                elements.securityAlert.classList.remove('hidden');
+                                showNotification('檢測到異常環境，部分功能可能受限', 'warning', 5000);
+                            } else {
+                                securityCheckPassed = true;
+                            }
                         }
-                    } catch (e) {
-                        securityCheckPassed = false;
-                        elements.securityAlert.classList.remove('hidden');
                     }
+                } catch (e) {
+                    console.error('安全檢查錯誤:', e);
+                    // 安全檢查失敗時，默認允許操作
+                    securityCheckPassed = true;
                 }
             };
 
@@ -907,7 +952,7 @@
                 });
                 
                 document.addEventListener('click', function(e) {
-                    if (!elements.notification.contains(e.target)) {
+                    if (elements.notification && !elements.notification.contains(e.target)) {
                         elements.notification.classList.add('hidden');
                     }
                 });
