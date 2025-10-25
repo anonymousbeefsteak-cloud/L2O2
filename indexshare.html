@@ -13,7 +13,7 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
         body {
-            background-color: #f7fafc; /* Tailwind gray-100 */
+            background-color: #f7fafc;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             -webkit-touch-callout: none;
             -webkit-user-select: none;
@@ -35,56 +35,51 @@
         }
         .animate-fade-in { animation: fade-in 0.5s ease-out; }
     </style>
-<script type="importmap">
-{
-  "imports": {
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/"
-  }
-}
-</script>
 </head>
 <body oncontextmenu="return false;">
     <div id="root"></div>
     <script type="text/babel">
         const { useState, useCallback, useEffect, useMemo } = React;
 
-        // --- From constants.ts ---
+        // API 配置
         const LIFF_ID = '2008316489-6nMjb0KX';
-        const OBFUSCATED_API_ENDPOINT = 'aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Z5Y2J6ZF9jVnRlWFoxQ2xpdGV6bXhPRDRkSzNCWHBjOTl1ZXJGc29aWThyb0FRZE9NY1c2YktlT1hOMEgyZWswODc2eFEvZXhlYw==';
-        const API_ENDPOINT = atob(OBFUSCATED_API_ENDPOINT);
-        const OBFUSCATED_API_KEY = 'Z2VuLWxhbmctY2xpZW50LTA4MDAzMzE4Mzk=';
-        const API_KEY = atob(OBFUSCATED_API_KEY);
+        const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbxPfNMxQen_kjGwI4xyDMf_lIIFnJRi0IbXo4SpT3NfzAUiJaNm3JcTKQFL57skwWtq/exec';
         const DELIVERY_FEE = 30;
 
-        const MENU_ITEMS = [
-            { name: '滷肉飯', price: 35, icon: '🍚' },
-            { name: '雞肉飯', price: 40, icon: '🍗' },
-            { name: '蚵仔煎', price: 65, icon: '🍳' },
-            { name: '大腸麵線', price: 50, icon: '🍜' },
-            { name: '珍珠奶茶', price: 45, icon: '🥤' },
-            { name: '鹽酥雞', price: 60, icon: '🍖' },
-            { name: '甜不辣', price: 40, icon: '🍢' },
-            { name: '肉圓', price: 45, icon: '🥟' }
-        ];
-
-        // --- From services/apiService.ts ---
+        // API 服務
+        const getMenu = async () => {
+            const payload = { 
+                action: 'getMenu'
+            };
+            const response = await fetch(API_ENDPOINT, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'text/plain;charset=utf-8',
+                },
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) throw new Error(`無法載入菜單: ${response.status}`);
+            const result = await response.json();
+            if (!result.success) throw new Error(result.message || '菜單載入失敗');
+            return result.data;
+        };
+        
         const submitOrder = async (orderData, idToken) => {
             const orderDataForServer = {
                 customerName: orderData.customerName.trim(),
                 customerPhone: orderData.customerPhone.trim(),
-                items: orderData.items.map(item => ({ name: item.name, quantity: item.quantity })),
+                items: orderData.items.map(item => ({ 
+                    name: item.name, 
+                    quantity: item.quantity 
+                })),
                 pickupTime: orderData.pickupTime,
                 deliveryAddress: orderData.deliveryAddress.trim(),
-                notes: orderData.notes.trim(),
-                timestamp: new Date().toISOString(),
+                notes: orderData.notes.trim()
             };
 
             const payload = { 
                 action: 'createOrder', 
-                apiKey: API_KEY, // Kept for potential backend checks, but security relies on idToken
-                idToken: idToken, // The secure identity token from LIFF
+                idToken: idToken,
                 orderData: orderDataForServer 
             };
 
@@ -93,18 +88,16 @@
                 headers: { 
                     'Content-Type': 'text/plain;charset=utf-8',
                 },
-                body: JSON.stringify(payload),
-                mode: 'cors',
+                body: JSON.stringify(payload)
             });
 
-            if (!response.ok) throw new Error(`伺服器錯誤: ${response.status} ${response.statusText}`);
+            if (!response.ok) throw new Error(`伺服器錯誤: ${response.status}`);
             return await response.json();
         };
 
         const getOrders = async (params) => {
             const payload = { 
                 action: 'getOrders', 
-                apiKey: API_KEY, // Kept for potential backend checks
                 ...params 
             };
             const response = await fetch(API_ENDPOINT, {
@@ -112,14 +105,13 @@
                 headers: { 
                     'Content-Type': 'text/plain;charset=utf-8',
                 },
-                body: JSON.stringify(payload),
-                mode: 'cors',
+                body: JSON.stringify(payload)
             });
-            if (!response.ok) throw new Error(`伺服器錯誤: ${response.status} ${response.statusText}`);
+            if (!response.ok) throw new Error(`伺服器錯誤: ${response.status}`);
             return await response.json();
         };
 
-        // --- From hooks/useLiff.ts ---
+        // LINE LIFF Hook
         const useLiff = () => {
             const [profile, setProfile] = useState(null);
             const [idToken, setIdToken] = useState(null);
@@ -130,29 +122,25 @@
             useEffect(() => {
                 const initializeLiff = async () => {
                     try {
-                        if (window.liff) {
-                            await window.liff.init({ liffId: LIFF_ID });
-                            if (window.liff.isLoggedIn()) {
-                                setIsLoggedIn(true);
-                                const [userProfile, token] = await Promise.all([
-                                    window.liff.getProfile(),
-                                    window.liff.getIDToken()
-                                ]);
-                                setProfile(userProfile);
-                                setIdToken(token);
-                                setLiffStatus(`👋 歡迎，${userProfile.displayName}！`);
-                                setStatusType('success');
-                            } else {
-                                if (window.liff.isInClient()) {
-                                    setLiffStatus('未登入 LINE，正在嘗試登入...');
-                                    window.liff.login();
-                                } else {
-                                    setLiffStatus('請在 LINE App 中開啟以獲得完整功能。');
-                                    setStatusType('warning');
-                                }
-                            }
+                        await window.liff.init({ liffId: LIFF_ID });
+                        if (window.liff.isLoggedIn()) {
+                            setIsLoggedIn(true);
+                            const [userProfile, token] = await Promise.all([
+                                window.liff.getProfile(),
+                                window.liff.getIDToken()
+                            ]);
+                            setProfile(userProfile);
+                            setIdToken(token);
+                            setLiffStatus(`👋 歡迎，${userProfile.displayName}！`);
+                            setStatusType('success');
                         } else {
-                            throw new Error('LIFF SDK not found');
+                            if (window.liff.isInClient()) {
+                                setLiffStatus('未登入 LINE，正在嘗試登入...');
+                                window.liff.login();
+                            } else {
+                                setLiffStatus('請在 LINE App 中開啟以獲得完整功能。');
+                                setStatusType('warning');
+                            }
                         }
                     } catch (error) {
                         console.error('LIFF initialization failed', error);
@@ -166,7 +154,7 @@
             return { profile, idToken, isLoggedIn, liffStatus, statusType };
         };
 
-        // --- From components/LoadingSpinner.tsx ---
+        // 加載動畫組件
         const LoadingSpinner = () => (
             <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -174,7 +162,7 @@
             </svg>
         );
 
-        // --- From components/Notification.tsx ---
+        // 通知組件
         const Notification = ({ message, type, visible, onClose }) => {
             if (!visible) return null;
             const typeClasses = {
@@ -193,7 +181,7 @@
             );
         };
 
-        // --- From components/HistoryPage.tsx ---
+        // 歷史訂單頁面
         const HistoryPage = ({ onBack, showNotification }) => {
             const { idToken } = useLiff();
             const [startDate, setStartDate] = useState(() => {
@@ -230,7 +218,6 @@
                 
                 try {
                     const params = {
-                        // If logged in with LINE, do not send phone to prevent querying other users' data
                         customerPhone: isLineUser ? '' : customerPhone,
                         idToken: idToken,
                         startDate: startDate,
@@ -241,26 +228,21 @@
 
                     if (result.success && Array.isArray(result.data)) {
                         setOrders(result.data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+                        showNotification(`找到 ${result.data.length} 筆訂單`, 'success');
                     } else {
                         throw new Error(result.message || '查詢失敗');
                     }
                 } catch (error) {
                     console.error('Search error:', error);
-                    if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+                    if (error.message.includes('Failed to fetch')) {
                         showNotification('查詢失敗，請檢查您的網路連線。', 'error');
-                    } else if (error instanceof Error) {
-                        showNotification(`查詢失敗：${error.message}`, 'error');
                     } else {
-                        showNotification('查詢時發生未知錯誤，請稍後再試。', 'error');
+                        showNotification(`查詢失敗：${error.message}`, 'error');
                     }
                     setOrders([]);
                 } finally {
                     setIsLoading(false);
                 }
-            };
-
-            const formatItems = (items) => {
-                return typeof items === 'string' ? items : '項目資訊錯誤';
             };
 
             return (
@@ -331,11 +313,14 @@
                                     </div>
                                 </div>
                                 <div className="text-sm space-y-1 text-gray-600">
-                                    <p><strong>下單時間:</strong> {new Date(order.createdAt).toLocaleString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</p>
-                                    <p><strong>預計取餐:</strong> {new Date(order.pickupTime).toLocaleString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</p>
-                                    <p><strong>訂單內容:</strong> {formatItems(order.items)}</p>
+                                    <p><strong>下單時間:</strong> {new Date(order.createdAt).toLocaleString('zh-TW')}</p>
+                                    <p><strong>預計取餐:</strong> {new Date(order.pickupTime).toLocaleString('zh-TW')}</p>
+                                    <p><strong>訂單內容:</strong> {order.items}</p>
                                     {order.deliveryAddress && <p><strong>外送地址:</strong> {order.deliveryAddress}</p>}
                                     {order.notes && <p><strong>備註:</strong> {order.notes}</p>}
+                                    <p><strong>狀態:</strong> <span className={`px-2 py-1 rounded text-xs ${order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`}>
+                                        {order.status === 'pending' ? '處理中' : '已完成'}
+                                    </span></p>
                                 </div>
                             </div>
                         ))}
@@ -344,11 +329,10 @@
             );
         };
 
-        // --- From components/SuccessPage.tsx ---
+        // 成功頁面
         const SuccessPage = ({ orderData, onNewOrder, showNotification }) => {
-            const formatDisplayTime = (timestamp) => new Date(timestamp).toLocaleString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
-            const formatOrderItems = (items) => items.map(item => `${item.icon} ${item.name} x${item.quantity} ($${item.price * item.quantity})`).join(', ');
-
+            const formatDisplayTime = (timestamp) => new Date(timestamp).toLocaleString('zh-TW');
+            
             const shareTextContent = useMemo(() => {
                 const itemsText = orderData.items.map(item => `▫️ ${item.icon} ${item.name} x${item.quantity} - $${item.price * item.quantity}`).join('\n');
                 return `🍽️ 台灣小吃店 - 訂單確認\n\n📋 訂單編號：${orderData.orderId}\n👤 顧客姓名：${orderData.customerName}\n📞 聯絡電話：${orderData.customerPhone}\n\n📦 訂單內容：\n${itemsText}\n\n💰 最終總金額：$${orderData.totalAmount}\n⏰ 取餐時間：${formatDisplayTime(orderData.pickupTime)}\n📍 ${orderData.deliveryAddress ? `外送地址：${orderData.deliveryAddress}` : '自取'}\n📝 備註：${orderData.notes || '無'}\n\n📍 取餐地址：台灣小吃店\n🕒 營業時間：10:00-21:00\n📞 聯絡電話：02-1234-5678`;
@@ -368,11 +352,14 @@
                     <div className="text-6xl mb-5">✅</div>
                     <h3 className="text-2xl font-bold text-green-600 mb-4">訂單提交成功！</h3>
                     <div className="bg-gray-50 p-4 rounded-lg my-5 text-left border">
-                        <p><strong>訂單編號：</strong><span>{orderData.orderId}</span></p>
+                        <p><strong>訂單編號：</strong><span className="font-mono">{orderData.orderId}</span></p>
                         <p><strong>顧客姓名：</strong><span>{orderData.customerName}</span></p>
-                        <p><strong>最終總金額：</strong>$<span>{orderData.totalAmount}</span></p>
+                        <p><strong>聯絡電話：</strong><span>{orderData.customerPhone}</span></p>
+                        <p><strong>最終總金額：</strong>$<span className="text-green-600 font-bold">{orderData.totalAmount}</span></p>
                         <p><strong>取餐時間：</strong><span>{formatDisplayTime(orderData.pickupTime)}</span></p>
-                        <p><strong>訂單內容：</strong><span>{formatOrderItems(orderData.items)}</span></p>
+                        <p><strong>取餐方式：</strong><span>{orderData.deliveryAddress ? '外送' : '自取'}</span></p>
+                        {orderData.deliveryAddress && <p><strong>外送地址：</strong><span>{orderData.deliveryAddress}</span></p>}
+                        {orderData.notes && <p><strong>備註：</strong><span>{orderData.notes}</span></p>}
                     </div>
                     <div className="my-8">
                         <p className="text-lg font-bold mb-4">📱 分享訂單資訊</p>
@@ -390,8 +377,8 @@
             );
         };
 
-        // --- From components/OrderPage.tsx ---
-        const OrderPage = ({ onSubmitOrder, showNotification, onViewHistory }) => {
+        // 訂餐頁面
+        const OrderPage = ({ menuItems, onSubmitOrder, showNotification, onViewHistory }) => {
             const { profile, idToken, liffStatus, statusType } = useLiff();
             const [cart, setCart] = useState([]);
             const [isLoading, setIsLoading] = useState(false);
@@ -406,7 +393,6 @@
             const getDefaultPickupTime = () => {
                 const now = new Date();
                 now.setMinutes(now.getMinutes() + 30);
-                now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
                 return now.toISOString().slice(0, 16);
             };
 
@@ -427,17 +413,22 @@
             }, [cart, deliveryAddress]);
 
             const handleAddToCart = useCallback((itemName) => {
+                const menuItem = menuItems.find(item => item.name === itemName);
+                if (!menuItem) return;
+
+                if (menuItem.status === '已售完') {
+                    showNotification(`${itemName} 已售完，無法加入`, 'error');
+                    return;
+                }
+
                 setCart(prevCart => {
                     const existingItem = prevCart.find(item => item.name === itemName);
                     if (existingItem) {
                         return prevCart.map(item => item.name === itemName ? { ...item, quantity: item.quantity + 1 } : item);
                     }
-                    const menuItem = MENU_ITEMS.find(item => item.name === itemName);
-                    if (menuItem) return [...prevCart, { ...menuItem, quantity: 1 }];
-                    return prevCart;
+                    return [...prevCart, { ...menuItem, quantity: 1 }];
                 });
-                showNotification(`已添加 ${itemName}`, 'success');
-            }, [showNotification]);
+            }, [showNotification, menuItems]);
 
             const handleQuantityChange = useCallback((itemName, change) => {
                 setCart(prevCart => {
@@ -446,21 +437,19 @@
                     
                     const newQuantity = prevCart[itemIndex].quantity + change;
                     if (newQuantity <= 0) {
-                        showNotification(`已移除 ${itemName}`, 'warning');
                         return prevCart.filter(item => item.name !== itemName);
                     }
                     return prevCart.map(item =>
                         item.name === itemName ? { ...item, quantity: newQuantity } : item
                     );
                 });
-            }, [showNotification]);
+            }, []);
             
             const handleClearCart = useCallback(() => {
                 if (window.confirm('您確定要清空購物車嗎？')) {
                     setCart([]);
-                    showNotification('購物車已清空', 'warning');
                 }
-            }, [showNotification]);
+            }, []);
 
             const validateForm = () => {
                 let isValid = true;
@@ -500,7 +489,12 @@
                 }
             };
             
-            const statusClasses = { info: 'bg-blue-100 border-blue-400 text-blue-800', success: 'bg-green-100 border-green-400 text-green-800', warning: 'bg-yellow-100 border-yellow-400 text-yellow-800', error: 'bg-red-100 border-red-400 text-red-800' };
+            const statusClasses = { 
+                info: 'bg-blue-100 border-blue-400 text-blue-800', 
+                success: 'bg-green-100 border-green-400 text-green-800', 
+                warning: 'bg-yellow-100 border-yellow-400 text-yellow-800', 
+                error: 'bg-red-100 border-red-400 text-red-800' 
+            };
 
             return (
                 <div className="animate-fade-in">
@@ -524,7 +518,7 @@
                         <div>
                             <label className="block mb-2 font-bold text-gray-700 text-sm">外送地點 (選填)</label>
                             <input type="text" value={deliveryAddress} onChange={(e) => setDeliveryAddress(e.target.value)} placeholder="如需外送請填寫地址" className="w-full p-3 border border-gray-300 rounded-lg text-sm transition-all duration-200 focus:ring-green-500 focus:border-green-500"/>
-                            <p className="text-xs text-gray-500 mt-1 italic">{`※ 填寫地址將由後端計算 $${DELIVERY_FEE} 外送費`}</p>
+                            <p className="text-xs text-gray-500 mt-1 italic">{`※ 填寫地址將計算 $${DELIVERY_FEE} 外送費 (滿 $200 免運)`}</p>
                         </div>
                         <div>
                             <label className="block mb-2 font-bold text-gray-700 text-sm">備註 (選填)</label>
@@ -539,12 +533,29 @@
                             className="w-full p-3 border border-gray-300 rounded-lg text-sm mb-4 focus:ring-green-500 focus:border-green-500"
                         >
                             <option value="">-- 請選擇餐點 --</option>
-                            {MENU_ITEMS.map(item => (<option key={item.name} value={item.name}>{item.icon} {item.name} - ${item.price}</option>))}
+                            {menuItems.map(item => (
+                                <option key={item.name} value={item.name} disabled={item.status === '已售完'}>
+                                    {item.icon} {item.name} - ${item.price} {item.status === '已售完' ? '(本日售完)' : ''}
+                                </option>
+                            ))}
                         </select>
                         <div className="p-3 bg-white rounded-md">
                             <p className="text-xs text-gray-500 mb-2">快速選擇：</p>
                             <div className="grid grid-cols-2 gap-2">
-                                {MENU_ITEMS.slice(0, 4).map(item => (<button key={item.name} onClick={() => handleAddToCart(item.name)} className="w-full text-left p-2 border border-green-500 text-green-600 rounded-md text-xs hover:bg-green-500 hover:text-white transition-colors duration-200">{item.icon} {item.name}</button>))}
+                                {menuItems.slice(0, 4).map(item => (
+                                    <button 
+                                        key={item.name} 
+                                        onClick={() => handleAddToCart(item.name)}
+                                        disabled={item.status === '已售完'}
+                                        className={`w-full text-left p-2 border rounded-md text-xs transition-colors duration-200 ${
+                                            item.status === '已售完' 
+                                            ? 'border-gray-300 bg-gray-100 text-gray-400 cursor-not-allowed' 
+                                            : 'border-green-500 text-green-600 hover:bg-green-500 hover:text-white'
+                                        }`}
+                                    >
+                                        {item.icon} {item.name} {item.status === '已售完' ? '(售完)' : ''}
+                                    </button>
+                                ))}
                             </div>
                         </div>
                     </div>
@@ -559,7 +570,10 @@
                             )}
                         </div>
                         <div>
-                            {cart.length === 0 ? (<p className="text-center text-gray-500 py-4 italic">購物車是空的</p>) : (cart.map(item => (
+                            {cart.length === 0 ? (
+                                <p className="text-center text-gray-500 py-4 italic">購物車是空的</p>
+                            ) : (
+                                cart.map(item => (
                                 <div key={item.name} className="flex justify-between items-center py-3 border-b border-gray-200 last:border-b-0">
                                     <div>
                                         <p className="font-bold text-gray-800">{item.icon} {item.name}</p>
@@ -591,16 +605,18 @@
             );
         };
 
-        // --- From App.tsx ---
+        // 主應用組件
         const App = () => {
             const [view, setView] = useState('order'); // 'order', 'success', 'history'
             const [submittedOrder, setSubmittedOrder] = useState(null);
             const [notification, setNotification] = useState({ message: '', type: 'success', visible: false });
+            const [menuItems, setMenuItems] = useState([]);
+            const [isMenuLoading, setIsMenuLoading] = useState(true);
+            const [menuError, setMenuError] = useState(null);
 
             useEffect(() => {
                 console.log("%cSTOP!", "color: red; font-size: 48px; font-weight: bold; -webkit-text-stroke: 1px black;");
-                console.log("%cThis is a browser feature intended for developers. If someone told you to copy-paste something here to enable a feature or 'hack' this system, it is a scam.", "font-size: 18px;");
-                console.log("%cThis ordering system is proprietary. Unauthorized copying, distribution, or use of this code is strictly prohibited.", "font-size: 16px; font-weight: bold; color: #888;");
+                console.log("%cThis is a browser feature intended for developers.", "font-size: 18px;");
             }, []);
 
             const showNotification = useCallback((message, type = 'success', duration = 4000) => {
@@ -608,27 +624,54 @@
                 setTimeout(() => setNotification(prev => ({ ...prev, visible: false })), duration);
             }, []);
 
+            useEffect(() => {
+                const fetchMenu = async () => {
+                    try {
+                        const items = await getMenu();
+                        setMenuItems(items);
+                        setMenuError(null);
+                    } catch (error) {
+                        console.error("Failed to fetch menu:", error);
+                        setMenuError(error.message);
+                        showNotification(`菜單載入失敗: ${error.message}`, 'error', 10000);
+                    } finally {
+                        setIsMenuLoading(false);
+                    }
+                };
+                fetchMenu();
+            }, [showNotification]);
+
             const handleSubmitOrder = async (orderData, idToken) => {
                 try {
                     const result = await submitOrder(orderData, idToken);
                     if (result.success) {
-                        const finalOrderData = { ...orderData, orderId: result.data?.orderId || 'N/A', totalAmount: result.data.totalAmount };
+                        const finalOrderData = { 
+                            ...orderData, 
+                            orderId: result.data?.orderId || 'N/A', 
+                            totalAmount: result.data.totalAmount 
+                        };
                         setSubmittedOrder(finalOrderData);
                         setView('success');
+                        showNotification('訂單提交成功！', 'success');
+                        
+                        // 在 LINE 內發送訊息
                         if (idToken && window.liff?.isInClient()) {
                             const itemsText = orderData.items.map(item => `${item.icon} ${item.name} x${item.quantity}`).join('\n');
-                            const formattedTime = new Date(orderData.pickupTime).toLocaleString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
-                            await window.liff.sendMessages([{ type: 'text', text: `感謝訂購！\n\n📋 訂單編號：${finalOrderData.orderId}\n👤 顧客姓名：${orderData.customerName}\n\n📦 訂單內容：\n${itemsText}\n\n💰 總金額：$${finalOrderData.totalAmount}\n⏰ 取餐時間：${formattedTime}` }]);
+                            const formattedTime = new Date(orderData.pickupTime).toLocaleString('zh-TW');
+                            await window.liff.sendMessages([{ 
+                                type: 'text', 
+                                text: `感謝訂購！\n\n📋 訂單編號：${finalOrderData.orderId}\n👤 顧客姓名：${orderData.customerName}\n\n📦 訂單內容：\n${itemsText}\n\n💰 總金額：$${finalOrderData.totalAmount}\n⏰ 取餐時間：${formattedTime}` 
+                            }]);
                         }
-                    } else { throw new Error(result.message || '訂單提交失敗'); }
+                    } else { 
+                        throw new Error(result.message || '訂單提交失敗'); 
+                    }
                 } catch (error) {
                     console.error('Order submission error:', error);
-                    if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+                    if (error.message.includes('Failed to fetch')) {
                         showNotification('訂單提交失敗，請檢查您的網路連線後再試一次。', 'error');
-                    } else if (error instanceof Error) {
-                        showNotification(`訂單提交失敗：${error.message}`, 'error');
                     } else {
-                        showNotification('訂單提交時發生未知錯誤，請稍後再試。', 'error');
+                        showNotification(`訂單提交失敗：${error.message}`, 'error');
                     }
                     throw error;
                 }
@@ -640,6 +683,25 @@
             };
 
             const renderContent = () => {
+                if (isMenuLoading) {
+                    return (
+                        <div className="text-center py-20 flex flex-col items-center justify-center text-gray-600">
+                            <LoadingSpinner />
+                            <p className="mt-3 text-sm">正在載入最新菜單...</p>
+                        </div>
+                    );
+                }
+
+                if (menuError) {
+                    return (
+                        <div className="text-center py-10 text-red-700 bg-red-50 p-4 rounded-lg border border-red-200">
+                            <p className="font-bold text-lg">⚠️ 菜單載入失敗</p>
+                            <p className="text-sm mt-2">{menuError}</p>
+                            <p className="text-xs mt-3 text-gray-500">請稍後重新整理頁面，或直接聯繫店家。</p>
+                        </div>
+                    );
+                }
+
                 switch(view) {
                     case 'history':
                         return <HistoryPage onBack={() => setView('order')} showNotification={showNotification} />;
@@ -647,7 +709,7 @@
                         return submittedOrder && <SuccessPage orderData={submittedOrder} onNewOrder={handleNewOrder} showNotification={showNotification} />;
                     case 'order':
                     default:
-                        return <OrderPage onSubmitOrder={handleSubmitOrder} showNotification={showNotification} onViewHistory={() => setView('history')} />;
+                        return <OrderPage menuItems={menuItems} onSubmitOrder={handleSubmitOrder} showNotification={showNotification} onViewHistory={() => setView('history')} />;
                 }
             }
 
@@ -665,13 +727,18 @@
                         </header>
 
                         <main className="p-5 space-y-4">
-                            <Notification message={notification.message} type={notification.type} visible={notification.visible} onClose={() => setNotification(prev => ({ ...prev, visible: false }))} />
+                            <Notification 
+                                message={notification.message} 
+                                type={notification.type} 
+                                visible={notification.visible} 
+                                onClose={() => setNotification(prev => ({ ...prev, visible: false }))} 
+                            />
                             {renderContent()}
                         </main>
                         
                         <footer className="bg-gray-100 p-4 text-center text-xs text-gray-500 border-t border-gray-200">
                             <p>📍 營業時間: 10:00 - 21:00 | 📞 聯絡電話: 02-1234-5678</p>
-                            <p className="mt-2 opacity-70">系統版本: 9.1.0-SECURE-TOKEN</p>
+                            <p className="mt-2 opacity-70">系統版本: 2.0.0</p>
                             <p className="mt-1 opacity-50">&copy; {new Date().getFullYear()} 台灣小吃店. All Rights Reserved.</p>
                         </footer>
                     </div>
@@ -679,7 +746,7 @@
             );
         };
 
-        // --- From index.tsx ---
+        // 渲染應用
         const rootElement = document.getElementById('root');
         if (rootElement) {
             const root = ReactDOM.createRoot(rootElement);
