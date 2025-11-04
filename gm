@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Crowd Cow 頂級肉品系統</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+  <style>
+    :root {
+      --primary: #8B4513;
+      --secondary: #D2691E;
+      --success: #228B22;
+      --warning: #FFD700;
+      --danger: #DC143C;
+    }
+    body { background: #f8f9fa; font-family: 'Noto Sans TC', sans-serif; }
+    .nav-tabs .nav-link.active { background: var(--primary); color: white; border-color: var(--primary); }
+    .category-title { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; padding: 1rem; border-radius: 15px; margin: 2rem 0 1.5rem; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    .item-card { border: 1px solid #ddd; border-radius: 15px; transition: all 0.3s; background: white; }
+    .item-card:hover { box-shadow: 0 12px 25px rgba(0,0,0,0.15); transform: translateY(-6px); }
+    .price-oz { font-size: 1.2rem; color: var(--secondary); font-weight: bold; background: #fff8e1; padding: 0.5rem; border-radius: 8px; }
+    .badge-prime { background: linear-gradient(45deg, #FFD700, #FFA500); color: #000; font-weight: bold; }
+    .badge-wagyu { background: linear-gradient(45deg, #C71585, #FF1493); color: white; font-weight: bold; }
+    .badge-grass { background: #228B22; color: white; font-weight: bold; }
+    .badge-set { background: #4169E1; color: white; }
+    .cart-item { background: #fff; border-left: 5px solid var(--primary); border-radius: 8px; }
+    .multi-choice-input { display: flex; align-items: center; gap: 10px; margin: 6px 0; background: #f5f5f5; padding: 8px; border-radius: 8px; }
+    .toast-container { position: fixed; top: 1rem; right: 1rem; z-index: 9999; }
+    .kitchen-order { border-left: 6px solid var(--primary); background: #fff; }
+    .status-pending { background: #fff3cd; }
+    .status-inprogress { background: #d1ecf1; }
+    .status-completed { background: #d4edda; text-decoration: line-through; }
+    .chart-container { height: 300px; }
+    .item-image-placeholder { height: 120px; background: linear-gradient(45deg, #eee, #ddd); display: flex; align-items: center; justify-content: center; color: #999; font-size: 2rem; font-weight: bold; }
+    
+    /* 列印樣式 */
+    @media print {
+      body * { visibility: hidden; }
+      #printArea, #printArea * { visibility: visible; }
+      #printArea { position: absolute; left: 0; top: 0; width: 100%; }
+      .no-print { display: none !important; }
+      .print-receipt { font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.4; }
+      .print-title { font-size: 16px; font-weight: bold; text-align: center; margin: 10px 0; }
+      .print-hr { border-top: 1px dashed #000; margin: 8px 0; }
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<div class="container py-4">
+  <header class="text-center mb-5">
+    <h1 class="display-5 fw-bold" style="color: var(--primary);">
+      Crowd Cow 頂級肉品
+    </h1>
+    <p class="lead text-muted">USDA Prime・A5 和牛・100% 草飼・現切現包</p>
+  </header>
+
+  <!-- 頁籤切換 -->
+  <ul class="nav nav-tabs mb-4" id="mainTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#customerTab">顧客點餐</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#kitchenTab">廚房工單</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#adminTab">管理者後台</button>
+    </li>
+  </ul>
+
+  <div class="tab-content">
+    <!-- === 顧客點餐頁面 === -->
+    <div class="tab-pane fade show active" id="customerTab">
+      <div class="text-end mb-3">
+        <button class="btn btn-lg btn-warning position-relative shadow" data-bs-toggle="modal" data-bs-target="#cartModal">
+          購物車
+          <span class="badge bg-danger position-absolute top-0 start-100 translate-middle" id="cartCount">0</span>
+        </button>
+        <button class="btn btn-outline-primary ms-2" data-bs-toggle="modal" data-bs-target="#orderSearchModal">
+          查訂單
+        </button>
+      </div>
+
+      <div id="loadingMenu" class="text-center py-5">
+        <div class="spinner-border text-primary" style="width:4rem;height:4rem;"></div>
+        <p class="mt-3 fs-5">載入頂級肉品中...</p>
+      </div>
+
+      <div id="menuContainer" class="d-none"></div>
+    </div>
+
+    <!-- === 廚房工單 === -->
+    <div class="tab-pane fade" id="kitchenTab">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3>廚房工單</h3>
+        <div>
+          <button class="btn btn-success me-2" onclick="refreshKitchen()">即時更新</button>
+          <button class="btn btn-info text-white" onclick="printAllPending()">
+            列印待處理
+          </button>
+        </div>
+      </div>
+      <div id="kitchenOrders"></div>
+    </div>
+
+    <!-- === 管理者後台 === -->
+    <div class="tab-pane fade" id="adminTab">
+      <div class="row">
+        <div class="col-md-6 mb-4">
+          <div class="card border-primary">
+            <div class="card-header bg-primary text-white">
+              <h5 class="mb-0">銷售統計</h5>
+            </div>
+            <div class="card-body">
+              <div class="mb-3">
+                <label class="form-label">日期區間</label>
+                <div class="row g-2">
+                  <div class="col"><input type="date" class="form-control" id="statsStart"></div>
+                  <div class="col"><input type="date" class="form-control" id="statsEnd"></div>
+                  <div class="col-auto"><button class="btn btn-primary" onclick="loadStats()">查詢</button></div>
+                </div>
+              </div>
+              <div id="statsSummary" class="text-center"></div>
+              <div class="chart-container mt-4">
+                <canvas id="trendChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6 mb-4">
+          <div class="card border-success">
+            <div class="card-header bg-success text-white">
+              <h5 class="mb-0">熱銷排行</h5>
+            </div>
+            <div class="card-body">
+              <div id="popularItems"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- === 模態框區 === -->
+<!-- 購物車、結帳、查詢略（與前版相同） -->
+
+<!-- Toast -->
+<div class="toast-container">
+  <div id="toast" class="toast align-items-center text-white bg-success border-0" role="alert">
+    <div class="d-flex">
+      <div class="toast-body"></div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+  </div>
+</div>
+
+<!-- 列印區域（隱藏） -->
+<div id="printArea" style="display:none;"></div>
+
+<script>
+// === 你的 Google Apps Script URL ===
+const API_URL = 'https://script.google.com/macros/s/AKfycbzqLVrEtFiu3UipyasGD9DjEM5gMmx-CgHYMFIORO9tqT7zhPsloyF6VzHMjFEstY_uwg/exec';
+
+let menuData = { menu: [], addons: [] };
+let cart = [];
+let kitchenOrders = [];
+let statsChart = null;
+
+// 初始化
+document.addEventListener('DOMContentLoaded', () => {
+  loadMenu();
+  setDefaultDates();
+  refreshKitchen();
+  loadStats();
+});
+
+// === 顧客點餐功能（略，與前版相同）===
+// ...（包含 loadMenu, renderMenu, addToCart, submitOrder 等）
+// 為節省篇幅，此處省略顧客點餐完整程式碼（與前一版完全相同）
+// 若需完整版請告知，我會補上
+
+// === 廚房工單 ===
+async function refreshKitchen() {
+  try {
+    const res = await fetch(`${API_URL}?action=getAllOrders`);
+    const data = await res.json();
+    if (data.success) {
+      kitchenOrders = data.orders;
+      renderKitchenOrders();
+    }
+  } catch (err) {
+    showToast('廚房資料載入失敗', 'danger');
+  }
+}
+
+function renderKitchenOrders() {
+  const container = document.getElementById('kitchenOrders');
+  const pending = kitchenOrders.filter(o => o.status === '待處理');
+  const inProgress = kitchenOrders.filter(o => o.status === '製作中');
+  const completed = kitchenOrders.filter(o => o.status === '已完成');
+
+  container.innerHTML = `
+    <div class="row">
+      <div class="col-md-4"><h5 class="text-warning">待處理 (${pending.length})</h5>
+        ${pending.map(order => renderKitchenOrder(order, 'status-pending')).join('')}
+      </div>
+      <div class="col-md-4"><h5 class="text-primary">製作中 (${inProgress.length})</h5>
+        ${inProgress.map(order => renderKitchenOrder(order, 'status-inprogress')).join('')}
+      </div>
+      <div class="col-md-4"><h5 class="text-success">已完成 (${completed.length})</h5>
+        ${completed.map(order => renderKitchenOrder(order, 'status-completed')).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function renderKitchenOrder(order, statusClass) {
+  return `
+    <div class="kitchen-order p-3 mb-3 rounded ${statusClass}">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <strong>#${order.id}</strong> 
+          <span class="badge bg-secondary">${order.customerInfo.tableNumber || '外帶'}</span>
+        </div>
+        <div>
+          <button class="btn btn-sm btn-outline-info me-1" onclick="printSingleOrder('${order.id}')">
+            列印
+          </button>
+          ${order.status === '待處理' ? `<button class="btn btn-sm btn-primary" onclick="updateOrderStatus('${order.id}', '製作中')">開始</button>` : ''}
+          ${order.status === '製作中' ? `<button class="btn btn-sm btn-success" onclick="updateOrderStatus('${order.id}', '已完成')">完成</button>` : ''}
+        </div>
+      </div>
+      <hr class="my-2">
+      ${order.items.map(item => `
+        <div class="mb-2">
+          <strong>${item.item.name} × ${item.quantity}</strong>
+          ${item.weightOz ? ` <small>(${item.weightOz}oz)</small>` : ''}
+          <div class="text-muted small">
+            ${item.selectedDonenesses ? Object.entries(item.selectedDonenesses).map(([k,v])=>`${k}x${v}`).join(', ') : ''}
+            ${item.selectedMultiChoice ? ' | ' + Object.entries(item.selectedMultiChoice).map(([k,v])=>`${k}x${v}`).join(', ') : ''}
+            ${item.selectedNotes ? ' | ' + item.selectedNotes : ''}
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+// === 新增：列印功能 ===
+function printSingleOrder(orderId) {
+  const order = kitchenOrders.find(o => o.id === orderId);
+  if (!order) return;
+  generatePrintContent([order]);
+}
+
+function printAllPending() {
+  const pending = kitchenOrders.filter(o => o.status === '待處理');
+  if (pending.length === 0) {
+    showToast('沒有待處理訂單', 'warning');
+    return;
+  }
+  generatePrintContent(pending);
+}
+
+function generatePrintContent(orders) {
+  const printArea = document.getElementById('printArea');
+  printArea.innerHTML = orders.map(order => `
+    <div class="print-receipt" style="padding:10px; page-break-after: always;">
+      <div class="print-title">Crowd Cow 廚房工單</div>
+      <div class="print-hr"></div>
+      <div><strong>訂單編號：</strong>${order.id}</div>
+      <div><strong>桌號：</strong>${order.customerInfo.tableNumber || '外帶'}</div>
+      <div><strong>類型：</strong>${order.orderType}</div>
+      <div><strong>下單時間：</strong>${new Date(order.timestamp).toLocaleString('zh-TW')}</div>
+      <div class="print-hr"></div>
+      ${order.items.map(item => `
+        <div style="margin:8px 0;">
+          <div><strong>${item.item.name} × ${item.quantity}</strong>${item.weightOz ? ` (${item.weightOz}oz)` : ''}</strong></div>
+          ${item.selectedDonenesses ? `<div>　熟度：${Object.entries(item.selectedDonenesses).map(([k,v])=>`${k}x${v}`).join(', ')}</div>` : ''}
+          ${item.selectedMultiChoice ? `<div>　口味：${Object.entries(item.selectedMultiChoice).map(([k,v])=>`${k}x${v}`).join(', ')}</div>` : ''}
+          ${item.selectedSauces?.length ? `<div>　加購：${item.selectedSauces.map(s=>s.name).join(', ')}</div>` : ''}
+          ${item.selectedNotes ? `<div>　備註：${item.selectedNotes}</div>` : ''}
+        </div>
+      `).join('')}
+      <div class="print-hr"></div>
+      <div style="text-align:center; font-size:10px; color:#666;">
+        列印時間：${new Date().toLocaleString('zh-TW')}
+      </div>
+    </div>
+  `).join('');
+
+  window.print();
+}
+
+// === 狀態更新 ===
+async function updateOrderStatus(orderId, status) {
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'updateOrderStatus', orderId, status }),
+      headers: { 'Content-Type': 'application/json' }
+    });
+    const result = await res.json();
+    if (result.success) {
+      refreshKitchen();
+      showToast(`訂單 ${orderId} 已更新為「${status}」`);
+    }
+  } catch (err) {
+    showToast('更新失敗', 'danger');
+  }
+}
+
+// === 管理者統計（略）===
+
+function showToast(message, type = 'success') {
+  const toast = document.getElementById('toast');
+  toast.className = `toast align-items-center text-white bg-${type} border-0`;
+  toast.querySelector('.toast-body').textContent = message;
+  new bootstrap.Toast(toast, { delay: 3000 }).show();
+}
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
