@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>無名牛排 - A3 菜單 (可列印)</title>
+    <title>無名牛排 - 菜單 (可列印為PDF)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
@@ -62,7 +62,7 @@
 <body class="bg-gray-200">
     <div class="no-print p-4 text-center sticky top-0 bg-gray-200 z-10">
         <button onclick="window.print()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105">
-            列印 A3 菜單 (一式兩份)
+            列印菜單 (可儲存為 PDF)
         </button>
     </div>
 
@@ -88,7 +88,7 @@
               { id: 'set-9', name: '香煎鮮嫩雞腿套餐', weight: '10oz', price: 250, isAvailable: true, doneness: false },
               { id: 'set-10', name: '香煎美味豬排套餐', weight: '10oz', price: 299, isAvailable: true, doneness: false },
               { id: 'set-11', name: '英式炸魚套餐', weight: '10oz', price: 250, isAvailable: true, doneness: false },
-              { id: 'set-12', name: '日式豬排套餐', weight: '10oz', price: 250, isAvailable: false, doneness: false },
+              { id: 'set-12', name: '日式豬排套餐', weight: '10oz', price: 250, isAvailable: true, doneness: false },
             ]
           },
           {
@@ -113,7 +113,7 @@
             { id: 'addon-chicken-leg', name: '鮮嫩雞腿', price: 120, category: '主餐加購', isAvailable: true },
             { id: 'addon-pork-chop', name: '美味豬排', price: 120, category: '主餐加購', isAvailable: true },
             { id: 'addon-fried-fish', name: '英式炸魚', price: 120, category: '主餐加購', isAvailable: true },
-            { id: 'addon-jp-pork-cutlet', name: '日式豬排', price: 120, category: '主餐加購', isAvailable: false },
+            { id: 'addon-jp-pork-cutlet', name: '日式豬排', price: 120, category: '主餐加購', isAvailable: true },
             { id: 'addon-dessert', name: '是日甜品 加購', price: 30, category: '其他加購', isAvailable: true },
         ];
         // Based on image, since these are not in constants.ts
@@ -125,7 +125,7 @@
         ];
         const SAUCE_CHOICES = [
             { name: "巴醋", isAvailable: true }, { name: "橙汁", isAvailable: true }, { name: "椒鹽", isAvailable: true },
-            { name: "芥末", isAvailable: false }, { name: "泡菜", isAvailable: true }, { name: "BBQ醬", isAvailable: true },
+            { name: "芥末", isAvailable: true }, { name: "泡菜", isAvailable: true }, { name: "BBQ醬", isAvailable: true },
             { name: "黑胡椒", isAvailable: true }, { name: "蒜味醬", isAvailable: true },
         ];
         const DRINK_CHOICES = ["無糖紅茶", "冰涼可樂"];
@@ -134,7 +134,7 @@
              { id: 'simple-2', name: '涼麵套餐', price: 175, description: '附: 飲料', isAvailable: true },
         ];
         const NOODLE_SAUCE_CHOICES = [
-            { name: "台式涼麵", isAvailable: false }, { name: "日式涼麵", isAvailable: true }, { name: "泰式涼麵", isAvailable: false },
+            { name: "台式涼麵", isAvailable: true }, { name: "日式涼麵", isAvailable: true }, { name: "泰式涼麵", isAvailable: true },
             { name: "法式凱撒涼麵", isAvailable: true }, { name: "蔥香涼麵", isAvailable: true },
         ];
         const FOOTER_NOTES = [
