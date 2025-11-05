@@ -3,184 +3,189 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>無名牛排 - 菜單 (可列印為PDF)</title>
+    <title>無名牛排 - 菜單 (A3 橫向列印)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Noto+Sans+TC', 'Noto Sans TC', sans-serif;
+            font-family: 'Noto Sans TC', sans-serif;
             -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
+            margin: 0;
+            padding: 0;
+            background: #f3f4f6;
         }
+
+        /* === 列印設定：A3 橫向，兩份菜單一頁 === */
         @media print {
             @page {
                 size: A3 landscape;
-                margin: 1cm;
+                margin: 0.8cm;
             }
-            html, body {
+            body, html {
                 width: 42cm;
                 height: 29.7cm;
-                -webkit-print-color-adjust: exact;
+                background: white;
                 print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
             }
-            .no-print { display: none; }
+            .no-print { display: none !important; }
             .printable-area {
+                width: 100% !important;
+                height: 100% !important;
                 box-shadow: none !important;
-                border: none !important;
                 margin: 0 !important;
                 padding: 0 !important;
-                width: 100% !important;
+                display: block !important;
             }
             .menu-sheet {
-                break-after: page;
+                page-break-after: always;
+                height: 100%;
+            }
+            .menu-sheet:last-child {
+                page-break-after: avoid;
             }
         }
-        .table-header-group {
-            background-color: #d1fae5; /* A light green color */
-        }
+
+        /* === 共用樣式 === */
         .table-header-cell {
             padding: 6px 4px;
-            border: 1px solid #6b7280;
+            border: 1px solid #4b5563;
             text-align: center;
             font-weight: 700;
+            font-size: 13px;
             color: #1f2937;
+            background-color: #d1fae5;
             white-space: nowrap;
         }
         .table-body-cell {
             padding: 6px 4px;
-            border: 1px solid #6b7280;
+            border: 1px solid #4b5563;
+            font-size: 13px;
             vertical-align: middle;
         }
         .doneness-box {
+            width: 18px;
+            height: 18px;
+            border: 1.5px solid #4b5563;
+            margin: 0 auto;
+            background: white;
+        }
+        .checkbox {
             width: 20px;
             height: 20px;
-            border: 1px solid #6b7280;
-            margin: 0 auto;
+            border: 2px solid #4b5563;
+            display: inline-block;
+            margin: 0 4px;
+            background: white;
         }
     </style>
 </head>
 <body class="bg-gray-200">
-    <div class="no-print p-4 text-center sticky top-0 bg-gray-200 z-10">
-        <button onclick="window.print()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105">
-            列印菜單 (可儲存為 PDF)
+
+    <!-- 列印按鈕（列印時隱藏） -->
+    <div class="no-print p-5 text-center sticky top-0 bg-gray-200 z-50 shadow-md">
+        <button onclick="window.print()" 
+                class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-transform transform hover:scale-105 text-lg">
+            🖨️ 列印菜單（儲存為 A3 PDF）
         </button>
+        <p class="mt-2 text-sm text-gray-600">列印後會自動輸出兩份菜單於一張 A3 紙上</p>
     </div>
 
-    <div id="menu-container" class="printable-area w-[42cm] min-h-[29.7cm] mx-auto bg-white shadow-2xl">
-        <!-- Menu content will be dynamically injected here -->
+    <!-- 菜單容器：兩份並排 -->
+    <div class="printable-area flex">
+        <div id="menu-container" class="flex-1"></div>
     </div>
 
     <script>
-        // Data copied from the application's constants and supplemented to match images
+        // === 菜單資料 ===
         const MENU_DATA = [
-          {
-            title: "套餐",
-            description: "附: ①日湯 ②麵包 ③主餐 ④脆薯 ⑤飲料",
-            items: [
-              { id: 'set-1', name: '香煎海盜牛排套餐', weight: '7oz', price: 299, isAvailable: true, doneness: true },
-              { id: 'set-2', name: '香煎海盜牛排套餐', weight: '14oz', price: 399, isAvailable: true, doneness: true },
-              { id: 'set-3', name: '香煎海盜牛排套餐', weight: '21oz', price: 499, isAvailable: true, doneness: true },
-              { id: 'set-4', name: '香煎特選板腱套餐', weight: '10oz', price: 399, isAvailable: true, doneness: true },
-              { id: 'set-5', name: '香煎老饕上蓋套餐', weight: '7oz', price: 399, isAvailable: true, doneness: true },
-              { id: 'set-6', name: '香煎紐菲力套餐', weight: '7oz', price: 499, isAvailable: true, doneness: true },
-              { id: 'set-7', name: '香煎櫻桃鴨胸套餐', weight: '10oz', price: 320, isAvailable: true, doneness: false },
-              { id: 'set-8', name: '香煎鮮嫩鱸魚套餐', weight: '10oz', price: 320, isAvailable: true, doneness: false },
-              { id: 'set-9', name: '香煎鮮嫩雞腿套餐', weight: '10oz', price: 250, isAvailable: true, doneness: false },
-              { id: 'set-10', name: '香煎美味豬排套餐', weight: '10oz', price: 299, isAvailable: true, doneness: false },
-              { id: 'set-11', name: '英式炸魚套餐', weight: '10oz', price: 250, isAvailable: true, doneness: false },
-              { id: 'set-12', name: '日式豬排套餐', weight: '10oz', price: 250, isAvailable: true, doneness: false },
-            ]
-          },
-          {
-            title: "組合餐",
-            description: "附: ①日湯 ②麵包 ③主餐 ④脆薯 ⑤沙拉 ⑥飲料",
-            items: [
-              { id: 'combo-1', name: '日豬、雞腿、上蓋組合餐', weight: '15oz', price: 529, isAvailable: true, doneness: true },
-              { id: 'combo-2', name: '炸魚、雞腿、板腱組合餐', weight: '15oz', price: 529, isAvailable: true, doneness: true },
-              { id: 'combo-3', name: '鱸魚、鴨胸、豬排組合餐', weight: '15oz', price: 529, isAvailable: true, doneness: false },
-              { id: 'combo-4', name: '鴨胸、鱸魚、上蓋組合餐', weight: '15oz', price: 599, isAvailable: true, doneness: true },
-              { id: 'combo-5', name: 'N菲、上蓋、板腱組合餐', weight: '15oz', price: 699, isAvailable: true, doneness: true },
-            ]
-          },
+            {
+                title: "套餐",
+                description: "附: ①日湯 ②麵包 ③主餐 ④脆薯 ⑤飲料",
+                items: [
+                    { id: 'set-1', name: '香煎海盜牛排套餐', weight: '7oz', price: 299, isAvailable: true, doneness: true },
+                    { id: 'set-2', name: '香煎海盜牛排套餐', weight: '14oz', price: 399, isAvailable: true, doneness: true },
+                    { id: 'set-3', name: '香煎海盜牛排套餐', weight: '21oz', price: 499, isAvailable: true, doneness: true },
+                    { id: 'set-4', name: '香煎特選板腱套餐', weight: '10oz', price: 399, isAvailable: true, doneness: true },
+                    { id: 'set-5', name: '香煎老饕上蓋套餐', weight: '7oz', price: 399, isAvailable: true, doneness: true },
+                    { id: 'set-6', name: '香煎紐菲力套餐', weight: '7oz', price: 499, isAvailable: true, doneness: true },
+                    { id: 'set-7', name: '香煎櫻桃鴨胸套餐', weight: '10oz', price: 320, isAvailable: true, doneness: false },
+                    { id: 'set-8', name: '香煎鮮嫩鱸魚套餐', weight: '10oz', price: 320, isAvailable: true, doneness: false },
+                    { id: 'set-9', name: '香煎鮮嫩雞腿套餐', weight: '10oz', price: 250, isAvailable: true, doneness: false },
+                    { id: 'set-10', name: '香煎美味豬排套餐', weight: '10oz', price: 299, isAvailable: true, doneness: false },
+                    { id: 'set-11', name: '英式炸魚套餐', weight: '10oz', price: 250, isAvailable: true, doneness: false },
+                    { id: 'set-12', name: '日式豬排套餐', weight: '10oz', price: 250, isAvailable: true, doneness: false },
+                ]
+            },
+            {
+                title: "組合餐",
+                description: "附: ①日湯 ②麵包 ③主餐 ④脆薯 ⑤沙拉 ⑥飲料",
+                items: [
+                    { id: 'combo-1', name: '日豬、雞腿、上蓋組合餐', weight: '15oz', price: 529, isAvailable: true, doneness: true },
+                    { id: 'combo-2', name: '炸魚、雞腿、板腱組合餐', weight: '15oz', price: 529, isAvailable: true, doneness: true },
+                    { id: 'combo-3', name: '鱸魚、鴨胸、豬排組合餐', weight: '15oz', price: 529, isAvailable: true, doneness: false },
+                    { id: 'combo-4', name: '鴨胸、鱸魚、上蓋組合餐', weight: '15oz', price: 599, isAvailable: true, doneness: true },
+                    { id: 'combo-5', name: 'N菲、上蓋、板腱組合餐', weight: '15oz', price: 699, isAvailable: true, doneness: true },
+                ]
+            },
         ];
+
         const ADDONS = [
-            { id: 'addon-pirate-steak-5oz', name: '海盜牛排', price: 200, category: '主餐加購', isAvailable: true },
-            { id: 'addon-top-blade-5oz', name: '特選板腱', price: 200, category: '主餐加購', isAvailable: true },
-            { id: 'addon-ribeye-cap-5oz', name: '老饕上蓋', price: 200, category: '主餐加購', isAvailable: true },
-            { id: 'addon-filet-mignon-5oz', name: '紐菲力', price: 250, category: '主餐加購', isAvailable: true },
-            { id: 'addon-duck-breast', name: '櫻桃鴨胸', price: 150, category: '主餐加購', isAvailable: true },
-            { id: 'addon-sea-bass', name: '鮮嫩鱸魚', price: 150, category: '主餐加購', isAvailable: true },
-            { id: 'addon-chicken-leg', name: '鮮嫩雞腿', price: 120, category: '主餐加購', isAvailable: true },
-            { id: 'addon-pork-chop', name: '美味豬排', price: 120, category: '主餐加購', isAvailable: true },
-            { id: 'addon-fried-fish', name: '英式炸魚', price: 120, category: '主餐加購', isAvailable: true },
-            { id: 'addon-jp-pork-cutlet', name: '日式豬排', price: 120, category: '主餐加購', isAvailable: true },
-            { id: 'addon-dessert', name: '是日甜品 加購', price: 30, category: '其他加購', isAvailable: true },
+            { name: '海盜牛排', price: 200 }, { name: '特選板腱', price: 200 }, { name: '老饕上蓋', price: 200 },
+            { name: '紐菲力', price: 250 }, { name: '櫻桃鴨胸', price: 150 }, { name: '鮮嫩鱸魚', price: 150 },
+            { name: '鮮嫩雞腿', price: 120 }, { name: '美味豬排', price: 120 }, { name: '英式炸魚', price: 120 },
+            { name: '日式豬排', price: 120 },
         ];
-        // Based on image, since these are not in constants.ts
+
         const GENERAL_ADDONS = [
-            { name: "蒜味麵包", price: 60, isAvailable: true },
-            { name: "黃金脆薯", price: 60, isAvailable: true },
-            { name: "脆皮雞塊", price: 75, isAvailable: true },
-            { name: "香草冰淇淋", price: 60, isAvailable: true },
+            { name: "蒜味麵包", price: 60 }, { name: "黃金脆薯", price: 60 },
+            { name: "脆皮雞塊", price: 75 }, { name: "香草冰淇淋", price: 60 },
         ];
-        const SAUCE_CHOICES = [
-            { name: "巴醋", isAvailable: true }, { name: "橙汁", isAvailable: true }, { name: "椒鹽", isAvailable: true },
-            { name: "芥末", isAvailable: true }, { name: "泡菜", isAvailable: true }, { name: "BBQ醬", isAvailable: true },
-            { name: "黑胡椒", isAvailable: true }, { name: "蒜味醬", isAvailable: true },
-        ];
+
+        const SAUCE_CHOICES = ["巴醋", "橙汁", "椒鹽", "芥末", "泡菜", "BBQ醬", "黑胡椒", "蒜味醬"];
         const DRINK_CHOICES = ["無糖紅茶", "冰涼可樂"];
         const NOODLE_DISHES = [
-             { id: 'simple-1', name: '是日涼麵', price: 65, isAvailable: true },
-             { id: 'simple-2', name: '涼麵套餐', price: 175, description: '附: 飲料', isAvailable: true },
+            { name: '是日涼麵', price: 65 },
+            { name: '涼麵套餐', price: 175, description: '附: 飲料' },
         ];
-        const NOODLE_SAUCE_CHOICES = [
-            { name: "台式涼麵", isAvailable: true }, { name: "日式涼麵", isAvailable: true }, { name: "泰式涼麵", isAvailable: true },
-            { name: "法式凱撒涼麵", isAvailable: true }, { name: "蔥香涼麵", isAvailable: true },
-        ];
+        const NOODLE_SAUCE_CHOICES = ["台式涼麵", "日式涼麵", "泰式涼麵", "法式凱撒涼麵", "蔥香涼麵"];
         const FOOTER_NOTES = [
-            "＊店內最低消費為一份餐點", "＊打✓是有供應打 X 就是沒有供應",
+            "＊店內最低消費為一份餐點", "＊打✓是有供應 打 X 就是沒有供應",
             "＊不收服務費，用完餐請回收餐具", "＊加購提供主商品無搭配",
-            "＊用餐限九十分鐘請勿飲酒", "＊餐點內容以現場出餐為主",
-            "＊現點現做請耐心等候"
+            "＊用餐限九十分鐘請勿飲酒", "＊餐點內容以現場出餐為主", "＊現點現做請耐心等候"
         ];
 
         function findAddonPrice(itemName) {
-            const keywords = {
-                '海盜牛排': 200, '板腱': 200, '老饕上蓋': 200, '紐菲力': 250, '鴨胸': 150, '鱸魚': 150, '雞腿': 120, '豬排': 120, '炸魚': 120,
-            };
-            for (const key in keywords) {
-                if (itemName.includes(key)) {
-                    return keywords[key];
-                }
-            }
-            return null;
+            const match = ADDONS.find(a => itemName.includes(a.name.split('')[0]) || itemName.includes(a.name));
+            return match ? match.price : null;
         }
 
-        function generateSingleMenuHTML() {
+        function generateMenuHTML() {
             let html = `
-            <div class="menu-sheet grid grid-cols-2 gap-x-8 p-8">
-                <!-- LEFT COLUMN -->
+            <div class="menu-sheet grid grid-cols-2 gap-x-6 p-6 h-full text-sm">
+                <!-- 左欄：套餐 + 組合餐 -->
                 <div class="flex flex-col">
             `;
-            
-            // --- SET & COMBO MEALS ---
+
             MENU_DATA.forEach(category => {
                 html += `
-                <div class="mb-4">
-                    <h2 class="text-xl font-bold bg-green-200 text-green-900 p-2 border border-gray-500">${category.title}: ${category.description}</h2>
-                    <table class="w-full border-collapse border border-gray-500 text-sm">
-                        <thead class="table-header-group">
-                            <tr>
-                                <th class="table-header-cell w-[5%]" rowspan="2"></th>
-                                <th class="table-header-cell w-[25%]" rowspan="2">主選</th>
-                                <th class="table-header-cell w-[8%]" rowspan="2">重量</th>
-                                <th class="table-header-cell w-[8%]" rowspan="2">售價</th>
-                                <th class="table-header-cell w-[8%]" rowspan="2">5oz<br/>加購</th>
-                                <th class="table-header-cell w-[8%]" rowspan="2">甜品<br/>加購</th>
-                                <th class="table-header-cell w-[8%]" rowspan="2">數量</th>
+                <div class="mb-3 flex-1">
+                    <h2 class="text-lg font-black bg-green-200 text-green-900 px-3 py-2 border border-gray-600 rounded-t">
+                        ${category.title} <span class="text-xs font-normal">(${category.description})</span>
+                    </h2>
+                    <table class="w-full border-collapse border border-gray-600 text-xs">
+                        <thead>
+                            <tr class="bg-green-100">
+                                <th class="table-header-cell w-4" rowspan="2">選</th>
+                                <th class="table-header-cell" rowspan="2">主選</th>
+                                <th class="table-header-cell w-12" rowspan="2">重量</th>
+                                <th class="table-header-cell w-14" rowspan="2">售價</th>
+                                <th class="table-header-cell w-14" rowspan="2">5oz<br>加購</th>
+                                <th class="table-header-cell w-14" rowspan="2">甜品<br>加購</th>
+                                <th class="table-header-cell w-14" rowspan="2">數量</th>
                                 <th class="table-header-cell" colspan="4">牛排熟度</th>
                             </tr>
-                            <tr>
+                            <tr class="bg-green-100">
                                 <th class="table-header-cell">3</th>
                                 <th class="table-header-cell">5</th>
                                 <th class="table-header-cell">7</th>
@@ -191,122 +196,115 @@
                 `;
                 category.items.forEach(item => {
                     const addonPrice = findAddonPrice(item.name);
-                    const soldOutClass = !item.isAvailable ? 'text-gray-400 line-through' : '';
+                    const soldOut = !item.isAvailable ? 'text-gray-400 line-through' : '';
                     html += `
-                        <tr class="${soldOutClass}">
-                            <td class="table-body-cell text-center text-lg">□</td>
-                            <td class="table-body-cell font-semibold">${item.name.replace('套餐', '').replace('組合餐','')}</td>
-                            <td class="table-body-cell text-center">${item.weight || ''}</td>
+                        <tr class="${soldOut}">
+                            <td class="table-body-cell text-center"><span class="checkbox"></span></td>
+                            <td class="table-body-cell font-semibold">${item.name.replace('套餐', '').replace('組合餐', '')}</td>
+                            <td class="table-body-cell text-center">${item.weight}</td>
                             <td class="table-body-cell text-center font-bold">$${item.price}</td>
                             <td class="table-body-cell text-center">${category.title === '組合餐' ? 'X' : (addonPrice ? `$${addonPrice}` : 'X')}</td>
                             <td class="table-body-cell text-center">$30</td>
-                            <td class="table-body-cell"></td>
+                            <td class="table-body-cell text-center"></td>
                             ${item.doneness ? `
-                            <td class="table-body-cell"><div class="doneness-box"></div></td>
-                            <td class="table-body-cell"><div class="doneness-box"></div></td>
-                            <td class="table-body-cell"><div class="doneness-box"></div></td>
-                            <td class="table-body-cell"><div class="doneness-box"></div></td>
-                            ` : `<td class="table-body-cell text-center" colspan="4">X</td>`}
+                                <td class="table-body-cell"><div class="doneness-box"></div></td>
+                                <td class="table-body-cell"><div class="doneness-box"></div></td>
+                                <td class="table-body-cell"><div class="doneness-box"></div></td>
+                                <td class="table-body-cell"><div class="doneness-box"></div></td>
+                            ` : `<td colspan="4" class="table-body-cell text-center font-bold text-red-600">X</td>`}
                         </tr>
                     `;
                 });
-                html += `
-                        </tbody>
-                    </table>
-                </div>
-                `;
+                html += `</tbody></table></div>`;
             });
-            
-            // --- FOOTER NOTES (LEFT) ---
+
+            // 左下備註
             html += `
-                <div class="mt-auto border border-gray-500 p-2 text-xs">
-                    ${FOOTER_NOTES.map(note => `<p>${note}</p>`).join('')}
-                </div>
-            </div>
-            `;
-            
-            // --- RIGHT COLUMN ---
-            html += `
-            <div class="flex flex-col gap-y-4">
-                <!-- SAUCES -->
-                <div>
-                    <h2 class="text-lg font-bold bg-green-200 text-green-900 p-2 border border-gray-500">主菜沾醬 (擇二)</h2>
-                    <div class="grid grid-cols-5 border border-t-0 border-gray-500">
-                        ${SAUCE_CHOICES.map(sauce => `
-                            <div class="text-center p-2 border-r border-b border-gray-500 last:border-r-0 ${!sauce.isAvailable ? 'text-gray-400 line-through' : ''}">
-                                <p class="font-semibold">${sauce.name}</p>
-                                <p class="text-xs mt-1">___ 份</p>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-
-                <!-- COLD NOODLES -->
-                <div>
-                    <h2 class="text-lg font-bold bg-green-200 text-green-900 p-2 border border-gray-500">涼麵</h2>
-                    <div class="border border-t-0 border-gray-500 p-2 space-y-1">
-                        ${NOODLE_DISHES.map(item => `
-                          <div class="flex justify-between items-center text-sm ${!item.isAvailable ? 'text-gray-400 line-through' : ''}">
-                              <span class="font-semibold">${item.name}</span>
-                              <span class="font-bold">$${item.price}</span>
-                          </div>
-                        `).join('')}
-                    </div>
-                </div>
-                
-                <!-- NOODLE SAUCES -->
-                <div>
-                    <h2 class="text-lg font-bold bg-green-200 text-green-900 p-2 border border-gray-500">涼麵醬 (擇一)</h2>
-                    <div class="grid grid-cols-5 border border-t-0 border-gray-500">
-                        ${NOODLE_SAUCE_CHOICES.map(sauce => `
-                            <div class="text-center p-2 border-r border-b border-gray-500 last:border-r-0 ${!sauce.isAvailable ? 'text-gray-400 line-through' : ''}">
-                                <p class="font-semibold">${sauce.name}</p>
-                                <p class="text-xs mt-1">___ 份</p>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-
-                <!-- DRINKS -->
-                <div>
-                    <h2 class="text-lg font-bold bg-green-200 text-green-900 p-2 border border-gray-500">飲料</h2>
-                    <div class="grid grid-cols-2 border border-t-0 border-gray-500">
-                        ${DRINK_CHOICES.map(drink => `
-                            <div class="text-center p-2 border-r border-b border-gray-500 last:border-r-0">
-                                <p class="font-semibold">${drink}</p>
-                                <p class="text-xs mt-1">___ 份</p>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-
-                <!-- GENERAL ADDONS -->
-                <div>
-                    <h2 class="text-lg font-bold bg-green-200 text-green-900 p-2 border border-gray-500">加購區</h2>
-                    <div class="grid grid-cols-2 border border-t-0 border-gray-500">
-                        ${GENERAL_ADDONS.map(addon => `
-                            <div class="flex justify-between items-center text-sm p-2 border-r border-b border-gray-500 last:border-r-0 ${!addon.isAvailable ? 'text-gray-400 line-through' : ''}">
-                                <span class="font-semibold">${addon.name}</span>
-                                <span class="font-bold">$${addon.price}</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-
-                 <!-- FOOTER NOTES (RIGHT) -->
-                <div class="mt-auto border border-gray-500 p-2 text-xs">
-                    ${FOOTER_NOTES.map(note => `<p>${note}</p>`).join('')}
+                <div class="mt-2 text-xs border border-gray-600 p-2 bg-gray-50 rounded">
+                    ${FOOTER_NOTES.map(n => `<div class="mb-1">• ${n}</div>`).join('')}
                 </div>
             </div>
             `;
 
-            html += `</div>`; // Close grid
+            // === 右欄：加購、醬料、飲料、涼麵 ===
+            html += `
+            <div class="flex flex-col space-y-3">
+                <!-- 主菜沾醬 -->
+                <div>
+                    <h2 class="text-base font-black bg-green-200 text-green-900 px-3 py-2 border border-gray-600 rounded-t">主菜沾醬 (擇二)</h2>
+                    <div class="grid grid-cols-4 border border-t-0 border-gray-600">
+                        ${SAUCE_CHOICES.map(s => `
+                            <div class="text-center p-2 border-r border-b border-gray-600 last:border-r-0">
+                                <div class="font-semibold">${s}</div>
+                                <div class="text-xs mt-1">___ 份</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <!-- 涼麵 -->
+                <div>
+                    <h2 class="text-base font-black bg-green-200 text-green-900 px-3 py-2 border border-gray-600 rounded-t">涼麵</h2>
+                    <div class="border border-t-0 border-gray-600 p-2 space-y-1 text-xs">
+                        ${NOODLE_DISHES.map(d => `
+                            <div class="flex justify-between">
+                                <span class="font-semibold">${d.name}</span>
+                                <span class="font-bold">$${d.price}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <!-- 涼麵醬 -->
+                <div>
+                    <h2 class="text-base font-black bg-green-200 text-green-900 px-3 py-2 border border-gray-600 rounded-t">涼麵醬 (擇一)</h2>
+                    <div class="grid grid-cols-5 border border-t-0 border-gray-600 text-xs">
+                        ${NOODLE_SAUCE_CHOICES.map(s => `
+                            <div class="text-center p-1 border-r border-b border-gray-600 last:border-r-0">
+                                <div>${s}</div>
+                                <div class="mt-1">___</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <!-- 飲料 -->
+                <div>
+                    <h2 class="text-base font-black bg-green-200 text-green-900 px-3 py-2 border border-gray-600 rounded-t">飲料</h2>
+                    <div class="grid grid-cols-2 border border-t-0 border-gray-600 text-xs">
+                        ${DRINK_CHOICES.map(d => `
+                            <div class="text-center p-2 border-r border-b border-gray-600 last:border-r-0">
+                                <div class="font-semibold">${d}</div>
+                                <div class="mt-1">___ 份</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <!-- 加購區 -->
+                <div>
+                    <h2 class="text-base font-black bg-green-200 text-green-900 px-3 py-2 border border-gray-600 rounded-t">加購區</h2>
+                    <div class="grid grid-cols-2 border border-t-0 border-gray-600 text-xs">
+                        ${GENERAL_ADDONS.map(a => `
+                            <div class="flex justify-between p-2 border-r border-b border-gray-600 last:border-r-0">
+                                <span class="font-semibold">${a.name}</span>
+                                <span class="font-bold">$${a.price}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <!-- 右下備註 -->
+                <div class="mt-auto text-xs border border-gray-600 p-2 bg-gray-50 rounded">
+                    ${FOOTER_NOTES.map(n => `<div class="mb-1">• ${n}</div>`).join('')}
+                </div>
+            </div>
+            </div>`;
             return html;
         }
 
-        const menuHTML = generateSingleMenuHTML();
-        // Generate two copies for printing
-        document.getElementById('menu-container').innerHTML = menuHTML + menuHTML;
+        // 插入兩份菜單（A3 一頁兩份）
+        document.getElementById('menu-container').innerHTML = generateMenuHTML() + generateMenuHTML();
     </script>
 </body>
 </html>
